@@ -1,0 +1,4 @@
+unaria:  sin, cos, tan, tanh ..., - (opposto), |x|
+binaria: +, -, *, /, ^, sqrt, log
+
+

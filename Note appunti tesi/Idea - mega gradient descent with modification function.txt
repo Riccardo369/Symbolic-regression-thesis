@@ -1,0 +1,141 @@
+Faccio un alternanza: 
+
+Mega gradient descent:
+
+1) Ottenuto l' albero, ad ogni punto gli faccio fare la discesa del gradiente, dopo questo, per ogni dimensione di tutti i punti, scelgo la feature / costante migliore (che si avvicina di più), e rifaccio con un altro ciclo, finchè non mi fermo.
+  Prima di fare tutto questo procedimento, mi porto: la funzione di calcolo, la funzione gradiente, e la funzione hessiana di tutto l' albero.
+
+2) Scelgo quale modifica fare all' albero (e come). Il focus deve essere su questo secondo ciclo, il primo serve per non confondere il secondo.
+
+La funzione da minimizzare è Loss(y, tree).
+
+Il fatto di fare la descent gradient, ottimizza l' albero sui suoi input rispetto all' output, il fatto di modificare la funzione come aiuto, minimizza ancor di più la funzione (e può anche rendere non necessario di euristiche strane).
+
+Il fatto di modellare la funzione fino a minimizzare l' errore, porta alla funzione vera e propria che serve.
+
+LO PUOI FARE PERCHè: IL GRADIENTE NON è SULLA FEATURE, MA SULLA POSIZIONE DELL' INPUT (QUINDI LA POSIZIONE DELLA FOGLIA), QUINDI PER TUTTE LE ITERAZIONI DI UN CICLO, LA FUNZIONE NON CAMBIA
+LA FUNZIONE CAMBIA SOLO QUANDO FAI DELLE MODIFICHE ALL' ALBERO
+LA DIMENSIONE DEL GRADIENTE E DELL' HESSIANA CAMBIANO SOLO QUANDO TOGLI OD AGGIUNGI FOGLIE
+
+Per ogni nodo:
+
+- Forward calculation:  1 formula di calcolo
+- Backward calculation: k formule di calcolo inverso
+- Forward derivate:     un' algoritmo che dà un vettori di n valori (questo perchè il gradiente si fa con tutte le derivate locali, una per ogni input, il gradiente totale si trova elemento per elemento cercando foglia per foglia con una DFS)
+- Forward hessian:      un' algoritmo che dà una matrice di n x n valori.
+
+Dove n è il numero di tutte le foglie sotto al nodo.
+
+CALCOLO PER OTTIMIZZAZIONE DELLE FEATURES
+
+Si può fare in molti modi. Un' idea:
+
+- Applico un algoritmo di ottimizzazione che considera anche i target. Ad ogni passo, dopo aver fatto il salto, faccio una proiezione di tutte le features: scegliendo la feature / costante che si avvicina di 
+  più alla dimensione i (per ogni i), oppure scegliendo la feature / costante che minimizza di più la funzione ad ogni passo (questo richiede backtracking interno). Le costanti le tiri fuori dalla dimensione 
+  con calcoli di operazioni già prestabilite.
+
+CALCOLO PER MODIFICA DELL' ALBERO
+
+Calcolo: le varianze degl' errori di calcolo, le medie degl' errori di calcolo ed i gradienti di ogni nodo con questi 3 segnali, scelgo poi il nodo che avrà la norma massima (su ogni derivata del gradiente
+         di ogni nodo, si fa una media).
+
+Per scegliere se il nodo deve essere esteso o tagliato, provo sia il taglio che l' estensione, poi calcolo l' errore sia sul training set che sul validation set sia dell' albero di 
+ partenza che quello attuale (si considera \Delta(M, M') = L(M) - L(M'), dove M è il modello di prima, e M' è il modello di dopo) poi:
+
+- Sia per potatura che per estensione, se \Delta val < 0, si considera come candidato valido.
+
+- Se sia potatura che estensione sono validi come casi, allora si sceglie la via con la validation più bassa.
+
+- Se entrambi hanno una validation simile (quindi la loro differenza non supera una tolleranza molto bassa) o nessuno dei 2 casi abbassa la delta validation l' algoritmo si ferma verso quella direzione e ripete scegliendo il prossimo nodo della lista (guardando sempre le norme dei gradienti).
+
+La TR serve per scegliere le operazioni ed ottimizzare le foglie, la VL serve per decidere quale strada prendere nella estensione o potatura.
+Se si vuole aggiungere la regolarizzazione, l' albero si regolarizza da solo se si usa il un TR e VL diversi. Per toglierla, bisogna usare una TR ed una VL uguali.
+
+Se il nodo in questione è la radice, non si fa la potatura, si fa solo l' estensione.
+Se non si sceglie nessuna estensione su un nodo si prova da esplodere: si fanno n evoluzioni (ogni volta facendo il fit delle foglie e dove n è il numero di nodi in quell' albero in quel 
+momento), ci si calcola la VL loss, e ci si salva (prima scelti poi ordinati in base all' errore) tutti gli alberi che hanno una loss minore rispetto all' albero precedente nell' 
+evoluzione. Se nessuna evoluzione viene scelta (perchè veramente sei in un minimo locale con parete lunghissima), allora fai vero backtracking.
+
+Si può anche usare la logica di fare k evoluzioni ogni volta, in modo tale da essere ancora più generali.
+
+In questo modo, scelgo il nodo che è più sensibile alla funzione, e scelgo che operazione fare in base al miglioramento dell' errore sul validation set.
+
+Ad ogni operazione sul nodo seguita dall' ottimizzazione dei parametri (quindi fissato l' albero, scelgo la combinazione di feature / costanti migliore, 1° ciclo quindi), vedo se l' albero ottenuto
+dà una loss minore dell' albero precedente, se non dà una lossa migliore, ritorno indietro con albero e con features (faccio backtracking) e ripeto il procedimento scegliendo il nodo successivo 
+(considerando le norme etc.).
+
+Se facendo sempre backtracking finisco i nodi, si ritorna sull' albero ancora prima (quindi ci si salva una serie di alberi e l' indice del nodo scelto durante tutta l' operazione). Tanto gli stati sono 
+delle stringhe, non occupano molto, e le varianze, medie e gradienti si possono calcolare sempre in modo deterministico.
+
+Se sono finite tutte le uscite dall' albero iniziale (quindi il primo di tutti), l' algoritmo finisce. Quando torno indietro però, mi salvo fino a dove sono arrivato, come soluzione finale fattibile, 
+perchè altri minimi locali, potrebbero essere peggiori, se poi arrivo alla fine di tutti i casi, che non ho trovato l' estensione giusta, vado a racimolare l' albero migliore tra tutti i minimi locali 
+trovati per strada.
+
+Se durante l' algoritmo, ci si ritrova in uno stato già incontrato precedentemente, si fa backtracking e si passa al nodo successivo, per evitare di cadere in cicli infiniti.
+
+
+
+
+
+Questo garantisce:
+
+- Che la loss scende sempre (si sceglie sempre la strada che la minimizza, se si va in minimi locali, in termini di struttura dell' albero, si fa rollback), quindi anche niente zigzag della loss.
+
+- L' algoritmo termina sempre: 
+
+* Se non si sceglie nessuna estensione (considerando media e varianza), tutti i nodi sono perfetti e ci si ferma.
+* Se tutte le casistiche di scelta del prossimo nodo terminano, anche tornando indietro nel tempo, e se tutte le scelte sono veramente terminate in tutti i casi, allora finisco l' algoritmo da solo.
+* Si può fermare scegliendo anche una tolleranza di errore.
+
+- Niente cicli tra evoluzioni di alberi (per il fatto che ad ogni stato incontrato, se lo ri-incontri un altra volta, torni indietro).
+
+
+
+VANTAGGI:
+
+- Spiegabilità = Si può vedere la funzione imparata e tutte le funzioni imparate precedentemente.
+- Pattern memento = Lo stato di conoscenza di questo algoritmo è una stringa, e permette di risparmiare molto spazio. Questo spazio non dipende dai dati.
+- Meta learning manuale = Si può aiutare l' algoritmo partendo già da una funzione già scritta.
+- No model selection = Non esistono iper-parametri, apparte il caso in cui si vuole fissare una soglia per far finire prima l' algoritmo, ma l' algoritmo finisce prima o poi anche da solo.
+                       Altri possibili iper-parametri sono legati alla funzione di ottimizzazione scelta per ottimizzare le foglie.
+
+
+SVANTAGGI:
+
+- Conoscenza delle operazioni di base, con conoscenze di gradiente, hessiana, e gestione dei valori nel caso di funzioni surriettive nella forward (quindi gestire casistiche che rappresentano più valori
+  nella backward calculation).
+- L' errore e sopratutto la funzione di proiezione + le funzioni di estrazioni di valori continui, sono importanti.
+- Il fatto che ogni modifica su un nodo, abbia effetto su tutti gli altri nodi, non aiuta la ricerca (è il motivo principale della lentezza dell' algoritmo), quindi l' algoritmo potrebbe essere lento.
+- La regolarizzazione dipende dal VL set che si mette e dalla distribuzione dei dati del TR e del VL, e tutto quello che ne consegue.
+
+
+
+
+DA SCRIVERE MEGLIO LA PARTE DEI DOMINI
+
+
+Ogni operazione ha un suo dominio di accettazione:
+
+Quando si va a scegliere la prossima feature da proiettare, si scelgono solo le feature e costanti che non rompono i domini, se non c'è nessun candidato, si passa alla prossima 
+operazione. Se nessuna operazione di estensione o di potatura sono fattibili (perchè c'è un vincolo che rompe tutto), allora si torna indietro.
+
+Quando si fanno poi i calcoli dei valori ottimali, si considerano all' indietro tutti i possibili valori ed i domini da rispettare.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,71 @@
+Faccio così:
+
+- Scelgo un nodo da estendere. Per ogni funzione scelgo quale input estendere, gli altri input li copro con valori costanti (che dipendono dalla funzione) e sul slot input scelto, ci metto o la costante o la feature più adatta.
+
+* Se estendo una foglia, scelgo su quale input andare a scegliere la feature / costante.
+* Se estendo la radice, scelgo su quale input mettere la radice.
+
+- Faccio un ciclo di equilibrio (risettando variabili e costanti), in modo tale da abbassare ancor di più l' errore e mantenere un equilibrio tra le varie foglie. In questo caso non serve ripartire da una situazione di base, perchè ci sono già costanti e features fissate.
+  Uso quello che si chiama coordinate / block descent algorithm (variante a ciclo).
+ 
+- Ricomincio
+
+Mi fermo quando l' errore totale è sotto ad una certa soglia.
+
+Scelgo come variabile iniziale la stessa y, questo perchè nella sostituzione verso giù (che la prima è sempre verso giù), il valore del nodo vecchio deve essere l' output (od il più vicino possibile) dell' albero nuovo.
+
+
+
+Tipo (per l' estensione verso giù), scelgo con y, la /, posso scegliere tra y / 1, o 1 / y. 
+Per entrambe, metto su x tutte le features + costanti, confronto tutti i risultati con y, scelgo poi la funzione (inversa ovviamente, perchè durante il calcolo abbiamo usato l' inversa di nuovo) con la features / costante migliore.
+Le costanti le calcolo da costanti che ottengo dal risultato della funzione (non da y e non da nessuna features).
+
+Tipo (per l' estensione verso su), scelgo con y, la /, posso scegliere tra y / 1, o 1 / y.
+Per entrambe, vedo quale si avvicina di più alla mia radice, e gli altri slot li metto con valori costanti.
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+EURISTICHE:
+
+Si possono cercare delle euristiche che confermano la scelta migliore per l' estensione (non mi convince molto)
+
+Si possono cercare delle euristiche, tirate fuori dalla forma dell' albero, che si possono usare per evitare problemi durante il coordinate / block descent (molto convincente), ed usare la super euristica concatenata durante i cicli di coordinate / block descent.
+
+- Un euristica potrebbe essere (con un solo ciclo): faccio la backprop sulla prima foglia e scelgo la feature / costante migliore, poi vado sulla prossima etc., se su una foglia l' errore globale aumenta, torno indietro e faccio backtracking (oppure uso l' algoritmo A* per completare tutta la catena di foglie).
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+Link dei PAPER per quanto riguarda il ciclo per equilibrare features e costanti:
+
+- Tseng (2001) — Convergence of a Block Coordinate Descent Method for Nondifferentiable Minimization
+Cosa: convergenza (sottosequenziale) a punti stazionari per metodi a blocchi anche non convessi/non lisci.
+Ipotesi: continuità su un livello compatto; separabilità/regolarità per blocchi; o pseudoconvessità a coppie di blocchi oppure unicità del minimo per alcuni blocchi. Sono condizioni standard nella pratica.  Massachusetts Institute of Technology
+
+- Grippo & Sciandrone (2000) — On the convergence of the block nonlinear Gauss–Seidel method under convex constraints
+Cosa: per Gauss–Seidel a blocchi, convergenza globale se i blocchi sono m=2; per m>2 serve pseudoconvessità o quasi‐convessità strette per componenti: ancora ipotesi classiche.
+Scenario: vincoli convessi a prodotto cartesiano (tipico per aggiornare un blocco alla volta). 
+
+- Razaviyayn, Hong, Luo (2013) — A Unified Convergence Analysis of Block Successive Minimization Methods for Nonsmooth Optimization
+Cosa: quadro unificato (BSUM) per aggiornamenti a blocchi anche approssimati/inexact, con non convessità; ogni punto limite è stazionario.
+Ipotesi: ciascun sottoproblema minimizza una maggiorazione locale “stretta” con consistenza del gradiente—assunti standard per majorization–minimization. 
+
+- Wright (2015) — Coordinate Descent Algorithms (survey)
+Cosa: rassegna moderna su coordinate/block descent (anche per-feature ciclico), con condizioni di convergenza soprattutto in convesso.
+Ipotesi: convessità/Lipschitz del gradiente o separabilità: niente di strano. Ottimo per inquadrare il tuo schema. 
+
+- Friedman, Hastie, Tibshirani (2010) — Regularization Paths for GLMs via Coordinate Descent
+Cosa: algoritmo ciclico per-feature (verticale) per GLM con penalità lasso/elastic net; converge al minimo globale (problema convesso).
+Ipotesi: obiettivo convesso (GLM + penalità convessa); ipotesi standard in ML. È l’esempio pratico più noto di “aggiorno una feature alla volta”. 
+
+- Yuan & Lin (2006) — Group Lasso (+ seguiti Meier et al.)
+Cosa: selezione a gruppi di feature con aggiornamenti a blocchi; implementazioni via block coordinate descent con garanzie in convesso.
+Ipotesi: penalità convessa a norma di gruppo; assunti standard.
+
+
+
+
+
+
+

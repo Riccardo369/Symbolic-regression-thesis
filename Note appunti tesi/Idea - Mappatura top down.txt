@@ -1,0 +1,21 @@
+Procedimento elegante:
+
+* Parto dall' output, vedo:
+
+- Quanto è simile ad ogni variabile
+- Quanto è simile alla sua stima costante (si possono usare più candidati, come media, mediana etc.).
+- Quanto è simile per ogni funzione del bagaglio. Per ogni funzione, scelgo la funzione stessa applicata ad un range (da decidere come scegliere questo range).
+
+? Bisogna confermare che mettendo qualsiasi funzione al di sopra di tutto, la forma è simile a quella dell' ultima funzione (da vedere in letteratura).
+
+- In f(g(x)), come faccio a capire la forma dell' operazione f? Lo faccio con dei stimatori, considerando che tutti i valori di g(x) vengono mappati in della sotto funzione sono sull' asse X, fai la stima dell' output.
+  Ma tu non hai i valori di g(x), è vero, ma sapendo che vengono mappati sull' asse X, fai un range (che ti sembra affidabile od un range fisso), e consideri i valori di quel range come validi per g(x).
+
+? quindi: X sarà in modo temporaneno la tua nuova g(x). (Siamo sicuri che usare lo stesso range valga come situazione ?).
+
+- Se la funzione è multivariata, userò dei range diversi, per ogni input, considerando che i range X1, X2, ..., Xk, andranno in f(X1, X2, ..., Xn), a compensare f(g1(x), g2(x), ..., gn(x)).
+  Bisogna fare in modo che ogni range, alla fine della scelta della funzione, sia rimappato partendo dall' output e dalla funzione scelta, in modo tale da essere più preciso per la prossima discesa,
+  possibilmente dove ogni nuovo output non sia influenzato dagl' altri.
+
+
+? Come faccio poi a determinare come fissare i prossimi figli? scelta la funzione, rifaccio il procedimento per ogni range, ogni range scelto lo considero un output, e rifaccio il procedimento.
