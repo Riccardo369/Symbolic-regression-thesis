@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 
-#Rivedere il view_graph un attimo
-
 class OperationNode:
     
     def __init__(self, channels, name = None):
@@ -24,8 +22,10 @@ class OperationNode:
 
         self.__forward_calculation_memory = None
         self.__backward_calculation_memory = None
-        self.__forward_gradient_memory = None
-        self.__forward_hessian_memory = None
+        
+        self.__string_calculation_memory = None
+        self.__string_gradient_memory = None
+        self.__string_hessian_memory = None
         
     def get_channels(self):
         return self.__channels
@@ -44,18 +44,21 @@ class OperationNode:
     def get_backward_calculation_memory(self):
         return self.__backward_calculation_memory.copy()
     
-    def get_forward_gradient_memory(self):
-        return self.__forward_gradient_memory.copy()
+    def get_string_calculation_memory(self):
+        return str(self.__string_calculation_memory)
     
-    def get_forward_hessian_memory(self):
-        return self.__forward_hessian_memory.copy()
+    def get_string_gradient_memory(self):
+        return self.__string_gradient_memory.copy()
+
+    def get_string_hessian_memory(self):
+        return self.__string_hessian_memory.copy()
     
     def check_set_name(self, name):
         return True
     
-    def check_value_memory(self, value):
+    def __check_value_memory(self, value):
         if(not isinstance(value, np.array)): raise ValueError("Memory must contains only a numpy tensor")
-        
+
     def set_name(self, name): 
         if(not self.check_set_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
         self.__name = name
@@ -87,33 +90,46 @@ class OperationNode:
         child.__father = father
     
     def set_forward_calculation_memory(self, value):
-        self.check_value_memory(value)
+        self.__check_value_memory(value)
         self.__forward_calculation_memory = value
     
     def set_backward_calculation_memory(self, value):
-        self.check_value_memory(value)
+        self.__check_value_memory(value)
         self.__backward_calculation_memory = value
+        
+    def set_string_calculation_memory(self, value):
+        if(type(value) != str and value != None): raise ValueError("String memory must contains only a string")
+        self.__string_calculation_memory = value
     
-    def set_forward_gradient_memory(self, value):
-        self.check_value_memory(value)
-        self.__forward_gradient_memory = value
-    
-    def set_forward_hessian_memory(self, value):
-        self.check_value_memory(value)
-        self.__forward_hessian_memory = value
+    def set_string_gradient_memory(self, value):
+        self.__check_value_memory(value)
+        self.__string_gradient_memory = value
+        
+    def set_string_hessian_memory(self, value):
+        self.__check_value_memory(value)
+        self.__string_hessian_memory = value
 
     def forward_calculation(self):
-        return NotImplemented
-    
-    def forward_gradient(self):
-        return NotImplemented
-    
-    def forward_hessian(self):
         return NotImplemented
     
     def backward_calculation(self):
         return NotImplemented
     
+    def string_calculation(self):
+        return NotImplemented
+    
+    def string_gradient(self):
+        return NotImplemented
+    
+    def string_hessian(self):
+        return NotImplemented
+    
+    def check_input_domain(self):
+        return NotImplemented
+    
+    def check_output_domain(self):
+        return NotImplemented
+     
     def copy_sub_tree(self):
         
         result = self.__class__(self.__channels, self.__name)
@@ -123,22 +139,16 @@ class OperationNode:
             if(child == None): continue
             OperationNode.new_connection(result, child, i)
 
-        result.set_forward_calculation_memory(self.__forward_calculation_memory)
-        result.set_backward_calculation_memory(self.__backward_calculation_memory)
-        result.set_forward_gradient_memory(self.__forward_gradient_memory)
-        result.set_forward_hessian_memory(self.__forward_hessian_memory)
+        result.set_forward_calculation_memory(self.__forward_calculation_memory.copy())
+        result.set_backward_calculation_memory(self.__backward_calculation_memory.copy())
+        result.set_string_calculation_memory(self.__string_calculation_memory.copy())
+        result.set_string_gradient_memory(self.__string_gradient_memory.copy())
+        result.set_string_hessian_memory(self.__string_hessian_memory.copy())
         
         return result
-    
-    
-            
-    def __str__(self):
-        
-        if(self.__class__ in [Constant, Variable]): return self.get_name()
 
-        return f"{self.__class__.__name__}({', '.join([str(child) for child in self.get_childrens()])})"
 
-    def view_sub_tree(self):
+    def view_sub_tree(self, f):
     
         class CounterGraph:
             def __init__(self):
@@ -150,13 +160,13 @@ class OperationNode:
 
         def recursion(node, level):
 
-            if(type(node) in [Constant, Variable]):
+            if(type(node) in [Leaf]):
                 str_node = node.get_name()
                 count.i += 1
-                Printer.node(f"Child {count.i}", str_node, {'shape': 'ellipse', 'color': 'green' if type(node) == Variable else 'red', 'style': 'filled'})
+                Printer.node(f"Child {count.i}", f"{str_node}\n{f(node)}", {'shape': 'ellipse', 'color': 'green' if type(node.get_name()) == str else 'red', 'style': 'filled'})
                 return f"Child {count.i}"
             
-            Printer.node(str(id(node)), f"{node.__class__.__name__}", {'shape': 'ellipse', 'color': 'yellow', 'style': 'filled'})
+            Printer.node(str(id(node)), f"{node.__class__.__name__}\n{f(node)}", {'shape': 'ellipse', 'color': 'yellow', 'style': 'filled'})
 
             for child in [x for x in node.__childrens]: Printer.edge(str(id(node)), recursion(child, level+1))
                 
@@ -173,21 +183,212 @@ class OperationNode:
         plt.imshow(image)
         plt.axis('off')
         plt.show()
-    
-    
-    
-    
-       
-class Constant(OperationNode):
-    def __init__(self):
-        super().__init__(0)
-        
-    def check_set_name(self, name):
-        return type(name) in [float, int]
+     
 
-class Variable(OperationNode):
-    def __init__(self):
-        super().__init__(0)
+class Leaf(OperationNode):
+    def __init__(self, label):
+        super().__init__(0, label)
     
     def check_set_name(self, name):
-        return type(name) in [str]
+        return type(name) in [str, int, float]  
+    
+    def forward_calculation(self):
+        return self.get_forward_calculation_memory()
+    
+    def backward_calculation(self):
+        return []
+    
+    def string_calculation(self):
+        return self.get_name()
+        
+    def string_gradient(self):
+        return np.array(["1" if type(self.get_name()) != str else "0"])
+    
+    def string_hessian(self):
+        return np.array([["0"]])
+    
+
+
+class neg(OperationNode):
+    def __init__(self):
+        super().__init__(1)
+        
+    def forward_calculation(self):
+        return -self.get_childrens()[0].get_forward_calculation_memory()
+    
+    def backward_calculation(self):
+        return [-self.get_backward_calculation_memory()]
+    
+    def string_calculation(self):
+        return f"-({self.get_childrens()[0].get_string_calculation_memory()})"
+        
+    def string_gradient(self):
+        
+        formula = self.get_childrens()[0].get_string_calculation_memory()
+        gradients = self.get_childrens()[0].get_string_gradient_memory()
+        
+        return [f"-(({s}) * ({formula}))" for s in gradients]
+    
+    def string_hessian(self):
+        return NotImplemented
+    
+    
+    
+
+class add(OperationNode):
+    def __init__(self):
+        super().__init__(2)
+        
+    def forward_calculation(self):
+        childrens = self.get_childrens()
+        return childrens[0].get_forward_calculation_memory() + childrens[1].get_forward_calculation_memory()
+    
+    def backward_calculation(self):
+        childrens = self.get_childrens()
+        output = self.get_backward_calculation_memory() 
+        return [output - childrens[1].get_forward_calculation_memory(), output - childrens[0].get_forward_calculation_memory()]
+    
+    def string_calculation(self):
+        childrens = self.get_childrens()
+        return f"({childrens[0].get_string_calculation_memory()} + {childrens[1].get_string_calculation_memory()})"
+        
+    def string_gradient(self):
+        childrens = self.get_childrens()
+        return childrens[1].get_string_gradient_memory() + childrens[0].get_string_gradient_memory()
+    
+    def string_hessian(self):
+        return NotImplemented
+    
+    
+    
+    
+    
+class sub(OperationNode):
+    def __init__(self):
+        super().__init__(2)
+        
+    def forward_calculation(self):
+        childrens = self.get_childrens()
+        return childrens[0].get_forward_calculation_memory() - childrens[1].get_forward_calculation_memory()
+    
+    def backward_calculation(self):
+        childrens = self.get_childrens()
+        output = self.get_backward_calculation_memory() 
+        return [output + childrens[1].get_forward_calculation_memory(), -output + childrens[0].get_forward_calculation_memory()]
+        
+    def string_calculation(self):
+        childrens = self.get_childrens()
+        return f"({childrens[0].get_string_calculation_memory()} - {childrens[1].get_string_calculation_memory()})"
+        
+    def string_gradient(self):
+        childrens = self.get_childrens()
+        return childrens[0].get_string_gradient_memory() + [f"-({s})" for s in childrens[1].get_string_gradient_memory()]
+    
+    def string_hessian(self):
+        return NotImplemented
+    
+    
+    
+
+class mul(OperationNode):
+    def __init__(self):
+        super().__init__(2)
+        
+    def forward_calculation(self):
+        childrens = self.get_childrens()
+        return childrens[0].get_forward_calculation_memory() * childrens[1].get_forward_calculation_memory()
+    
+    def backward_calculation(self):
+        childrens = self.get_childrens()
+        output = self.get_backward_calculation_memory() 
+        return [output / childrens[1].get_forward_calculation_memory(), output / childrens[0].get_forward_calculation_memory()]
+        
+    def string_calculation(self):
+        childrens = self.get_childrens()
+        return f"({childrens[0].get_string_gradient_memory()} * {childrens[1].get_string_gradient_memory()})"
+       
+    def string_gradient(self):
+        
+        childrens = self.get_childrens()
+        
+        str_calc1 = childrens[0].get_string_calculation_memory()
+        str_calc2 = childrens[1].get_string_calculation_memory()
+        
+        str_grad1 = childrens[0].get_string_gradient_memory()
+        str_grad2 = childrens[1].get_string_gradient_memory()
+        
+        return [f"({s} * {str_calc2})" for s in str_grad1] + [f"({str_calc1} * {s})" for s in str_grad2]
+    
+    def string_hessian(self):
+        return NotImplemented
+    
+
+
+
+class div(OperationNode):
+    def __init__(self):
+        super().__init__(2)
+        
+    def check_input_domain(self):
+        return np.all(self.get_childrens[1].get_forward_calculation_memory() != 0)
+    
+    def forward_calculation(self):
+        childrens = self.get_childrens()
+        return childrens[0].get_forward_calculation_memory() / childrens[1].get_forward_calculation_memory()
+    
+    def backward_calculation(self):
+        childrens = self.get_childrens()
+        output = self.get_backward_calculation_memory() 
+        return [output * childrens[1].get_forward_calculation_memory(), childrens[0].get_forward_calculation_memory() / output]
+        
+    def string_calculation(self):
+        childrens = self.get_childrens()
+        return f"({childrens[0].get_string_gradient_memory()} / {childrens[1].get_string_gradient_memory()})"
+       
+    def string_gradient(self):
+        
+        childrens = self.get_childrens()
+        
+        str_calc1 = childrens[0].get_string_calculation_memory()
+        str_calc2 = childrens[1].get_string_calculation_memory()
+        
+        str_grad1 = childrens[0].get_string_gradient_memory()
+        str_grad2 = childrens[1].get_string_gradient_memory()
+
+        return [f"(1 / ({str_calc2}))" for _ in str_grad1] + [f"-(({str_calc1}) / (({str_calc2})**2))" for _ in str_grad2]
+    
+    def string_hessian(self):
+        return NotImplemented
+
+
+
+
+
+#IDEA IN MODEL: LE FUNZIONI string_(calculation, gradient, hessian), servono per creare 1 o pià funzioni contemporaneamente 
+# sotto forma di simboli diretti in python, poi il corpo verrà passato in un eval (e non è necessario prendere i nomi delle 
+# foglie, perchè il modello passerà un dizionario ogni volta, che associa il nome della foglia ed il valore / feature assegnato)
+
+
+#MANCA DA FARE OPERAZIONI
+
+
+#exp richiede log
+#log richiede log
+
+
+#sqrt
+#sin
+#cos
+#tan
+#cot
+#sec
+#csc
+#Modulo
+#Valore assoluto
+
+
+
+
+#MANCA IL CALCOLO INVERSO GENERALE (QUINDI CREARE CLASSI APPOSITE DI INSIEMI CHE GESTISCONO PIù SOLUZIONI CONTEMPORANEAMENTE)
+#PER FUNZIONI SURRIETTIVE
+#MANCA LA GESTIONE DEL DOMINIO
