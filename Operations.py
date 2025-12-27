@@ -23,9 +23,11 @@ class OperationNode:
         self.__forward_calculation_memory = None
         self.__backward_calculation_memory = None
         
-        self.__string_calculation_memory = None
-        self.__string_gradient_memory = None
-        self.__string_hessian_memory = None
+        self.__weight_vector_memory = None
+        
+    def __str__(self):
+        if(isinstance(self, Leaf)): return self.__name if type(self.__name) == "str" else str(self.__name)
+        return f"{self.__class__.__name__}({', '.join([str(x) for x in self.__childrens])})"
         
     def get_channels(self):
         return self.__channels
@@ -39,33 +41,30 @@ class OperationNode:
     def get_childrens(self): return list(self.__childrens)
     
     def get_forward_calculation_memory(self):
-        return self.__forward_calculation_memory.copy()
+        value = self.__forward_calculation_memory
+        return value.copy() if isinstance(value, np.ndarray) else value
     
     def get_backward_calculation_memory(self):
-        return self.__backward_calculation_memory.copy()
+        value = self.__backward_calculation_memory.copy()
+        return value.copy() if isinstance(value, np.ndarray) else value
     
-    def get_string_calculation_memory(self):
-        return str(self.__string_calculation_memory)
-    
-    def get_string_gradient_memory(self):
-        return self.__string_gradient_memory.copy()
-
-    def get_string_hessian_memory(self):
-        return self.__string_hessian_memory.copy()
+    def get_weight_vector_memory(self):
+        value = self.__weight_vector_memory.copy()
+        return value.copy() if isinstance(value, np.ndarray) else value
     
     def check_set_name(self, name):
         return True
     
     def __check_value_memory(self, value):
-        if(not isinstance(value, np.array)): raise ValueError("Memory must contains only a numpy tensor")
+        if(not isinstance(value, np.ndarray) and type(value) not in [float, int] and value != None): raise ValueError("Memory must contains only a numpy tensor")
 
-    def set_name(self, name): 
+    def set_name(self, name):
         if(not self.check_set_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
         self.__name = name
         
     def free_connection(father, child):
-        if(not isinstance(OperationNode, father)): raise ValueError(f"Father must be a Operation node type, not a {type(father)}")
-        if(not isinstance(OperationNode, child)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
+        if(not issubclass(type(father), OperationNode)): raise ValueError(f"Father must be a Operation node type, not a {type(father)}")
+        if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
         
         if(child.__father != father): raise ValueError(f"Child {child} has not like a father {father}, but has {child.__father}")
         if(child not in father.__childrens): raise ValueError(f"Father {father} has not {child} in own childrens")
@@ -77,8 +76,9 @@ class OperationNode:
         child.__father = None
         
     def new_connection(father, child, i):
-        if(not isinstance(OperationNode, father)): raise ValueError(f"Father must be a Operation node type, not a {type(father)}")
-        if(not isinstance(OperationNode, child)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
+        
+        if(not issubclass(type(father), OperationNode)): raise ValueError(f"Father must be a Operation node type, not a {type(father)}")
+        if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
         
         if(child.__father != None): raise ValueError(f"Child {child} has also a father {father}, so connection is useless")
         if(child in father.__childrens): raise ValueError(f"Father {father} has {child} in own childrens, so connection is useless")
@@ -91,37 +91,23 @@ class OperationNode:
     
     def set_forward_calculation_memory(self, value):
         self.__check_value_memory(value)
-        self.__forward_calculation_memory = value
+        self.__forward_calculation_memory = value.copy() if isinstance(value, np.ndarray) else value
     
     def set_backward_calculation_memory(self, value):
         self.__check_value_memory(value)
-        self.__backward_calculation_memory = value
+        self.__backward_calculation_memory = value.copy() if isinstance(value, np.ndarray) else value
         
-    def set_string_calculation_memory(self, value):
-        if(type(value) != str and value != None): raise ValueError("String memory must contains only a string")
-        self.__string_calculation_memory = value
-    
-    def set_string_gradient_memory(self, value):
+    def set_weight_vector_memory(self, value):
         self.__check_value_memory(value)
-        self.__string_gradient_memory = value
+        self.__weight_vector_memory = value.copy() if isinstance(value, np.ndarray) else value
         
-    def set_string_hessian_memory(self, value):
-        self.__check_value_memory(value)
-        self.__string_hessian_memory = value
+    def get_string_structure(self, x):
+        return NotImplemented
 
     def forward_calculation(self):
         return NotImplemented
     
     def backward_calculation(self):
-        return NotImplemented
-    
-    def string_calculation(self):
-        return NotImplemented
-    
-    def string_gradient(self):
-        return NotImplemented
-    
-    def string_hessian(self):
         return NotImplemented
     
     def check_input_domain(self):
@@ -132,41 +118,52 @@ class OperationNode:
      
     def copy_sub_tree(self):
         
-        result = self.__class__(self.__channels, self.__name)
+        result = self.__class__(self.__name) if(self.__class__.__name__ == "Leaf") else self.__class__()
         
         result.__childrens = [None for _ in self.__childrens]
+        
+        #Non necessita della copia perchè i metodi set fanno una copia già di default
+        result.set_forward_calculation_memory(self.__forward_calculation_memory)
+        result.set_backward_calculation_memory(self.__backward_calculation_memory)
+        result.set_weight_vector_memory(self.__weight_vector_memory)
+        
         for i, child in enumerate(self.__childrens):
             if(child == None): continue
-            OperationNode.new_connection(result, child, i)
+            OperationNode.new_connection(result, child.copy_sub_tree(), i)
 
-        result.set_forward_calculation_memory(self.__forward_calculation_memory.copy())
-        result.set_backward_calculation_memory(self.__backward_calculation_memory.copy())
-        result.set_string_calculation_memory(self.__string_calculation_memory.copy())
-        result.set_string_gradient_memory(self.__string_gradient_memory.copy())
-        result.set_string_hessian_memory(self.__string_hessian_memory.copy())
-        
         return result
 
+    #brown -> magenta
+    #blue -> cyan
+    #purple -> yellow
 
-    def view_sub_tree(self, f):
+    def view_sub_tree(self, f = lambda x: ""):
     
         class CounterGraph:
             def __init__(self):
                 self.i = 0
 
         Printer = Digraph()
+        
+        title_color = 'red'
+        text_color = 'blue'
+        node_color = 'black'
+        border_color = 'yellow'
+        
+        Printer.graph_attr.update(bgcolor='black', margin = '0', padding = '0')
+        Printer.edge_attr.update(color='white')
+        Printer.node_attr.update(fontcolor=text_color)
 
         count = CounterGraph()
 
         def recursion(node, level):
 
             if(type(node) in [Leaf]):
-                str_node = node.get_name()
                 count.i += 1
-                Printer.node(f"Child {count.i}", f"{str_node}\n{f(node)}", {'shape': 'ellipse', 'color': 'green' if type(node.get_name()) == str else 'red', 'style': 'filled'})
+                Printer.node(f"Child {count.i}", f'<\n<FONT COLOR="{title_color}">{str(node.get_name()).upper()}</FONT><BR/>\n<FONT COLOR="{text_color}">{f(node)}</FONT>>', {'shape': 'ellipse' if node.is_variable() else 'square', 'color': border_color, 'fillcolor': node_color, 'style': 'filled'})
                 return f"Child {count.i}"
             
-            Printer.node(str(id(node)), f"{node.__class__.__name__}\n{f(node)}", {'shape': 'ellipse', 'color': 'yellow', 'style': 'filled'})
+            Printer.node(str(id(node)), f'<\n<FONT COLOR="{title_color}">{node.__class__.__name__.upper()}</FONT><BR/>\n<FONT COLOR="{text_color}">{f(node)}</FONT>>', {'shape': 'octagon', 'color': border_color, 'fillcolor': node_color, 'style': 'filled'})
 
             for child in [x for x in node.__childrens]: Printer.edge(str(id(node)), recursion(child, level+1))
                 
@@ -180,9 +177,10 @@ class OperationNode:
         image = Image.open(io.BytesIO(img_bytes))
 
         # Mostra l'immagine con matplotlib
+        plt.figure(facecolor='black')
         plt.imshow(image)
         plt.axis('off')
-        plt.show()
+        plt.show(block = False)
      
 
 class Leaf(OperationNode):
@@ -190,23 +188,16 @@ class Leaf(OperationNode):
         super().__init__(0, label)
     
     def check_set_name(self, name):
-        return type(name) in [str, int, float]  
+        return type(name) in [str, int, float]
+    
+    def is_variable(self):
+        return type(self.get_name()) in [str]
     
     def forward_calculation(self):
-        return self.get_forward_calculation_memory()
+        raise ValueError("It is a leaf, it is not possible to do a forward calculation, it has no children")
     
     def backward_calculation(self):
-        return []
-    
-    def string_calculation(self):
-        return self.get_name()
-        
-    def string_gradient(self):
-        return np.array(["1" if type(self.get_name()) != str else "0"])
-    
-    def string_hessian(self):
-        return np.array([["0"]])
-    
+        raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
 
 
 class neg(OperationNode):
@@ -219,21 +210,8 @@ class neg(OperationNode):
     def backward_calculation(self):
         return [-self.get_backward_calculation_memory()]
     
-    def string_calculation(self):
-        return f"-({self.get_childrens()[0].get_string_calculation_memory()})"
-        
-    def string_gradient(self):
-        
-        formula = self.get_childrens()[0].get_string_calculation_memory()
-        gradients = self.get_childrens()[0].get_string_gradient_memory()
-        
-        return [f"-(({s}) * ({formula}))" for s in gradients]
-    
-    def string_hessian(self):
-        return NotImplemented
-    
-    
-    
+    def get_string_structure(self, x):
+        return f"-{x[0]}"
 
 class add(OperationNode):
     def __init__(self):
@@ -248,18 +226,8 @@ class add(OperationNode):
         output = self.get_backward_calculation_memory() 
         return [output - childrens[1].get_forward_calculation_memory(), output - childrens[0].get_forward_calculation_memory()]
     
-    def string_calculation(self):
-        childrens = self.get_childrens()
-        return f"({childrens[0].get_string_calculation_memory()} + {childrens[1].get_string_calculation_memory()})"
-        
-    def string_gradient(self):
-        childrens = self.get_childrens()
-        return childrens[1].get_string_gradient_memory() + childrens[0].get_string_gradient_memory()
-    
-    def string_hessian(self):
-        return NotImplemented
-    
-    
+    def get_string_structure(self, x):
+        return f"{x[0]} + {x[1]}"
     
     
     
@@ -276,18 +244,8 @@ class sub(OperationNode):
         output = self.get_backward_calculation_memory() 
         return [output + childrens[1].get_forward_calculation_memory(), -output + childrens[0].get_forward_calculation_memory()]
         
-    def string_calculation(self):
-        childrens = self.get_childrens()
-        return f"({childrens[0].get_string_calculation_memory()} - {childrens[1].get_string_calculation_memory()})"
-        
-    def string_gradient(self):
-        childrens = self.get_childrens()
-        return childrens[0].get_string_gradient_memory() + [f"-({s})" for s in childrens[1].get_string_gradient_memory()]
-    
-    def string_hessian(self):
-        return NotImplemented
-    
-    
+    def get_string_structure(self, x):
+        return f"{x[0]} - {x[1]}"
     
 
 class mul(OperationNode):
@@ -302,27 +260,9 @@ class mul(OperationNode):
         childrens = self.get_childrens()
         output = self.get_backward_calculation_memory() 
         return [output / childrens[1].get_forward_calculation_memory(), output / childrens[0].get_forward_calculation_memory()]
-        
-    def string_calculation(self):
-        childrens = self.get_childrens()
-        return f"({childrens[0].get_string_gradient_memory()} * {childrens[1].get_string_gradient_memory()})"
-       
-    def string_gradient(self):
-        
-        childrens = self.get_childrens()
-        
-        str_calc1 = childrens[0].get_string_calculation_memory()
-        str_calc2 = childrens[1].get_string_calculation_memory()
-        
-        str_grad1 = childrens[0].get_string_gradient_memory()
-        str_grad2 = childrens[1].get_string_gradient_memory()
-        
-        return [f"({s} * {str_calc2})" for s in str_grad1] + [f"({str_calc1} * {s})" for s in str_grad2]
-    
-    def string_hessian(self):
-        return NotImplemented
-    
 
+    def get_string_structure(self, x):
+        return f"{x[0]} * {x[1]}"
 
 
 class div(OperationNode):
@@ -340,29 +280,9 @@ class div(OperationNode):
         childrens = self.get_childrens()
         output = self.get_backward_calculation_memory() 
         return [output * childrens[1].get_forward_calculation_memory(), childrens[0].get_forward_calculation_memory() / output]
-        
-    def string_calculation(self):
-        childrens = self.get_childrens()
-        return f"({childrens[0].get_string_gradient_memory()} / {childrens[1].get_string_gradient_memory()})"
-       
-    def string_gradient(self):
-        
-        childrens = self.get_childrens()
-        
-        str_calc1 = childrens[0].get_string_calculation_memory()
-        str_calc2 = childrens[1].get_string_calculation_memory()
-        
-        str_grad1 = childrens[0].get_string_gradient_memory()
-        str_grad2 = childrens[1].get_string_gradient_memory()
 
-        return [f"(1 / ({str_calc2}))" for _ in str_grad1] + [f"-(({str_calc1}) / (({str_calc2})**2))" for _ in str_grad2]
-    
-    def string_hessian(self):
-        return NotImplemented
-
-
-
-
+    def get_string_structure(self, x):
+        return f"{x[0]} / {x[1]}"
 
 #IDEA IN MODEL: LE FUNZIONI string_(calculation, gradient, hessian), servono per creare 1 o pià funzioni contemporaneamente 
 # sotto forma di simboli diretti in python, poi il corpo verrà passato in un eval (e non è necessario prendere i nomi delle 

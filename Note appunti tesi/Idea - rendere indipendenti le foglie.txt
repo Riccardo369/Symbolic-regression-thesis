@@ -1,0 +1,122 @@
+Su ogni operazione con almeno 2 channels, prendo l' output, e lo divido usando dei coefficienti. Così dall' output, con la struttura ed i coefficienti, arrivo subito alle foglie con l' 
+immagine ideale. Faccio la proiezione sulle foglie, poi aggiorno tutti i pesi dal basso. Poi ricomincio, tolgo tutti i valori di forward, e ricomincio, finchè le foglie non si sono 
+stabilizzate. I coefficienti servono solo come aiuto per fare lo split in modo indipendente, in modo tale che un canale non diventi dipendente dall' altro.
+
+FUNZIONI A 2 INPUTS:
+
+--------- ADD:
+
+a + b = c
+
+a = i1*c
+b = (1 - i1)*c
+
+i1 \in R
+
+--------- SUB:
+
+a - b = c
+
+a = (1 + i1)*c
+b = i1*c
+
+i1 \in R
+
+--------- MUL:
+
+a * b = c
+
+a = c ^ (i1)
+b = c ^ (1 - i1)
+
+i1 \in R
+
+--------- DIV:
+
+a / b = c
+
+a = c ^ (i1)
+b = c ^ (-1 + i1)
+
+i1 \in R
+
+--------- POW:
+
+a ^ b = c
+
+a = c ^ (c ^ i1)
+b = c ^ (-i1)
+
+i1 \in R
+
+--------- LOG:
+
+log_b(a) = c
+
+a = e ^ (e^(i1) (1 + c^2) c)
+b = e ^ (e^(i1) (1 + c^2))
+
+i1 \in R
+
+i1 > 0 and i1 != 0
+
+i1 = 2
+
+--------- ROOT:
+
+a ^ (1 / b) = c
+
+a = c ^ (c ^ i1)
+b = c ^ i1
+
+i1 in R
+
+Si possono fare i split di un operazione binaria in qualsiasi modo. Si deve cercare di fare in modo che ogni funzione che parta da una 
+foglia ed arrivi al risultato, contribuisca al risultato con una somma, in modo tale che le foglie possano poi essere veramente 
+indipendenti l' una dall' altra.
+
+Si devono avere scomposizioni, in modo tale che in un nodo, i 2 errori contribuiscano all' errore del nodo in modo lineare (cioè 
+indipendente dall' errore dell' altro nodo). Evidentemente, senza pesi da allenare a ciclo forward / backward, questa cosa non si può
+ fare.
+
+
+Dopo aver fatto il primo ciclo, sul secondo ciclo, dopo aver scelto il nodo: 
+
+se lo taglio, metto una foglia e via
+se lo estendo, provo tutte le operazioni, con i coefficienti propago e scelgo quale operazione ha proiezioni sulle foglie con errori minori (si fa una media).
+
+Per scegliere se estendere o tagliare: su ogni operazione faccio la proiezione e mi calcolo il minimo tra gl' errori. Quando calcolo ogni errore, faccio in modo tale da ottimizzare
+ (e già sapere poi quale fissare) coefficiente i1 se quel nodo dovesse vincere. Sul nodo stesso calcolo la proiezione e mi salvo l' errore. 
+Se l' errore minimo è di un operazione, si fa l' estensione e si sceglie quell' operazione, altrimenti si fa la potatura. 
+
+
+Per scegliere il nodo ???
+
+
+Se il nodo scelto è la radice, si sceglie quale operazione e dove mettere tutto l' albero nell' operazione (si sceglie andando a modificare il coefficiente di ogni operazione binaria,
+se l' operazione è binaria, sennò si vede direttamente con operazioni unarie).
+
+Nel caso in cui in un ramo di backprop incontro funzioni surriettive (|x|, sin, cos, etc.), alla fine, faccio la vicinanza con ogni feature, e per ogni feature, provo la feature stessa e la media di quello 
+che ho estratto.
+
+
+
+
+
+Se in qualche dato, il valore diventa libero nella backprop, non si considera quel dato. Se tutti i dati diventano liberi, si lascia quella parte così com'è.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
