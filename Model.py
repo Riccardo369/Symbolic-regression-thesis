@@ -3,12 +3,9 @@ import lark
 import Operations as op
 import matplotlib.pyplot as plt
 
+import LearningStrategy as ls
+
 class SymbolicRegression:
-    
-    def __projection(ideal, features, L):
-        const = np.mean(ideal)
-        proposals = [{"label": x, "value": features[x]} for x in features.keys()] + [{"label": const, "value": const}]
-        return sorted(proposals, key = lambda x: L(ideal, x["value"]))[0]["label"]
     
     __compiler = lark.Lark(f"""
                         %import common.WS
@@ -42,7 +39,6 @@ class SymbolicRegression:
     def string_to_tree(string):
         
         parsed_tree = SymbolicRegression.__compiler.parse(string)
-        lark.tree.pydot__tree_to_png(parsed_tree, "tree.png")
         
         def recursive_construction(node):
             
@@ -98,7 +94,7 @@ class SymbolicRegression:
     
     def fix_leafs(self, leafs_list):
         
-        total_leafs = len(self.get_fixed_leaf_list())
+        total_leafs = len(self.get_fixed_leafs_list())
         total_proposed_leafs = len(leafs_list)
         
         if(total_leafs != total_proposed_leafs): raise ValueError(f"This tree has {total_leafs} in total, but it is proposed to fix {total_proposed_leafs}")
@@ -106,6 +102,7 @@ class SymbolicRegression:
         def recursion(node, leafs_list):
             
             if(issubclass(type(node), op.Leaf)):
+                
                 node.set_name(leafs_list[0])
                 del leafs_list[0]
                 
@@ -117,6 +114,19 @@ class SymbolicRegression:
         recursion(self.__root, list(leafs_list))
         
         return self
+
+    def get_leafs(self):
+        result = []
+        
+        def recursion(node, leafs):
+            if(issubclass(type(node), op.Leaf)): leafs.append(node)
+            else: 
+                for child in node.get_childrens():
+                    recursion(child, leafs)
+                    
+        recursion(self.__root, result)
+                    
+        return result
     
     #Generate the forward function in string form
     def get_string_function(self):
@@ -158,7 +168,7 @@ class SymbolicRegression:
         return result_function
 
     #Generate the solution (leaf combination assignament) of the tree
-    def get_fixed_leaf_list(self):
+    def get_fixed_leafs_list(self):
         
         leaf_labels = []
         
@@ -204,30 +214,43 @@ class SymbolicRegression:
         recursion(self.__root)
         
         return self
-            
-    def learn(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, LearningAlgorithm):
+          
+    def learn(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, LearningAlgorithm, stop_criteria = lambda model: False, metric_functions = {}):
 
-        LearningAlgorithm(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output)
-        
-        return self
+        return LearningAlgorithm(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, stop_criteria, metric_functions)
 
 
-X = np.array([x for x in range(10, 100, 2)])
-Y = 2*X + 3
+X = np.array([x for x in range(1, 10, 2)])
+Y = X*X + 3*X
 
-#tree1 = SymbolicRegression.string_to_tree("mul(2, x1)")
-#tree1.forward_calculation({"x1": X}).backward_calculation(Y)
-#tree1.get_root().view_sub_tree(lambda x: f"{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
-#tree1.get_root().view_sub_tree(lambda x: f"Forward: {x.get_forward_calculation_memory()}\nBackward: {x.get_backward_calculation_memory()}\n{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
 
-#tree2 = SymbolicRegression.string_to_tree("add(x1, 3)")
-#tree2.forward_calculation({"x1": X}).backward_calculation(Y)
-#tree2.get_root().view_sub_tree(lambda x: f"{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
-#tree2.get_root().view_sub_tree(lambda x: f"Forward: {x.get_forward_calculation_memory()}\nBackward: {x.get_backward_calculation_memory()}\n{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
+tree = SymbolicRegression.string_to_tree("add(mul(x1, x1), mul(3, x1))")
 
-tree3 = SymbolicRegression.string_to_tree("add(mul(2, x1), 3)")
-tree3.forward_calculation({"x1": X}).backward_calculation(Y)
-tree3.get_root().view_sub_tree(lambda x: f"{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
-#tree3.get_root().view_sub_tree(lambda x: f"Forward: {x.get_forward_calculation_memory()}\nBackward: {x.get_backward_calculation_memory()}\n{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
+tree.forward_calculation({"x1": X}).backward_calculation(Y).get_root().view_sub_tree(lambda x: f"{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
 
+plt.show()
+
+tree.get_root().clear_all_memory_sub_tree()
+
+def MAE(model):
+    
+    model.forward_calculation({"x1": X}).backward_calculation(Y)
+    result = np.mean(np.abs(model.get_root().get_forward_calculation_memory() - model.get_root().get_backward_calculation_memory()))
+    model.get_root().clear_all_memory_sub_tree()
+    return result
+    
+    
+metric_results = tree.learn({"x1": X}, Y, None, None, ls.SingleExpectationMaximization(), metric_functions = {"states": lambda model: [x.get_name() for x in model.get_leafs()], 
+                                                                                                               "structures": lambda model: str(model.get_root()),
+                                                                                                               "MAE error": lambda model: MAE(model)})
+
+tree.forward_calculation({"x1": X}).backward_calculation(Y).get_root().view_sub_tree(lambda x: f"{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
+
+for s, i, m in zip(metric_results["structures"], metric_results["states"], metric_results["MAE error"]): print(s, i, m)
+
+plt.show()
+
+plt.plot(X, Y, color = "red", label = "Ideal function")
+plt.plot(X, tree.get_root().get_forward_calculation_memory(), color = "blue", label = "SR tree")
+plt.legend()
 plt.show()

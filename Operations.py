@@ -56,7 +56,7 @@ class OperationNode:
         return True
     
     def __check_value_memory(self, value):
-        if(not isinstance(value, np.ndarray) and type(value) not in [float, int] and value != None): raise ValueError("Memory must contains only a numpy tensor")
+        if(not isinstance(value, np.ndarray) and type(value) not in [float, int] and not isinstance(value, np.generic) and value != None): raise ValueError("Memory must contains only a numpy tensor")
 
     def set_name(self, name):
         if(not self.check_set_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
@@ -101,13 +101,46 @@ class OperationNode:
         self.__check_value_memory(value)
         self.__weight_vector_memory = value.copy() if isinstance(value, np.ndarray) else value
         
+    def __clear_memory_sub_tree(self, set_function):
+        
+        def recursion(node):
+            if(not issubclass(type(node), Leaf)):
+                for child in node.get_childrens(): recursion(child)
+                set_function(child)
+        
+        recursion(self)
+        
+    def clear_all_memory_sub_tree(self):
+        self.clear_forward_calculation_memory_sub_tree()
+        self.clear_backward_calculation_memory_sub_tree()
+        self.clear_weight_calculation_memory_sub_tree()
+        
+    def clear_forward_calculation_memory_sub_tree(self):
+        self.__clear_memory_sub_tree(lambda x: x.set_forward_calculation_memory(None))
+        
+    def clear_backward_calculation_memory_sub_tree(self):
+        self.__clear_memory_sub_tree(lambda x: x.set_backward_calculation_memory(None))
+        
+    def clear_weight_calculation_memory_sub_tree(self):
+        self.__clear_memory_sub_tree(lambda x: x.set_weight_vector_memory(None))
+        
     def get_string_structure(self, x):
         return NotImplemented
 
+    #Calculate forward value
     def forward_calculation(self):
         return NotImplemented
     
+    #Calculate backward value considering the forward values from childrens
     def backward_calculation(self):
+        return NotImplemented
+    
+    #Calculate weights for indipendent backward, taking forward values from childrens
+    def weight_vector_calculation(self):
+        return NotImplemented
+    
+    #Calculate indipendent backwards using weights and output
+    def backward_indipendent_calculation(self):
         return NotImplemented
     
     def check_input_domain(self):
@@ -188,7 +221,7 @@ class Leaf(OperationNode):
         super().__init__(0, label)
     
     def check_set_name(self, name):
-        return type(name) in [str, int, float]
+        return type(name) in [str, int, float] or isinstance(name, np.generic)
     
     def is_variable(self):
         return type(self.get_name()) in [str]
@@ -212,6 +245,12 @@ class neg(OperationNode):
     
     def get_string_structure(self, x):
         return f"-{x[0]}"
+    
+    def weight_vector_calculation(self):
+        return 0
+    
+    def backward_indipendent_calculation(self):
+        return self.get_backward_calculation_memory()
 
 class add(OperationNode):
     def __init__(self):
@@ -228,6 +267,16 @@ class add(OperationNode):
     
     def get_string_structure(self, x):
         return f"{x[0]} + {x[1]}"
+    
+    def weight_vector_calculation(self):
+        inputs = [self.get_childrens()[0].get_forward_calculation_memory(), self.get_childrens()[1].get_forward_calculation_memory()]
+        output = self.get_backward_calculation_memory()
+        return NotImplemented
+    
+    def backward_indipendent_calculation(self):
+        output = self.get_backward_calculation_memory() 
+        weights = self.get_weight_vector_memory()
+        return [weights * output, (1 - weights) * output]
     
     
     
@@ -247,6 +296,16 @@ class sub(OperationNode):
     def get_string_structure(self, x):
         return f"{x[0]} - {x[1]}"
     
+    def weight_vector_calculation(self):
+        inputs = [self.get_childrens()[0].get_forward_calculation_memory(), self.get_childrens()[1].get_forward_calculation_memory()]
+        output = self.get_backward_calculation_memory()
+        return NotImplemented
+    
+    def backward_indipendent_calculation(self):
+        output = self.get_backward_calculation_memory() 
+        weights = self.get_weight_vector_memory()
+        return [weights * output, (1 - weights) * output]
+    
 
 class mul(OperationNode):
     def __init__(self):
@@ -263,6 +322,16 @@ class mul(OperationNode):
 
     def get_string_structure(self, x):
         return f"{x[0]} * {x[1]}"
+    
+    def weight_vector_calculation(self):
+        inputs = [self.get_childrens()[0].get_forward_calculation_memory(), self.get_childrens()[1].get_forward_calculation_memory()]
+        output = self.get_backward_calculation_memory()
+        return NotImplemented
+    
+    def backward_indipendent_calculation(self):
+        output = self.get_backward_calculation_memory() 
+        weights = self.get_weight_vector_memory()
+        return [output ** weights, output ** (1 - weights)]
 
 
 class div(OperationNode):
@@ -283,6 +352,16 @@ class div(OperationNode):
 
     def get_string_structure(self, x):
         return f"{x[0]} / {x[1]}"
+    
+    def weight_vector_calculation(self):
+        inputs = [self.get_childrens()[0].get_forward_calculation_memory(), self.get_childrens()[1].get_forward_calculation_memory()]
+        output = self.get_backward_calculation_memory()
+        return NotImplemented
+    
+    def backward_indipendent_calculation(self):
+        output = self.get_backward_calculation_memory() 
+        weights = self.get_weight_vector_memory()
+        return [output ** weights, output ** (weights - 1)]
 
 #IDEA IN MODEL: LE FUNZIONI string_(calculation, gradient, hessian), servono per creare 1 o pià funzioni contemporaneamente 
 # sotto forma di simboli diretti in python, poi il corpo verrà passato in un eval (e non è necessario prendere i nomi delle 

@@ -62,15 +62,6 @@ i1 > 0 and i1 != 0
 
 i1 = 2
 
---------- ROOT:
-
-a ^ (1 / b) = c
-
-a = c ^ (c ^ i1)
-b = c ^ i1
-
-i1 in R
-
 Si possono fare i split di un operazione binaria in qualsiasi modo. Si deve cercare di fare in modo che ogni funzione che parta da una 
 foglia ed arrivi al risultato, contribuisca al risultato con una somma, in modo tale che le foglie possano poi essere veramente 
 indipendenti l' una dall' altra.
