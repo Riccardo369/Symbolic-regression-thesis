@@ -62,16 +62,6 @@ class IndipendentRamification(SymbolicRegressionLearning):
     def __check_one_node(node):
         leafs = node.get_leafs()
         return len(leafs) == 1 and leafs[0] and leafs[0] == node
-    
-    def __elaboration_2_inputs_operation(oper_node, base, childrens, feature, TR_inputs_dict, i):
-        
-        childrens[1-i].set_forward_calculation_memory(feature)
-        childrens[i].set_forward_calculation_memory(base[i])
-                        
-        #Doing the projection to (1-i)° slot / child
-        childrens[1-i].set_name(projection(oper_node.backward_calculation()[1-i], TR_inputs_dict, lambda a, b: -cosine(a, b)))
-
-        return oper_node
         
     def body_learning(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, stop_criteria):
         
@@ -144,20 +134,20 @@ class IndipendentRamification(SymbolicRegressionLearning):
             #If best extension is worst than leaf, doing nothing
             if(operation_candidates[0] == leaf): continue
             
+            #Do the extension
             extension = SymbolicRegression(operation_candidates[0])
             leaf_candidates += extension.get_leafs()
             extension = extension.get_root()
         
             father_leaf = leaf.get_father()
-            
-            #Do the extension
+
             op.OperationNode.free_connection(father_leaf, leaf)
             op.OperationNode.new_connection(father_leaf, extension)
             
             #3° sub problem: only for binary operations, split in right way the backwards calculation
             if(extension.get_channels() == 2):
                 
-                #Solve sub proble of indipendent weights
+                #Solve sub problem of indipendent weights
                 extension.set_weight_vector_memory(extension.weight_vector_calculation())
                 
                 #Set final indipendent backwards ideal values
