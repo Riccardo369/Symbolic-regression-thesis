@@ -28,6 +28,9 @@ class OperationNode:
     def __str__(self):
         if(isinstance(self, Leaf)): return self.__name if type(self.__name) == "str" else str(self.__name)
         return f"{self.__class__.__name__}({', '.join([str(x) for x in self.__childrens])})"
+    
+    def get_default_inputs(self):
+        raise ValueError(f"This operation is not aviable (operation has {self.__channels} inputs (it must be > 1))")
         
     def get_channels(self):
         return self.__channels
@@ -256,6 +259,9 @@ class add(OperationNode):
     def __init__(self):
         super().__init__(2)
         
+    def get_default_inputs(self):
+        return [0, 0]
+        
     def forward_calculation(self):
         childrens = self.get_childrens()
         return childrens[0].get_forward_calculation_memory() + childrens[1].get_forward_calculation_memory()
@@ -284,6 +290,9 @@ class sub(OperationNode):
     def __init__(self):
         super().__init__(2)
         
+    def get_default_inputs(self):
+        return [0, 0]
+        
     def forward_calculation(self):
         childrens = self.get_childrens()
         return childrens[0].get_forward_calculation_memory() - childrens[1].get_forward_calculation_memory()
@@ -311,6 +320,9 @@ class mul(OperationNode):
     def __init__(self):
         super().__init__(2)
         
+    def get_default_inputs(self):
+        return [1, 1]
+        
     def forward_calculation(self):
         childrens = self.get_childrens()
         return childrens[0].get_forward_calculation_memory() * childrens[1].get_forward_calculation_memory()
@@ -337,6 +349,9 @@ class mul(OperationNode):
 class div(OperationNode):
     def __init__(self):
         super().__init__(2)
+        
+    def get_default_inputs(self):
+        return [1, 1]
         
     def check_input_domain(self):
         return np.all(self.get_childrens[1].get_forward_calculation_memory() != 0)

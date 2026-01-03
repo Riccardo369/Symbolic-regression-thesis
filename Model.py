@@ -221,12 +221,11 @@ class SymbolicRegression:
 
 
 X = np.array([x for x in range(1, 10, 2)])
-Y = X*X + 3*X
+Y = 3*X + 4
 
+tree = SymbolicRegression.string_to_tree("add(mul(3, X), 4)")
 
-tree = SymbolicRegression.string_to_tree("add(mul(x1, x1), mul(3, x1))")
-
-tree.forward_calculation({"x1": X}).backward_calculation(Y).get_root().view_sub_tree(lambda x: f"{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
+tree.forward_calculation({"X": X}).backward_calculation(Y).get_root().view_sub_tree(lambda x: f"{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
 
 plt.show()
 
@@ -234,19 +233,18 @@ tree.get_root().clear_all_memory_sub_tree()
 
 def MAE(model):
     
-    model.forward_calculation({"x1": X}).backward_calculation(Y)
+    model.forward_calculation({"X": X}).backward_calculation(Y)
     result = np.mean(np.abs(model.get_root().get_forward_calculation_memory() - model.get_root().get_backward_calculation_memory()))
     model.get_root().clear_all_memory_sub_tree()
     return result
     
-    
-metric_results = tree.learn({"x1": X}, Y, None, None, ls.SingleExpectationMaximization(), metric_functions = {"states": lambda model: [x.get_name() for x in model.get_leafs()], 
-                                                                                                               "structures": lambda model: str(model.get_root()),
+metric_results = tree.learn({"X": X}, Y, None, None, ls.SingleExpectationMaximization(), metric_functions = {"states": lambda model: [x.get_name() for x in model.get_leafs()], 
+                                                                                                               "tree": lambda model: str(model.get_root()),
                                                                                                                "MAE error": lambda model: MAE(model)})
 
-tree.forward_calculation({"x1": X}).backward_calculation(Y).get_root().view_sub_tree(lambda x: f"{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
+tree.forward_calculation({"X": X}).backward_calculation(Y).get_root().view_sub_tree(lambda x: f"{np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory()))}")
 
-for s, i, m in zip(metric_results["structures"], metric_results["states"], metric_results["MAE error"]): print(s, i, m)
+for s, i, m in zip(metric_results["tree"], metric_results["states"], metric_results["MAE error"]): print(s, i, m)
 
 plt.show()
 

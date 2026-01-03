@@ -62,52 +62,50 @@ i1 > 0 and i1 != 0
 
 i1 = 2
 
+Presupposizioni teoriche da accertare:
+
+- Più funzioni possono rappresentare la stessa funzione ideale sull' insieme di dati disponibili
+- Non si può mai verificare al 100% che una funzione reale ottenuta sia ideale, perchè per farlo, bisogna avere infiniti dati,
+  ed avere infiniti dati è impossibile.
+
+Queste 2 presupposizioni concludono il fatto, che qualsiasi strategia usata nella symbolic regression è valida, a patto di 
+rappresentare bene i dati ottenuti (e lo si vede con l' errore del TR e l' errore del VL).
+
+
 Si possono fare i split di un operazione binaria in qualsiasi modo. Si deve cercare di fare in modo che ogni funzione che parta da una 
 foglia ed arrivi al risultato, contribuisca al risultato con una somma, in modo tale che le foglie possano poi essere veramente 
 indipendenti l' una dall' altra.
 
-Si devono avere scomposizioni, in modo tale che in un nodo, i 2 errori contribuiscano all' errore del nodo in modo lineare (cioè 
-indipendente dall' errore dell' altro nodo). Evidentemente, senza pesi da allenare a ciclo forward / backward, questa cosa non si può
- fare.
-
-
-Dopo aver fatto il primo ciclo, sul secondo ciclo, dopo aver scelto il nodo: 
-
-se lo taglio, metto una foglia e via
-se lo estendo, provo tutte le operazioni, con i coefficienti propago e scelgo quale operazione ha proiezioni sulle foglie con errori minori (si fa una media).
-
-Per scegliere se estendere o tagliare: su ogni operazione faccio la proiezione e mi calcolo il minimo tra gl' errori. Quando calcolo ogni errore, faccio in modo tale da ottimizzare
- (e già sapere poi quale fissare) coefficiente i1 se quel nodo dovesse vincere. Sul nodo stesso calcolo la proiezione e mi salvo l' errore. 
-Se l' errore minimo è di un operazione, si fa l' estensione e si sceglie quell' operazione, altrimenti si fa la potatura. 
-
-
-Per scegliere il nodo ???
-
-
-Se il nodo scelto è la radice, si sceglie quale operazione e dove mettere tutto l' albero nell' operazione (si sceglie andando a modificare il coefficiente di ogni operazione binaria,
-se l' operazione è binaria, sennò si vede direttamente con operazioni unarie).
-
-Nel caso in cui in un ramo di backprop incontro funzioni surriettive (|x|, sin, cos, etc.), alla fine, faccio la vicinanza con ogni feature, e per ogni feature, provo la feature stessa e la media di quello 
-che ho estratto.
-
-
-
-
+Si devono avere scomposizioni, in modo tale che in un nodo, i 2 errori contribuiscano all' errore del nodo in modo indipendente
+dall' errore dell' altro nodo.
 
 Se in qualche dato, il valore diventa libero nella backprop, non si considera quel dato. Se tutti i dati diventano liberi, si lascia quella parte così com'è.
 
+Per ogni ramificazione, si parte dalla foglia, e si fanno i 2 sottoproblemi:
+
+1. Trovare l' operazione con i parametri più vicini all' output. Lo si fa usando tutta la ramificazione come unica funzione (si 
+può fare, perchè hai i pesi di indipendenza che ti permettono di arrivare da una foglia al ramo senza contare le altre foglie).
+Obiettivo, minimizzare l' errore ciò che ottieni con il sotto albero e l' output. Qui si considera sia TR che VL quando si 
+calcola l' errore dell' intera ramificazione, non la proiezione.
+
+2. Se l' operazione è binaria, una volta fissata l' operazione ed il sotto albero, minimizzare il problema dove il backward (
+che si ottiene prendendo il backward della radice del sotto albero ed i pesi di splittamento di indipendenza) ed il forward (le 
+foglie), siano più vicini possibili. Nel caso in cui si ha funzioni surriettive nel mezzo, si considerano tutte le backward 
+possibili, e si fissa il peso di split usando ottimizzando il problema di minimizzazione. Qui la backward solo con TR.
+
+3. Si ripete il ciclo per ognuno dei nodi appena creati. L' estensione di una ramificazioe si ferma quando l' errore del nodo
+ha raggiunto una certa soglia (cioè lo stop criteria).
 
 
+Da confermare (per prestazioni):
 
+- Fisso un input ad una variabile, calcolo con l' inversa il secondo input e l' output, e con la proiezione ottengo il miglior 
+secondo input (stessa cosa se fisso il secondo input ed ottengo il primo). Questo per ridurre il tempo computazionale (e
+ricavarmi tutte le possibili combinazioni con costanti).
 
+- Il fatto di minimizzare su entrambi i sotto problemi, è per chiudere il prima possibile l' apprendimento, ottenendo un buon 
+risultato.
 
-
-
-
-
-
-
-
-
-
-
+Se tutte le foglie si fermano, e non si riesce ad ottenere il risultato ottenuto, o si vuole che il modello vada ancora più ad 
+imparare (il modello può cadere in minimi locali in termini di estensioni), si può fare backtracking (sempre in parallelo volen
+do), dove su ogni sopra nodo, si sceglie la prossima operazione (con i suoi parametri fissati).
