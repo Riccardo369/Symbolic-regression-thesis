@@ -5,21 +5,46 @@ class Set:
     def __init__(self):
         pass
     
-    def neighbour(self, x):
+    def neighbour(self, values):
         return NotImplemented
     
-
-class Pi:
+class SimpleSet(Set):
+    
+    def __init__(self):
+        super().__init__()
+    
+class ModuleSet(Set):
+    
+    def __init__(self):
+        super().__init__()
+        
+class AbsSet(Set):
+    
+    def __init__(self):
+        super().__init__()
+        
+        
+    
+class GoniometricSet(Set):
     
     def __init__(self, x):
-        self.__x = x % (np.pi * 2)
+        super().__init__()
+        self.__x = x % (np.pi * 2)   
         
-    def neighbour(self, x):
         
-        n = x // (np.pi * 2)
         
-        lower = (n * np.pi * 2) + self.__x
-        upper = ((n+1) * np.pi * 2) + self.__x
-        
-        return lower if np.abs(lower - x) < np.abs(upper - x) else upper
-        
+
+class SinSet(GoniometricSet):
+    
+    def __init__(self, x):
+        super().__init__(x)
+    
+class CosSet(GoniometricSet):
+    
+    def __init__(self, x):
+        super().__init__(x)
+     
+class TanSet(GoniometricSet):
+    
+    def __init__(self, x):
+        super().__init__(x)

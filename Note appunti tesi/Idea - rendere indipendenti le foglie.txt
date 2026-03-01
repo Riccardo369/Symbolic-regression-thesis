@@ -109,3 +109,18 @@ risultato.
 Se tutte le foglie si fermano, e non si riesce ad ottenere il risultato ottenuto, o si vuole che il modello vada ancora più ad 
 imparare (il modello può cadere in minimi locali in termini di estensioni), si può fare backtracking (sempre in parallelo volen
 do), dove su ogni sopra nodo, si sceglie la prossima operazione (con i suoi parametri fissati).
+
+
+
+Il modello, per il fatto che si estende e si adatta, abbassa la bias, ma aumenta la variance. Per tenere a bada la variance, 
+al modello serve una forma di arresto che non dipende dall criterio di arresto dell' errore, ma che dipende da una 
+formula / metrica fissata dentro il modello.
+
+Bisogna confermare che il modello ridia sempre funzioni con basso bias ed anche con varianza trattenuta.
+
+Bisogna vedere anche (e se necessario, modificare anche la struttura dell' algoritmo), che il modello sia robusto al cambio di 
+distribuzioni di dati da TR a TR.
+
+
+Per la robustezza, faccio dei sotto insiemi di TR e di VL, e vedo se un estensione migliora quasi tutti i sotto contesti,
+se lo fa, accetto l' estensione. Ma che metrica uso?

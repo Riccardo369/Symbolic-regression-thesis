@@ -8,63 +8,35 @@ import io
 
 class OperationNode:
     
-    def __init__(self, channels, name = None):
+    def __init__(self, channels, is_commutative, name = None):
         
         if(type(channels) != int): raise ValueError(f"Channels number must be a int value, cannot be a {channels}")
         
+        #Channel numbers
         self.__channels = channels
         
+        #Special properties
+        self.__is_commutative = is_commutative
+        
+        #Father
         self.__father = None
         
+        #Set parameters
         self.set_name(name)
         
         self.__childrens = [None for _ in range(channels)]
-
+        
         self.__forward_calculation_memory = None
         self.__backward_calculation_memory = None
-        
-        self.__weight_vector_memory = None
-        
+        self.__factorization_backward_calculation_memory = None
+        self.__weight_memory = None     
+
+
     def __str__(self):
         if(isinstance(self, Leaf)): return self.__name if type(self.__name) == "str" else str(self.__name)
         return f"{self.__class__.__name__}({', '.join([str(x) for x in self.__childrens])})"
-    
-    def get_default_inputs(self):
-        raise ValueError(f"This operation is not aviable (operation has {self.__channels} inputs (it must be > 1))")
-        
-    def get_channels(self):
-        return self.__channels
-        
-    def get_name(self):
-        return self.__name
-        
-    def get_father(self):
-        return self.__father
-    
-    def get_childrens(self): return list(self.__childrens)
-    
-    def get_forward_calculation_memory(self):
-        value = self.__forward_calculation_memory
-        return value.copy() if isinstance(value, np.ndarray) else value
-    
-    def get_backward_calculation_memory(self):
-        value = self.__backward_calculation_memory.copy()
-        return value.copy() if isinstance(value, np.ndarray) else value
-    
-    def get_weight_vector_memory(self):
-        value = self.__weight_vector_memory.copy()
-        return value.copy() if isinstance(value, np.ndarray) else value
-    
-    def check_set_name(self, name):
-        return True
-    
-    def __check_value_memory(self, value):
-        if(not isinstance(value, np.ndarray) and type(value) not in [float, int] and not isinstance(value, np.generic) and value != None): raise ValueError("Memory must contains only a numpy tensor")
-
-    def set_name(self, name):
-        if(not self.check_set_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
-        self.__name = name
-        
+       
+    #Delete a connection
     def free_connection(father, child):
         if(not issubclass(type(father), OperationNode)): raise ValueError(f"Father must be a Operation node type, not a {type(father)}")
         if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
@@ -77,7 +49,8 @@ class OperationNode:
         del brothers
         
         child.__father = None
-        
+       
+    #Create a connection 
     def new_connection(father, child, i):
         
         if(not issubclass(type(father), OperationNode)): raise ValueError(f"Father must be a Operation node type, not a {type(father)}")
@@ -91,19 +64,135 @@ class OperationNode:
         
         father.__childrens[i] = child
         child.__father = father
+       
+    #EQUALS SUB TREE STRUCTURE ZONE 
+    def __compare_parameter(a, b, f):
+            return f(a) == f(b)
+        
+    def structure_equals(self, node):
+        return all([OperationNode.__compare_parameter(self, node, lambda x: type(x)),
+                    OperationNode.__compare_parameter(self, node, lambda x: x.get_name()),
+                    all([node.strucutre_equals(child) for child in node.get_childrens()])])
+    
+    def calculation_memory_equals(self, node):
+        
+        return all([OperationNode.__compare_parameter(self, node, lambda x: type(x)),
+                    OperationNode.__compare_parameter(self, node, lambda x: x.get_forward_calculation_memory()),
+                    OperationNode.__compare_parameter(self, node, lambda x: x.get_backward_calculation_memory()),
+                    OperationNode.__compare_parameter(self, node, lambda x: x.get_factorization_backward_calculation_memory()),
+                    all([node.calculation_memory_equals(child) for child in node.get_childrens()])])
+        
+    def weight_memory_equals(self, node):
+        
+        return all([OperationNode.__compare_parameter(self, node, lambda x: type(x)),
+                    OperationNode.__compare_parameter(self, node, lambda x: x.get_weight_memory()),
+                    all([node.calculation_memory_equals(child) for child in node.get_childrens()])])
+        
+    def all_equals(self, node):
+        return self.structure_equals(node) and self.calculation_memory_equals(node) and self.weight_memory_equals(node)
+     
+    #GET PARAMETERS ZONE
+    def is_commutative(self):
+        return self.__is_commutative
+    
+    def get_default_inputs(self):
+        raise ValueError(f"This operation is not aviable (operation has {self.__channels} inputs (it must be > 1))")
+        
+    def get_channels(self):
+        return self.__channels
+        
+    def get_name(self):
+        return self.__name
+        
+    def get_father(self):
+        return self.__father
+    
+    def get_childrens(self):
+        return list(self.__childrens)
+    
+    #GET MEMORY ZONE
+    def __get_memory(self, value):
+        return value.copy() if isinstance(value, np.ndarray) else value
+    
+    def get_forward_calculation_memory(self):
+        return self.__get_memory(self.__forward_calculation_memory)
+        
+    def get_backward_calculation_memory(self):
+        return self.__get_memory(self.__backward_calculation_memory)
+        
+    def get_weight_memory(self):
+        return self.__get_memory(self.__weight_memory)
+        
+    def get_factorization_backward_calculation_memory(self):
+        return self.__get_memory(self.__factorization_backward_calculation_memory)
+ 
+    #SET MEMORY ZONE
+    def __check_value_memory(self, value):
+        if(not isinstance(value, np.ndarray) and type(value) not in [float, int] and not isinstance(value, np.generic) and value != None): raise ValueError("Memory must contains only a numpy tensor or a number float / int")
+
+    def set_name(self, name):
+        if(not self.check_set_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
+        self.__name = name
+      
+    def __prepare_set_memory(self, value):
+        self.__check_value_memory(value)
+        return value.copy() if isinstance(value, np.ndarray) else value
     
     def set_forward_calculation_memory(self, value):
-        self.__check_value_memory(value)
-        self.__forward_calculation_memory = value.copy() if isinstance(value, np.ndarray) else value
-    
+        self.__forward_calculation_memory = self.__prepare_set_memory(value)
+        
     def set_backward_calculation_memory(self, value):
-        self.__check_value_memory(value)
-        self.__backward_calculation_memory = value.copy() if isinstance(value, np.ndarray) else value
+        self.__backward_calculation_memory = self.__prepare_set_memory(value)
         
-    def set_weight_vector_memory(self, value):
-        self.__check_value_memory(value)
-        self.__weight_vector_memory = value.copy() if isinstance(value, np.ndarray) else value
+    def set_weight_memory(self, value):
+        self.__weight_memory = self.__prepare_set_memory(value)
         
+    def set_factorization_backward_calculation_memory(self, value):
+        self.__factorization_backward_calculation_memory = self.__prepare_set_memory(value)
+   
+    #CALCULATION AND AUTOMATICALLY SET MEMORY ALL SUB TREE ZONE
+    def forward_calculation_memory_sub_tree(self, inputs_dict):
+          
+        def recursion(node):
+            for child in node.get_childrens(): recursion(child)
+            if(type(node) == Leaf): node.set_forward_calculation_memory(inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name())
+            else: node.set_forward_calculation_memory(node.forward_calculation())
+                
+        recursion(self)
+        
+        return self
+
+    def backward_calculation_memory_sub_tree(self, output):
+        
+        self.set_backward_calculation_memory(output)
+        
+        def recursion(node):
+            
+            if(not issubclass(type(node), Leaf)):
+                for child, backward in zip(node.get_childrens(), node.backward_calculation()):                
+                    child.set_backward_calculation_memory(backward)
+                    recursion(child)
+
+        recursion(self)
+        
+        return self
+    
+    def factorization_backward_calculation_memory_sub_tree(self, output):
+        
+        self.set_factorization_backward_calculation_memory(output)
+        
+        def recursion(node):
+            
+            if(not issubclass(type(node), Leaf)):
+                for child, backward in zip(node.get_childrens(), node.factorization_backward_calculation()):                
+                    child.set_factorization_backward_calculation_memory(backward)
+                    recursion(child)
+
+        recursion(self)
+        
+        return self
+
+    #CLEAR ALL SUB TREE MEMORY ZONE
     def __clear_memory_sub_tree(self, set_function):
         
         def recursion(node):
@@ -112,46 +201,67 @@ class OperationNode:
                 set_function(child)
         
         recursion(self)
-        
-    def clear_all_memory_sub_tree(self):
+         
+    def clear_all_calculation_memory_sub_tree(self):
         self.clear_forward_calculation_memory_sub_tree()
         self.clear_backward_calculation_memory_sub_tree()
-        self.clear_weight_calculation_memory_sub_tree()
+        self.clear_factorization_backward_calculation_memory_sub_tree()
+        return self
         
     def clear_forward_calculation_memory_sub_tree(self):
         self.__clear_memory_sub_tree(lambda x: x.set_forward_calculation_memory(None))
+        return self
         
     def clear_backward_calculation_memory_sub_tree(self):
         self.__clear_memory_sub_tree(lambda x: x.set_backward_calculation_memory(None))
+        return self
         
     def clear_weight_calculation_memory_sub_tree(self):
-        self.__clear_memory_sub_tree(lambda x: x.set_weight_vector_memory(None))
-        
+        self.__clear_memory_sub_tree(lambda x: x.set_weight_memory(None))
+        return self
+    
+    def clear_factorization_backward_calculation_memory_sub_tree(self):
+        self.__clear_memory_sub_tree(lambda x: x.set_factorization_backward_calculation_memory(None))
+        return self
+
+    #CHECK OPERATION ZONE
+    def check_set_name(self, name):
+        return True
+    
+    def check_input_domain(self, i, input):
+        return NotImplemented
+
+    def check_output_domain(self, output):
+        return NotImplemented
+    
+    #NODE METHODS (valid only for the node, not for the all sub tree). For correct functions, the require memory must be calculated already
+    
+    #Get the operation in string form 
     def get_string_structure(self, x):
         return NotImplemented
 
-    #Calculate forward value
+    #Calculate forward value. REQUIRE forwards from childrens
     def forward_calculation(self):
         return NotImplemented
-    
-    #Calculate backward value considering the forward values from childrens
+
+    #Calculate backward value. REQUIRE backward from father and forward from childrens
     def backward_calculation(self):
         return NotImplemented
     
-    #Calculate weights for indipendent backward, taking forward values from childrens
+    #Calculate factorization backwards. REQUIRE backward from father and internal weight
+    def factorization_backward_calculation(self):
+        return NotImplemented
+
+    #Calculate weights for factorization backward. REQUIRE backward from father and forward from childrens
     def weight_vector_calculation(self):
         return NotImplemented
     
-    #Calculate indipendent backwards using weights and output
-    def backward_indipendent_calculation(self):
+    #Return the factorization backward inverse formula, from which i-th node you come. REQUIRE internal weight
+    def get_factorization_forward_calculation_formula(self, i):
         return NotImplemented
-    
-    def check_input_domain(self):
-        return NotImplemented
-    
-    def check_output_domain(self):
-        return NotImplemented
-     
+
+
+    #Copy all sub tree
     def copy_sub_tree(self):
         
         result = self.__class__(self.__name) if(self.__class__.__name__ == "Leaf") else self.__class__()
@@ -161,19 +271,18 @@ class OperationNode:
         #Non necessita della copia perchè i metodi set fanno una copia già di default
         result.set_forward_calculation_memory(self.__forward_calculation_memory)
         result.set_backward_calculation_memory(self.__backward_calculation_memory)
-        result.set_weight_vector_memory(self.__weight_vector_memory)
+        result.set_weight_memory(self.__weight_memory)
+        result.set_factorization_backward_calculation_memory(self.__factorization_backward_calculation_memory)
         
         for i, child in enumerate(self.__childrens):
             if(child == None): continue
             OperationNode.new_connection(result, child.copy_sub_tree(), i)
 
         return result
-
-    #brown -> magenta
-    #blue -> cyan
-    #purple -> yellow
-
-    def view_sub_tree(self, f = lambda x: ""):
+    
+    
+    #View in a plot all sub tree structure
+    def view_sub_tree(self, f = lambda x: " "):
     
         class CounterGraph:
             def __init__(self):
@@ -221,7 +330,7 @@ class OperationNode:
 
 class Leaf(OperationNode):
     def __init__(self, label):
-        super().__init__(0, label)
+        super().__init__(0, False, label)
     
     def check_set_name(self, name):
         return type(name) in [str, int, float] or isinstance(name, np.generic)
@@ -238,7 +347,7 @@ class Leaf(OperationNode):
 
 class neg(OperationNode):
     def __init__(self):
-        super().__init__(1)
+        super().__init__(1, False)
         
     def forward_calculation(self):
         return -self.get_childrens()[0].get_forward_calculation_memory()
@@ -257,7 +366,7 @@ class neg(OperationNode):
 
 class add(OperationNode):
     def __init__(self):
-        super().__init__(2)
+        super().__init__(2, True)
         
     def get_default_inputs(self):
         return [0, 0]
@@ -281,14 +390,12 @@ class add(OperationNode):
     
     def backward_indipendent_calculation(self):
         output = self.get_backward_calculation_memory() 
-        weights = self.get_weight_vector_memory()
+        weights = self.get_weight_memory()
         return [weights * output, (1 - weights) * output]
-    
-    
-    
+       
 class sub(OperationNode):
     def __init__(self):
-        super().__init__(2)
+        super().__init__(2, False)
         
     def get_default_inputs(self):
         return [0, 0]
@@ -312,13 +419,12 @@ class sub(OperationNode):
     
     def backward_indipendent_calculation(self):
         output = self.get_backward_calculation_memory() 
-        weights = self.get_weight_vector_memory()
+        weights = self.get_weight_memory()
         return [weights * output, (1 - weights) * output]
     
-
 class mul(OperationNode):
     def __init__(self):
-        super().__init__(2)
+        super().__init__(2, True)
         
     def get_default_inputs(self):
         return [1, 1]
@@ -342,19 +448,19 @@ class mul(OperationNode):
     
     def backward_indipendent_calculation(self):
         output = self.get_backward_calculation_memory() 
-        weights = self.get_weight_vector_memory()
+        weights = self.get_weight_memory()
         return [output ** weights, output ** (1 - weights)]
-
 
 class div(OperationNode):
     def __init__(self):
-        super().__init__(2)
+        super().__init__(2, False)
         
     def get_default_inputs(self):
         return [1, 1]
         
-    def check_input_domain(self):
-        return np.all(self.get_childrens[1].get_forward_calculation_memory() != 0)
+    def check_input_domain(self, i, input):
+        if(i == 1): return np.all(input != 0)
+        return True
     
     def forward_calculation(self):
         childrens = self.get_childrens()
@@ -375,19 +481,16 @@ class div(OperationNode):
     
     def backward_indipendent_calculation(self):
         output = self.get_backward_calculation_memory() 
-        weights = self.get_weight_vector_memory()
+        weights = self.get_weight_memory()
         return [output ** weights, output ** (weights - 1)]
 
-#IDEA IN MODEL: LE FUNZIONI string_(calculation, gradient, hessian), servono per creare 1 o pià funzioni contemporaneamente 
-# sotto forma di simboli diretti in python, poi il corpo verrà passato in un eval (e non è necessario prendere i nomi delle 
-# foglie, perchè il modello passerà un dizionario ogni volta, che associa il nome della foglia ed il valore / feature assegnato)
 
 
 #MANCA DA FARE OPERAZIONI
 
-
 #exp richiede log
 #log richiede log
+
 
 
 #sqrt
@@ -399,7 +502,6 @@ class div(OperationNode):
 #csc
 #Modulo
 #Valore assoluto
-
 
 
 

@@ -1,0 +1,28 @@
+La logica è quella di estendere l' albero (considerando una metrica di arresto), e poi ricalcolare l' intera struttura per avere una struttura più semplice
+
+Il ciclo è quello di: 
+
+1) scelgo il nodo da estendere per m volte (finchè non raggiungo una condizione di arresto). Faccio l' indipendenza delle foglie, e fermo questo ciclo quando ogni ramo è stato risolto
+2) Ricalcolo la struttura con la e-graph. Il ciclo totale si interrompe quando raggiungo una metrica di arresto che definisce se la nuova struttura è quasi uguale a quella di prima, 
+se si, allora ci si ferma del tutto.
+
+Quando si va a scegliere le nuove feature, come risolvo il problema della combinazione esponenziale? Di base non lo puoi risolvere, ma puoi alleviare il calcolo usando
+delle metriche pre calcolate di range di dominio, vale per qualsiasi operazione.
+
+Per mantenere bias bassa, la struttura risolve da sè con la fattorizzazione dello spazio.
+Per mantenere la varianza bassa, il ricalcolo della struttura è buono, ma durante l' estensione delle foglie non si deve esagerare, qui serve una metrica di estensione.
+
+Meglio fare un estensione alla volta, per fare ogni volta un check del contesto globale e decidere se fermarsi oppure no.
+
+
+
+Fase in cui si può parallelizzare:
+
+- quando faccio la scelta della migliore operazione (un operazione per thread)
+
+
+
+
+Faccio:
+
+Scelta del nodo, scelta della combinazione, e da lì, calcolo poi i pesi
