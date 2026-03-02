@@ -1,0 +1,32 @@
+- La e-graph aiuta a non cadere in minimi locali?
+
+- Lo split è veramente una soluzione senza effetti collaterali?
+
+- Come restringere il campo delle prove? Trasformi ogni feature con un tipo di trasformazione, poi scegli la famiglia di operazioni e la 
+feature che si correlano meglio con il residuo / output. Quando ho le casistiche che il residuo è uguale a:
+
+* Costante O costante, no problem, il risultato è una costante, fine. Il residuo è una costante e fine del discorso.
+* Il resto, la trasformazione la vedo fittando anche l' altro valore con un fit in locale al momento. Differenza tra i casi in cui ho una sola 
+feature e non, faccio il fit sia considerando l' altra come una costante, e sia con più costanti (ed in quel caso vedere le feature che si 
+avvicinano meglio), quindi 2 test per le famiglie a 2 input.
+
+- Quale operazione scelgo poi? Sia nella scelta della famiglia, che nella scelta dell' operazione stessa, si va a scegliere quella che ridà un
+residuo più comprensibile.
+
+Cosa mi assicura che scegliere l' operazione / famiglia di operazioni che ridia un residuo più spiegabile non mi faccia cadere in minimi locali?
+Niente, ma è un euristica sicuramente più roubsta ed affidabile dell' affidarsi al diminuire dell' errore.
+
+Si avranno bisogno di:
+
+- test per trasformare le feature in modo lineare al residuo (ogni famiglia un test con un fit locale, doppio fit locale con costante rigida e variabile)
+- test per vedere la spiegabilità del residuo al passo successivo durante la scelta della famiglia / operazione (test rapidi ma affidabili)
+
+Si sceglie la famiglia in base a quanto il residuo successivo sia spiegato bene (quindi si considera la trasformazione che a grandi linee porta 
+ad un residuo successivo migliore) con i test rapidi. Qua si sceglie la famiglia e la prima feature.
+
+Si sceglie poi l' operazione che con i test rapidi ridia un residuo più spiegabile. Qui, si sceglie l' operazione e la seconda feature / costante.
+
+Questo serve per ridurre i tempi: 
+
+- Prima scelta, riduci di provare tutte le operazioni, e per ogni famiglia provi l' ideale in costante rigida e variabile O(2 x N x (k / r)).
+- Seconda scelta, non provi tutte le operazioni O(N x (k - m)).

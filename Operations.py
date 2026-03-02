@@ -492,7 +492,11 @@ class div(OperationNode):
 #log richiede log
 
 
-
+#neg
+#add
+#sub
+#mul
+#div
 #sqrt
 #sin
 #cos

@@ -13,6 +13,14 @@ def projection(ideal, features, L):
         proposals = [{"label": x, "value": features[x]} for x in features.keys()] + [{"label": const, "value": np.repeat(const, ideal.shape[0])}]
         return sorted(proposals, key = lambda x: L(ideal, x["value"]))[0]["label"]
 
+def durbin_watson(residuals):
+    numerator = np.sum(np.diff(residuals)**2)
+    denominator = np.sum(residuals**2)
+    
+    if denominator < 1e-15: return 2.0
+    return numerator / denominator
+
+
 class SymbolicRegressionLearning:
     
     def __init__(self):
@@ -55,6 +63,8 @@ class SymbolicRegressionLearning:
 
 class IndipendentRamification(SymbolicRegressionLearning):
     
+    __families = [{"family": "linear", "operations": [op.add, op.sub, op.mul, op.div], "transformation": lambda x: x, "residual": lambda x, a, b: (a * x) + b}]
+    
     def __init__(self, operations):
         super().__init__()
         
@@ -64,59 +74,96 @@ class IndipendentRamification(SymbolicRegressionLearning):
         self._operations = list(operations)
         
         
-    
-    def extend(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, f):
+    #Ho il mio TR_output / residuo:
+    #
+    #1) applico ad ogni feature delle trasformazioni (ogni trasformazione per ogni famiglia)
+    #2) da ogni trasformazione - feature, ricavo poi il nuovo residuo
+    #3) scelta la famiglia e la feature, scelgo la seconda feature / costante e l' operazione, che migliorano sempre la trasparenza del residuo
+    #4) Scelta l' operazione con le feature, si fa lo split calcolando il peso interno e lo split del residuo / output atteso
+    #
+    # Sul punto 2 e 3, quando scelgo la famiglia / feature e l' operazione, scelgo sempre l' opzione che rende il residuo successivo più trasparente
+    #
+    def extend(self, TR_inputs_dict, TR_output):
         
-        #Add all possible tree (1° sub problem: search for each operation the best inputs combination)
-        for oper in self._operations:
-            
-            return None
+        #Choose in a greedy way a family of functions and a feature
+        choices = []
+        
+        for feature in TR_inputs_dict.keys():
+            for family in IndipendentRamification.__families:
+                
+                #Calculate transformation
+                s = family["transformation"](TR_inputs_dict[feature])
+                
+                #Extract future residual
+                mean_R = np.mean(TR_output)
+                mean_s = np.mean(s)
+                
+                a = np.sum((s - mean_s)*(TR_output - mean_R)) / ((np.sum(s - mean_s)**2)+1e-25)
+                b = mean_R - (a * mean_s)
+                
+                #Calculate of transparency of new residual (greedy transparency)
+                DW = durbin_watson(TR_output - family["residual"](TR_inputs_dict[feature], a, b))
+                
+                choices.append({"feature": feature, "family": family["family"], "transparency": np.abs(DW - 2)})
+                
+        #Choose the best combination feature / family
+        choices = sorted(choices, key = lambda x: -x["transparency"])
+        
+        feature = choices[0]["feature"]
+        operations = list(filter(lambda x: x["family"] == choices[0]["family"], IndipendentRamification.__families))[0]["operations"]
+        
+        choices = []
+
+        #For each operations
+        for oper in operations:
                 
             oper_node = oper()
-            for i, in range(oper_node.get_channels()):
-                op.OperationNode.new_connection(oper_node, op.Leaf(f"l{i}"))
+            for i in range(oper_node.get_channels()):
+                op.OperationNode.new_connection(oper_node, op.Leaf(f"l{i}"), i)
                     
             childrens = oper_node.get_childrens()
                     
-            oper_node.set_backward_calculation_memory(leaf.get_backward_calculation_memory())
+            oper_node.set_backward_calculation_memory(TR_output)
                     
             if(oper_node.get_channels() == 2):
                     
                 base = oper_node.get_default_inputs()
-
-                for feature in TR_inputs_dict.keys():
                         
-                    #Doing the projection to 1° slot / child
-                    childrens[0].set_forward_calculation_memory(feature)
-                    childrens[1].set_forward_calculation_memory(base[1])
-                    childrens[1].set_name(projection(oper_node.backward_calculation()[1], TR_inputs_dict, lambda a, b: -cosine(a, b)))
-                    operation_candidates.append(oper_node.copy_sub_tree())
-                                        
-                    #Doing the projection to 0° slot / child
+                #Doing the projection to 1° slot / child
+                childrens[0].set_name(feature)
+                childrens[0].set_forward_calculation_memory(TR_inputs_dict[feature])
+                childrens[1].set_forward_calculation_memory(base[1])
+                childrens[1].set_name(projection(oper_node.backward_calculation()[1], TR_inputs_dict, lambda a, b: -cosine(a, b)))
+                choices.append(oper_node.copy_sub_tree())
+                
+                #Doing the projection to 0° slot / child if operation is not commutative
+                if(not oper_node.is_commutative()):
+                                            
+                    childrens[1].set_name(feature)
                     childrens[0].set_forward_calculation_memory(base[0])
-                    childrens[1].set_forward_calculation_memory(feature)
+                    childrens[1].set_forward_calculation_memory(TR_inputs_dict[feature])
                     childrens[0].set_name(projection(oper_node.backward_calculation()[0], TR_inputs_dict, lambda a, b: -cosine(a, b)))
-                    operation_candidates.append(oper_node.copy_sub_tree())
-
+                    choices.append(oper_node.copy_sub_tree())
+                
             elif(oper_node.get_channels() == 1):
-
-                for feature in TR_inputs_dict.keys():
-                        
-                    childrens[0].set_name(feature)
-                    operation_candidates.append(oper_node.copy_sub_tree())
+      
+                childrens[0].set_name(feature)
+                choices.append(oper_node.copy_sub_tree())
                     
             else: raise TypeError(f"{oper} has no 1 or 2 channels, it is not acceptable for IndipendentRamification learning strategy")
-
-        return None
-
-        inputs_dict = {key: np.concatenate([TR_inputs_dict[key], VL_inputs_dict[key]]) for key in TR_inputs_dict.keys()}
-        output = np.concatenate([TR_output, VL_output])
-               
-        #2° sub problem: choose the best extension
-        operation_candidates = sorted([{"candidate": str(x), "error": er.MAE(ramification_function(SymbolicRegression(x).forward_calculation(inputs_dict).get_root().get_forward_calculation_memory()), output)} for x in operation_candidates + [leaf]], lambda x: x["error"])
-
+            
+        #Choice the best operation / features - constant
+        choices = [{"structure": choice, "transparency": durbin_watson(TR_output - choice.forward_calculation_memory_sub_tree(TR_inputs_dict).get_forward_calculation_memory())} for choice in choices]
         
-        return None
+        choices = sorted(choices, key = lambda x: -x["transparency"])
+        
+        #Calculate all memory and weights
+        choice = choices[0]["structure"].backward_calculation_memory_sub_tree(TR_output)
+        choice.set_weight_memory(choice.factorization_backward_calculation())
+        choice.factorization_backward_calculation_memory_sub_tree()
+        
+        return choice
+    
         
     def body_learning(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, stop_criteria):
         
@@ -130,32 +177,18 @@ class IndipendentRamification(SymbolicRegressionLearning):
         
         #Calculate first candidates
         working_leafs = [{"leaf": leaf, "extension": None} for leaf in self._model.get_leafs()]
-        
-        #NON ESISTE CHE SI PARTA DA UN MODELLO GIà FATTO, SI PARTE SEMPRE DALL' INIZIO, COSE SEMPLICI, SENZA COMPLICARCI L' ESISTENZA
-        
-        #Per la parallelizzazione pattern multi writer - single reader:
-        # I writer creano le extension dei nodi che non hanno la propria extension, alla fine di ogni lavoro di writer, quel writer 
-        # aggiunge altri nodi, per non far fermare il lavoro
-        # il reader, in sequenza, controlla i nodi, vede se andare avanti con le estensioni, altrimenti, si ferma, e fermandosi, i
-        # lavori dei writer già fatti verranno eliminati, ma intanto in questo modo, lo scopo è quello di ridurre il più possibile il 
-        # tempo che il reader ci mette a: estendere l' albero e fare i vari calcoli di regolarizzazione
-    
-        
+
         
         #While cycle
+        # #DA FINIRE lo stop del ciclo
         while(stop_criteria(self) or len(working_leafs) > 0):
             
-            #Parallelism phase without synchronization
-            
-            ramification_function = lambda x: x
-            working_leafs[0]["extension"] = self.extend(TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, ramification_function)
+            working_leafs[0]["extension"] = self.extend(TR_inputs_dict, TR_output)
             
             break
-        
-            #Barrier synchronization
             
             #If best extension is worst than leaf, doing nothing
-            if(operation_candidates[0]["candidate"] == str(leaf)): continue
+            if(choices[0]["candidate"] == str(leaf)): continue
             
             #Do the extension
             leaf_candidates += extension.get_leafs()
@@ -164,6 +197,8 @@ class IndipendentRamification(SymbolicRegressionLearning):
 
             op.OperationNode.free_connection(father_leaf, leaf)
             op.OperationNode.new_connection(father_leaf, extension)
+            
+            del working_leafs[0]
             
 
 
