@@ -1,0 +1,34 @@
+Sviluppo dell' algoritmo:
+
+- Sotto ciclo: Estensione dell' albero. Si ferma con i stop criteria
+- Super ciclo: refactoring con e graph (riscrittura in una formula più semplice). Si ferma quando la struttura della funzione
+ non varia di pochissimo.
+
+Sotto ciclo:
+
+1) Si prende il nodo con più trasparenza tra tutti. Per calcolare la trasparenza, si fa l' inverso considerando tutto il resto
+ dell' albero. La trasparenza si fa sull' output atteso che quella foglia dovrebbe avere considerando tutto il resto dell' 
+ albero.
+
+2) Su quell' output, si usano le bussole: varie modifiche non lineari (più quella lineare) riscalate con a*f(x) + b 
+(dove la f(x) è la trasformazione). Si fanno tutte le bussole su tutte le feature. Si sceglie la bussola e la feature che danno 
+un risultato più vicino all' output. Ogni bussola rappresenta una famiglia di operazioni ed a e b verranno calcolati al momento 
+in base ad f(x) e l' output.
+
+3) Scelta la bussola e la feature, si sceglie la feature / costante e l' operazione che minimizzano l' errore dell' intero albero 
+(modificando solo quella parte / foglia che verrà estesa).
+
+4) Dopo aver fatto l' estensione, si aggiungono i vari nodi alla lista di nodi da modificare.
+
+Si va avanti finchè:
+
+- Lo stop criteria in base alla MDL non si attiva
+- Il numero di foglie da estendere non si esaurisce
+
+Per ridurre lo spazio di ricerca, durante l' estensione di una foglia: l' operazione verrà sottoposta a controllo di dominio
+con il suo nodo padre e la sua posizione di figlio i, le feature verranno sottoposte a controllo di dominio sulle operazioni.
+
+Essendo che al modificare una foglia si modifica anche gli input attesi delle altre foglie, questo permette di avere una coerenza 
+sull' estensione dell' albero, e permettere all' albero di scoprire nuovi sotto pattern che prima non c' erano. Se si estendessero 
+le foglie da sole, senza considerare le influenze tra loro, e verò, ci sarebbe più velocità (poichè sarebbe possibile la 
+parallelizzazione), ma ci sarebbe un ottimizzazione che si scollega dalla realtà.

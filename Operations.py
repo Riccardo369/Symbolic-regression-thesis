@@ -31,7 +31,6 @@ class OperationNode:
         self.__factorization_backward_calculation_memory = None
         self.__weight_memory = None     
 
-
     def __str__(self):
         if(isinstance(self, Leaf)): return self.__name if type(self.__name) == "str" else str(self.__name)
         return f"{self.__class__.__name__}({', '.join([str(x) for x in self.__childrens])})"
@@ -133,6 +132,7 @@ class OperationNode:
     def set_name(self, name):
         if(not self.check_set_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
         self.__name = name
+        return self
       
     def __prepare_set_memory(self, value):
         self.__check_value_memory(value)
@@ -140,22 +140,27 @@ class OperationNode:
     
     def set_forward_calculation_memory(self, value):
         self.__forward_calculation_memory = self.__prepare_set_memory(value)
+        return self
         
     def set_backward_calculation_memory(self, value):
         self.__backward_calculation_memory = self.__prepare_set_memory(value)
+        return self
         
     def set_weight_memory(self, value):
         self.__weight_memory = self.__prepare_set_memory(value)
+        return self
         
     def set_factorization_backward_calculation_memory(self, value):
         self.__factorization_backward_calculation_memory = self.__prepare_set_memory(value)
+        return self
    
     #CALCULATION AND AUTOMATICALLY SET MEMORY ALL SUB TREE ZONE
     def forward_calculation_memory_sub_tree(self, inputs_dict):
           
         def recursion(node):
             for child in node.get_childrens(): recursion(child)
-            if(type(node) == Leaf): node.set_forward_calculation_memory(inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name())
+            if(type(node) == Leaf):
+                node.set_forward_calculation_memory(inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name())
             else: node.set_forward_calculation_memory(node.forward_calculation())
                 
         recursion(self)
@@ -177,6 +182,7 @@ class OperationNode:
         
         return self
     
+    #REQUIRE: ogni nodo deve avere il suo forward
     def factorization_backward_calculation_memory_sub_tree(self, output):
         
         self.set_factorization_backward_calculation_memory(output)
@@ -184,7 +190,10 @@ class OperationNode:
         def recursion(node):
             
             if(not issubclass(type(node), Leaf)):
-                for child, backward in zip(node.get_childrens(), node.factorization_backward_calculation()):                
+                
+                node.set_weight_memory(node.weight_calculation())    
+                
+                for child, backward in zip(node.get_childrens(), node.factorization_backward_calculation()):   
                     child.set_factorization_backward_calculation_memory(backward)
                     recursion(child)
 
@@ -229,10 +238,10 @@ class OperationNode:
         return True
     
     def check_input_domain(self, i, input):
-        return NotImplemented
+        return True
 
     def check_output_domain(self, output):
-        return NotImplemented
+        return True
     
     #NODE METHODS (valid only for the node, not for the all sub tree). For correct functions, the require memory must be calculated already
     
@@ -251,10 +260,10 @@ class OperationNode:
     #Calculate factorization backwards. REQUIRE backward from father and internal weight
     def factorization_backward_calculation(self):
         return NotImplemented
-
+    
     #Calculate weights for factorization backward. REQUIRE backward from father and forward from childrens
-    def weight_vector_calculation(self):
-        return NotImplemented
+    def weight_calculation(self):
+        return None
     
     #Return the factorization backward inverse formula, from which i-th node you come. REQUIRE internal weight
     def get_factorization_forward_calculation_formula(self, i):
@@ -282,7 +291,7 @@ class OperationNode:
     
     
     #View in a plot all sub tree structure
-    def view_sub_tree(self, f = lambda x: " "):
+    def view_sub_tree(self, f = lambda x: " ", block = True):
     
         class CounterGraph:
             def __init__(self):
@@ -325,7 +334,7 @@ class OperationNode:
         plt.figure(facecolor='black')
         plt.imshow(image)
         plt.axis('off')
-        plt.show(block = False)
+        plt.show(block = block)
      
 
 class Leaf(OperationNode):
@@ -358,12 +367,14 @@ class neg(OperationNode):
     def get_string_structure(self, x):
         return f"-{x[0]}"
     
-    def weight_vector_calculation(self):
+    def weight_calculation(self):
         return 0
     
     def backward_indipendent_calculation(self):
         return self.get_backward_calculation_memory()
 
+
+#FACTORIZATION: a + b = c --> wc + (1-w)c = c
 class add(OperationNode):
     def __init__(self):
         super().__init__(2, True)
@@ -383,16 +394,19 @@ class add(OperationNode):
     def get_string_structure(self, x):
         return f"{x[0]} + {x[1]}"
     
-    def weight_vector_calculation(self):
-        inputs = [self.get_childrens()[0].get_forward_calculation_memory(), self.get_childrens()[1].get_forward_calculation_memory()]
-        output = self.get_backward_calculation_memory()
-        return NotImplemented
+    def factorization_backward_calculation(self):
+        w = self.get_weight_memory()
+        c = self.get_factorization_backward_calculation_memory()
+        
+        return [w*c, ((1 - w)*c)]
     
-    def backward_indipendent_calculation(self):
-        output = self.get_backward_calculation_memory() 
-        weights = self.get_weight_memory()
-        return [weights * output, (1 - weights) * output]
-       
+    def weight_calculation(self):
+        a = self.get_childrens()[0].get_forward_calculation_memory()
+        c = self.get_factorization_backward_calculation_memory()
+        
+        return np.sum(a * c) / np.sum(c**2)
+     
+#FACTORIZATION: a - b = c --> wc - (w-1)c = c  
 class sub(OperationNode):
     def __init__(self):
         super().__init__(2, False)
@@ -412,15 +426,17 @@ class sub(OperationNode):
     def get_string_structure(self, x):
         return f"{x[0]} - {x[1]}"
     
-    def weight_vector_calculation(self):
-        inputs = [self.get_childrens()[0].get_forward_calculation_memory(), self.get_childrens()[1].get_forward_calculation_memory()]
-        output = self.get_backward_calculation_memory()
-        return NotImplemented
+    def factorization_backward_calculation(self):
+        w = self.get_weight_memory()
+        c = self.get_factorization_backward_calculation_memory()
+        
+        return [w*c, ((w - 1)*c)]
     
-    def backward_indipendent_calculation(self):
-        output = self.get_backward_calculation_memory() 
-        weights = self.get_weight_memory()
-        return [weights * output, (1 - weights) * output]
+    def weight_calculation(self):
+        a = self.get_childrens()[0].get_forward_calculation_memory()
+        c = self.get_factorization_backward_calculation_memory()
+        
+        return np.sum(a * c) / np.sum(c**2)
     
 class mul(OperationNode):
     def __init__(self):
@@ -441,15 +457,12 @@ class mul(OperationNode):
     def get_string_structure(self, x):
         return f"{x[0]} * {x[1]}"
     
-    def weight_vector_calculation(self):
-        inputs = [self.get_childrens()[0].get_forward_calculation_memory(), self.get_childrens()[1].get_forward_calculation_memory()]
-        output = self.get_backward_calculation_memory()
+    def factorization_backward_calculation(self):
         return NotImplemented
     
-    def backward_indipendent_calculation(self):
-        output = self.get_backward_calculation_memory() 
-        weights = self.get_weight_memory()
-        return [output ** weights, output ** (1 - weights)]
+    def weight_calculation(self):
+        return NotImplemented
+
 
 class div(OperationNode):
     def __init__(self):
@@ -474,15 +487,12 @@ class div(OperationNode):
     def get_string_structure(self, x):
         return f"{x[0]} / {x[1]}"
     
-    def weight_vector_calculation(self):
-        inputs = [self.get_childrens()[0].get_forward_calculation_memory(), self.get_childrens()[1].get_forward_calculation_memory()]
-        output = self.get_backward_calculation_memory()
+    def factorization_backward_calculation(self):
         return NotImplemented
     
-    def backward_indipendent_calculation(self):
-        output = self.get_backward_calculation_memory() 
-        weights = self.get_weight_memory()
-        return [output ** weights, output ** (weights - 1)]
+    def weight_calculation(self):
+        return NotImplemented
+
 
 
 

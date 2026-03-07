@@ -24,14 +24,23 @@ class SymbolicRegression:
         
         self.__root = root.copy_sub_tree()
     
+    def __str__(self):
+        return str(self.__root)
+    
     def __eq__(self, tree):
         
         if(not isinstance(tree, SymbolicRegression)): return False
         
         root1 = self.__root
+  
+    def view(self, f = lambda x: " ", block = True):
+        self.__root.view_sub_tree(f, block)
         
     def copy(self):
         return SymbolicRegression(self.__root)
+        
+    def set_root(self, root):
+        self.__root = root
         
     def get_root(self):
         return self.__root
@@ -98,34 +107,6 @@ class SymbolicRegression:
         
         return SymbolicRegression(recursive_construction(parsed_tree))
  
-    #Recalculate all leafs
-    def fix_leafs(self, leafs_list):
-        
-        def calculate_leafs_number(node, count):
-            if(issubclass(type(node), op.Leaf)): return count + 1 
-            else: return sum([calculate_leafs_number(child, count) for child in node.get_childrens()])  
-        
-        total_leafs = calculate_leafs_number(self.get_root(), 0)
-        total_proposed_leafs = len(leafs_list)
-        
-        if(total_leafs != total_proposed_leafs): raise ValueError(f"This tree has {total_leafs} in total, but it is proposed to fix {total_proposed_leafs}")
-        
-        def recursion(node, leafs_list):
-            
-            if(issubclass(type(node), op.Leaf)):
-                
-                node.set_name(leafs_list[0])
-                del leafs_list[0]
-                
-            else:
-                
-                for child in node.get_childrens():
-                    recursion(child, leafs_list)
-        
-        recursion(self.__root, list(leafs_list))
-        
-        return self
-
     def get_leafs(self):
         result = []
         
@@ -179,6 +160,13 @@ class SymbolicRegression:
         return result_function
        
     #Learn phase   
-    def learn(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, LearningAlgorithm, stop_criteria = lambda model: False, metric_functions = {}):
+    def learn(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, LearningAlgorithm, stop_criteria, metric_functions = {}):
 
-        return LearningAlgorithm(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, stop_criteria, metric_functions)
+        return LearningAlgorithm(self,
+                                 TR_inputs_dict,
+                                 TR_output,
+                                 VL_inputs_dict,
+                                 VL_output,
+                                 stop_criteria,
+                                 metric_functions)
+
