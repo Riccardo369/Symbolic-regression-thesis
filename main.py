@@ -53,7 +53,6 @@ metric_results = tree.learn({"X": X}, Y, {"X": X},
                                                 "MAE error": lambda model: MAE(model),
                                                 "MDL": lambda model: MDL(model)})
 
-
 #print(metric_results)
 
 
