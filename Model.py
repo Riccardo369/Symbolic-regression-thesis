@@ -21,30 +21,24 @@ class SymbolicRegression:
                     """, start="start", parser="lalr")
     
     def __init__(self, root):
+        self.set_root(root)
         
+    def get_root(self):
+        return self.__root
+    
+    def set_root(self, root):
+        if(not isinstance(root, op.OperationNode)): raise ValueError("Root must be a operation node")
         self.__root = root.copy_sub_tree()
     
     def __str__(self):
         return str(self.__root)
     
-    def __eq__(self, tree):
-        
-        if(not isinstance(tree, SymbolicRegression)): return False
-        
-        root1 = self.__root
-  
     def view(self, f = lambda x: " ", block = True):
         self.__root.view_sub_tree(f, block)
         
     def copy(self):
         return SymbolicRegression(self.__root)
         
-    def set_root(self, root):
-        self.__root = root
-        
-    def get_root(self):
-        return self.__root
-
     def save_state(self):
         
         def extract_weights(node, weights):
@@ -137,12 +131,13 @@ class SymbolicRegression:
         
         body = recursion(self.__root, leaf_labels)
             
-        return f"lambda {', '.join(leaf_labels)}: {body}"
+        return {"leaf_labels": leaf_labels, "body": body}
     
     #Generate the real forward function (to input, insert a dict, important is every parameter of generated function must be inside the input dict)
     def get_dict_function(self):
         
-        f = eval(self.get_string_function())
+        f = self.get_string_function()
+        f = eval(f"lambda {', '.join(f['leaf_labels'])}: {f['body']}")
         
         aviable_parameters = set(f.__code__.co_varnames[:f.__code__.co_argcount])
         

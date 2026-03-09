@@ -11,23 +11,6 @@ Y = 2*X + 1000
 
 tree = SymbolicRegression.string_to_tree("0")
 
-def MDL(model):
-    
-    def count_nodes(node):
-        if(not issubclass(type(node), op.Leaf)): return sum([count_nodes(x)+1 for x in node.get_childrens()])
-        else: return 1
-        
-    return ((Y.shape[0]*np.log(np.mean(np.abs(Y - model.get_root().get_forward_calculation_memory())))) + (count_nodes(model.get_root())*np.log(Y.shape[0]))) / 2  
-
-
-def MAE(model):
-    
-    root = model.get_root()
-    
-    root.forward_calculation_memory_sub_tree({"X": X}).backward_calculation_memory_sub_tree(Y)
-    result = np.mean(np.abs(root.get_forward_calculation_memory() - root.get_backward_calculation_memory()))
-    return result
-
 
 class Counter:
     
@@ -50,10 +33,10 @@ metric_results = tree.learn({"X": X}, Y, {"X": X},
                             lambda model, metrics: #counter() or
                             metrics["MAE error"][-1] == 0,
                             metric_functions = {"tree": lambda model: str(model.get_root()),
-                                                "MAE error": lambda model: MAE(model),
-                                                "MDL": lambda model: MDL(model)})
+                                                "MAE error": lambda model: er.MAE(Y, model.get_root().get_memory("forward")),
+                                                "MDL": lambda model: er.MDL(Y, model.get_root().get_memory("forward"), model)
+                                                }
+                            )
 
-#print(metric_results)
 
-
-#tree.view(f = lambda x: np.mean(np.abs(x.get_forward_calculation_memory() - x.get_backward_calculation_memory())))
+print(metric_results)
