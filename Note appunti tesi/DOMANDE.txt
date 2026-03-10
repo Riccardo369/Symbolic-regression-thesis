@@ -30,3 +30,8 @@ Questo serve per ridurre i tempi:
 
 - Prima scelta, riduci di provare tutte le operazioni, e per ogni famiglia provi l' ideale in costante rigida e variabile O(2 x N x (k / r)).
 - Seconda scelta, non provi tutte le operazioni O(N x (k - m)).
+
+DOMANDE DA FARE AI PROF:
+
+- Per la tecnica di vedere se c'è un caos od un pattern, si può mescolare a caso? Quella casualità rompe la coerenza del
+deterministico? O si può fare uno shuffling deterministico?

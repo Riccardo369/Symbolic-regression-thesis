@@ -1,0 +1,33 @@
+
+- Pearson's coefficient = Pearson (1895): Notes on regression and inheritance in the case of two variables: https://www.jstor.org/stable/pdf/115794.pdf?refreqid=fastly-default%3A20652360cd1b6cfa81c60136d964190f&ab_segments=&initiator=&acceptTC=1
+- Spearman's coefficient = Spearman (1904): The proof and measurement of association between two things: https://webspace.ship.edu/pgmarr/Geo441/Readings/Spearman%201904%20-%20The%20Proof%20and%20Measurement%20of%20Association%20between%20Two%20Things.pdf
+- Distance Correlation = Székely, G. J., Rizzo, M. L., & Bakirov, N. K. (2007): Measuring and testing dependence by correlation of distances: https://arxiv.org/pdf/0803.4101
+- Hoeffding's D Test = Hoeffding, W. (1948): A non-parametric test of independence: https://projecteuclid.org/journalArticle/Download?urlId=10.1214%2Faoms%2F1177730150
+- Necessità di fare il permutation shuffle = Good, P. (2005): Permutation, Parametric, and Bootstrap Tests of Hypotheses: https://ndl.ethernet.edu.et/bitstream/123456789/59512/1/32.pdf
+- Necessità di fare più prove con 4 indicatori:
+
+- * Reshef, D. N., et al. (2011): Detecting novel associations in large data sets: https://pmc.ncbi.nlm.nih.gov/articles/PMC3325791/pdf/nihms358982.pdf
+- * Josse, J., & Holmes, S. (2016): Measuring multivariate association and quantifying statistical significance: https://pmc.ncbi.nlm.nih.gov/articles/PMC5658146/pdf/nihms897071.pdf
+
+- Usare il 95% come probabilità di confidenza (iper - parametro fissato):
+
+- * Fisher, R.A. (1925) - Statistical Methods for Research Workers. (La genesi dello 0.05).
+
+- * Neyman, J. & Pearson, E.S. (1933) - On the Problem of the most Efficient Tests of Statistical Hypotheses. (La teoria dell'errore di tipo I e II).
+
+Soglie per considerare gli elementi accettati (iper - parametri fissati):
+
+- Pearson:  > 0.3
+- Spearmen: > 0.3
+- Distance corr: > 0.2
+- Hoeffding: > 0.1
+
+Soglie da dimostrare accettabili in base ai vari paper (le soglie non sono scritte, ma bisogna tirare fuori il ragionamento del perchè):
+
+- Per le soglie di Spearmen e Pearson del 0.3 Cohen, J. (1988), Statistical Power Analysis for the Behavioral Sciences
+- Per le soglie Distance corr e Hoeffding: di Simon, N., & Tibshirani, R. (2015). Comment on "Detecting Novel Associations in Large Data Sets"
+
+- Paper che dimostra che l' estensione foglia per foglia è corretta: Hastie, T. J., & Tibshirani, R. J. (1990): Generalized Additive Models. Chapman & Hall: https://pdodds.w3.uvm.edu/files/papers/others/1986/hastie1986a.pdf
+
+- Paper che dimostra che non è possibile estrarre dei pattern osservando solo l' output: Wolpert, D. H., & Macready, W. G. (1997): No Free Lunch Theorems for Optimization. IEEE Transactions on Evolutionary Computation: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=585893
+

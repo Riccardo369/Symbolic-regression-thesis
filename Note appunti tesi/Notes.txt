@@ -32,3 +32,21 @@ Essendo che al modificare una foglia si modifica anche gli input attesi delle al
 sull' estensione dell' albero, e permettere all' albero di scoprire nuovi sotto pattern che prima non c' erano. Se si estendessero 
 le foglie da sole, senza considerare le influenze tra loro, e verò, ci sarebbe più velocità (poichè sarebbe possibile la 
 parallelizzazione), ma ci sarebbe un ottimizzazione che si scollega dalla realtà.
+
+
+
+
+- MANCA:
+
+- Finire implementazione dominio personalizzato:
+
+- * Fai a scaletta dal ramo alla foglia, considerando il dominio del padre ed i forward degl' altri rami se necessario
+- * check_input_domain mantienilo, fai creazione di output domain, e trasferimento di output domain in un input domain 
+(funzione proprio) che ridarà il nuovo dominio modificato in base al nodo ed al forward dell' altro nodo se necessario.
+Il check sull' output si farà direttamente con il set stesso.
+
+- Gestire l' afflusso e la gestione delle operazioni se una famiglia perde tutti i suoi operatori
+
+
+
+

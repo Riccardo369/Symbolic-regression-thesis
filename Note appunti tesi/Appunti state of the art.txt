@@ -1,0 +1,62 @@
+DA PROVARE:
+
+- "MIC" PER LE CORRELAZIONI TRA LE VARIE VARIABILI
+- "Partial Distance Correlation"
+
+Si tiene in considerazione anche:
+
+- il conditional mutual information
+- La presenza di cluster può dimostrare che esiste una formula
+- Test di Hopkins per vedere se ci sono cluster
+- Entropia di permutazione
+
+Un altra strategia per capire se c' è un rumore od un pattern nascosto, mescolare gli output (come? A caso?)
+
+Verificare il come capire se un in un output ci sia un pattern od un solo rumore
+
+
+INDICATORI STATISTICHE
+
+Solo su output senza input
+
+è impossibile avere degl' indicatori senza input con solo output, se non parliamo di una serie temporale (che in quel caso gli input
+possono essere dedotti).
+
+Su output ed input
+
+Coefficiente di Pearson (correlazioni lineari)
+Coefficiente di Spearman (correlazioni monotone)
+Distance Correlation (dCor)
+Hoeffding's D Test
+
+MIC, computazionalmente lenta
+mutual information, usa la K-nn neighbour, lenta e non spiegamo manco il perchè
+maximal information coefficient, usa una griglia, ma è lento (perchè deve spostare i punti ?)
+
+
+
+
+Si prende una foglia e si calcola:
+
+- coefficiente di Pearson   correlazione lineare  [add, sub, mul, div]
+- coefficiente di Spearman  correlazione monotona [log, pow]
+- Distance Correlation      correlazione universale geometrica [sin, cos, abs, x^n con n % 2 = 0]
+- Hoeffding's D Test        correlazione non strutturale [if-then-else, step, floor, condizionali]
+
+
+Tra la Y ed ogni X, avendo così una griglia (k x 4) (k è il numero di feature). Faccio poi r shuffle random (con dei semi già scelti, 
+per mantenere il determinismo), e rifai il tutto per ogni shuffle così si ha un tensore a 3 dimensioni (k x 4 x r).Questo per ogni foglia.
+
+Lungo la terza dimensione (quella degli shuffle), si conta ogni cella della griglia (k x 4) quante volte il 
+valore sulla prima griglia è maggiore rispetto agl' altri casi shuffled. Per ogni foglia, si analizzano le situazioni solo con le variabili
+che hanno superato il conteggio stando sopra una certa soglia. Se una foglia non ha variabili che superano il test, allora si considera 
+non valida. Per decidere le vincite della variabile su quella metrica, si considera la percentuale di vincite, e si usa un iper-parametro, 
+e bisogna anche considerare se il valore originale delle metriche sia sopra un certo valore (altro iper-parametro, uno per ogni metrica).
+
+Per ordinare le foglie, si ordina con questo ordine di priorità (contando come test passati la somma di tutti i test passati per ogni
+variabile):
+
+- per conteggio massimo tra tutte le foglie che hanno superato il test.
+- per numero di variabili che hanno superato il test.
+- per media dei conteggi delle foglie che hanno superato il test.
+

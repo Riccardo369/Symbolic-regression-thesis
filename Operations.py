@@ -6,9 +6,11 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 
+import Domains as dm
+
 class OperationNode:
     
-    def __init__(self, channels, is_commutative, name = None):
+    def __init__(self, channels, is_commutative = False, name = None):
         
         if(type(channels) != int): raise ValueError(f"Channels number must be a int value, cannot be a {channels}")
         
@@ -59,9 +61,9 @@ class OperationNode:
         if(child in father.__childrens): raise ValueError(f"Father {father} has {child} in own childrens, so connection is useless")
         
         if(i >= father.__channels): raise ValueError(f"Cannot set a {i}-th channel in a node with {father.__channels} children for father")
-        if(father.__childrens[i] != None): raise ValueError("Father has already a child in {i}-th position")
+        if(father.__inputs[i] != None): raise ValueError("Father has already a child in {i}-th position")
         
-        father.__childrens[i] = child
+        father.__inputs[i] = child
         child.__father = father
 
     #GET PARAMETERS ZONE
@@ -130,6 +132,7 @@ class OperationNode:
         return True
     
     def check_input_domain(self, i, input):
+        if(i < 0 or i > self.__channels - 1): raise ValueError(f"Operation {type(self)} has only {self.__channels}, so i = {i} has no coherence (start count from 0)")
         return True
 
     def check_output_domain(self, output):
@@ -229,34 +232,18 @@ class Leaf(OperationNode):
     def backward_calculation(self):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
 
-class neg(OperationNode):
-    def __init__(self):
-        super().__init__(1, False)
-        
-    def forward_calculation(self):
-        return -self.get_childrens()[0].get_memory("forward")
-    
-    def backward_calculation(self):
-        return [-self.get_memory("backward")]
-    
-    def get_string_structure(self, x):
-        return f"-{x[0]}"
-
 class add(OperationNode):
     def __init__(self):
         super().__init__(2, True)
-        
-    def get_default_inputs(self):
-        return [0, 0]
-        
+ 
     def forward_calculation(self):
-        childrens = self.get_childrens()
-        return childrens[0].get_memory("forward") + childrens[1].get_memory("forward")
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        return inputs[0] + inputs[1]
     
     def backward_calculation(self):
-        childrens = self.get_childrens()
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward") 
-        return [output - childrens[1].get_memory("forward"), output - childrens[0].get_memory("forward")]
+        return [output - inputs[1], output - inputs[0]]
     
     def get_string_structure(self, x):
         return f"{x[0]} + {x[1]}"
@@ -264,18 +251,15 @@ class add(OperationNode):
 class sub(OperationNode):
     def __init__(self):
         super().__init__(2, False)
-        
-    def get_default_inputs(self):
-        return [0, 0]
-        
+
     def forward_calculation(self):
-        childrens = self.get_childrens()
-        return childrens[0].get_memory("forward") - childrens[1].get_memory("forward")
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        return inputs[0].get_memory("forward") - inputs[1].get_memory("forward")
     
     def backward_calculation(self):
-        childrens = self.get_childrens()
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward") 
-        return [output + childrens[1].get_memory("forward"), -output + childrens[0].get_memory("forward")]
+        return [output + inputs[1].get_memory("forward"), -output + inputs[0].get_memory("forward")]
         
     def get_string_structure(self, x):
         return f"{x[0]} - {x[1]}"
@@ -283,18 +267,15 @@ class sub(OperationNode):
 class mul(OperationNode):
     def __init__(self):
         super().__init__(2, True)
-        
-    def get_default_inputs(self):
-        return [1, 1]
-        
+
     def forward_calculation(self):
-        childrens = self.get_childrens()
-        return childrens[0].get_memory("forward") * childrens[1].get_memory("forward")
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        return inputs[0].get_memory("forward") * inputs[1].get_memory("forward")
     
     def backward_calculation(self):
-        childrens = self.get_childrens()
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward") 
-        return [output / childrens[1].get_memory("forward"), output / childrens[0].get_memory("forward")]
+        return [output / inputs[1].get_memory("forward"), output / inputs[0].get_memory("forward")]
 
     def get_string_structure(self, x):
         return f"{x[0]} * {x[1]}"
@@ -303,25 +284,54 @@ class div(OperationNode):
     def __init__(self):
         super().__init__(2, False)
         
-    def get_default_inputs(self):
-        return [1, 1]
-        
     def check_input_domain(self, i, input):
+        super().check_input_domain(i, input)
         if(i == 1): return np.all(input != 0)
         return True
     
     def forward_calculation(self):
-        childrens = self.get_childrens()
-        return childrens[0].get_memory("forward") / childrens[1].get_memory("forward")
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        return inputs[0].get_memory("forward") / inputs[1].get_memory("forward")
     
     def backward_calculation(self):
-        childrens = self.get_childrens()
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward") 
-        return [output * childrens[1].get_memory("forward"), childrens[0].get_memory("forward") / output]
+        return [output * inputs[1].get_memory("forward"), inputs[0].get_memory("forward") / output]
 
     def get_string_structure(self, x):
         return f"{x[0]} / {x[1]}"
+     
+class sin(OperationNode):
+    def __init__(self):
+        super().__init__(1)
+        
+    def check_output_domain(self, output):
+        return np.all(output >= -1 & output <= 1)
     
+    def forward_calculation(self):
+        return np.sin(self.get_childrens()[0].get_memory("forward"))
+    
+    def backward_calculation(self):
+        return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))]
+
+    def get_string_structure(self, x):
+        return f"np.sin({x[0]})"
+
+class cos(OperationNode):
+    def __init__(self):
+        super().__init__(1)
+        
+    def check_output_domain(self, output):
+        return np.all(output >= -1 & output <= 1)
+    
+    def forward_calculation(self):
+        return np.sin(self.get_childrens()[0].get_memory("forward"))
+    
+    def backward_calculation(self):
+        return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))]
+
+    def get_string_structure(self, x):
+        return f"np.cos({x[0]})"
 
 
 #MANCA DA FARE OPERAZIONI
@@ -330,20 +340,16 @@ class div(OperationNode):
 #log richiede log
 
 
-#neg
-#add
-#sub
-#mul
-#div
-#sqrt
-#sin
-#cos
-#tan
-#cot
-#sec
-#csc
-#Modulo
-#Valore assoluto
+#add       R        sposta
+#sub       R        sposta
+#mul       R        sposta
+#div       c2 != 0  sposta
+#exp       if 1/c2 % == 0 c1 >= 0 else R  taglia
+#log       c1 > 0 (argomento) and c2 > 1 (argomento)  taglia
+#sin       R                             
+#cos       R
+#tan       x != (pi / 2) + kn
+#Valore assoluto R
 
 
 

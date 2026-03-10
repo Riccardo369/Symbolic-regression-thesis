@@ -83,9 +83,18 @@ class AnalysisRamification(SymbolicRegressionLearning):
             if(not issubclass(oper, op.OperationNode)): raise ValueError(f"The operation {oper} is not a OperationNode type")
         
         self._operations = list(operations)
+    
+        
+    def __get_check_domain(self, node, child):
+        
+        i = node.get_childrens().index(child)
+        father = node.get_father()
+        
         
 
-    def extend(self, inputs_dict, output, f):
+    def extend(self, inputs_dict, node, f):
+        
+        output = node.get_memory("backward")
         
         #Choose in a greedy way a family of functions and a feature
         choices = []
@@ -116,7 +125,12 @@ class AnalysisRamification(SymbolicRegressionLearning):
         operations = list(filter(lambda x: x["family"] == choices[0]["family"], AnalysisRamification.__families))[0]["operations"]
             
         choices = []
-
+        
+        father = node.get_father()
+        
+        if(father == None): output_set_check = node.get_output_domain()
+        else: output_set_check = self.__get_check_domain(father, node)
+        
         #For each operations
         for oper in operations:
             
@@ -217,7 +231,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 return np.mean(np.abs(Y_atteso - Y_ottenuto))
             
             #Calculate extension
-            extension = self.extend(TR_inputs_dict, leaf["leaf"].get_memory("backward"), f)
+            extension = self.extend(TR_inputs_dict, leaf["leaf"], f)
 
             #Do the extension
             
