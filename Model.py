@@ -132,7 +132,7 @@ class SymbolicRegression:
         body = recursion(self.__root, leaf_labels)
             
         return {"leaf_labels": leaf_labels, "body": body}
-    
+     
     #Generate the real forward function (to input, insert a dict, important is every parameter of generated function must be inside the input dict)
     def get_dict_function(self):
         

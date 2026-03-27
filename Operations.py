@@ -1,6 +1,5 @@
 import numpy as np
 
-import matplotlib.pyplot as plt
 from graphviz import Digraph
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -61,9 +60,9 @@ class OperationNode:
         if(child in father.__childrens): raise ValueError(f"Father {father} has {child} in own childrens, so connection is useless")
         
         if(i >= father.__channels): raise ValueError(f"Cannot set a {i}-th channel in a node with {father.__channels} children for father")
-        if(father.__inputs[i] != None): raise ValueError("Father has already a child in {i}-th position")
+        if(father.__childrens[i] != None): raise ValueError("Father has already a child in {i}-th position")
         
-        father.__inputs[i] = child
+        father.__childrens[i] = child
         child.__father = father
 
     #GET PARAMETERS ZONE
@@ -127,6 +126,19 @@ class OperationNode:
         
         return self
 
+    #CLEAR MEMORY OPERATIONS
+    def clear_all_subtree_memory(self, memory_name):
+        
+        def recursion(node):
+            for child in node.get_childrens(): recursion(child)
+            if(type(node) == Leaf):
+                node.set_memory(memory_name, None)
+            else: node.set_memory(memory_name, None)
+                
+        recursion(self)
+        
+        return self
+    
     #CHECK OPERATION ZONE
     def __check_type_name(self, name):
         return True
@@ -247,23 +259,7 @@ class add(OperationNode):
     
     def get_string_structure(self, x):
         return f"{x[0]} + {x[1]}"
-      
-class sub(OperationNode):
-    def __init__(self):
-        super().__init__(2, False)
-
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return inputs[0].get_memory("forward") - inputs[1].get_memory("forward")
-    
-    def backward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        output = self.get_memory("backward") 
-        return [output + inputs[1].get_memory("forward"), -output + inputs[0].get_memory("forward")]
-        
-    def get_string_structure(self, x):
-        return f"{x[0]} - {x[1]}"
-    
+  
 class mul(OperationNode):
     def __init__(self):
         super().__init__(2, True)
@@ -279,28 +275,7 @@ class mul(OperationNode):
 
     def get_string_structure(self, x):
         return f"{x[0]} * {x[1]}"
-
-class div(OperationNode):
-    def __init__(self):
-        super().__init__(2, False)
-        
-    def check_input_domain(self, i, input):
-        super().check_input_domain(i, input)
-        if(i == 1): return np.all(input != 0)
-        return True
-    
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return inputs[0].get_memory("forward") / inputs[1].get_memory("forward")
-    
-    def backward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        output = self.get_memory("backward") 
-        return [output * inputs[1].get_memory("forward"), inputs[0].get_memory("forward") / output]
-
-    def get_string_structure(self, x):
-        return f"{x[0]} / {x[1]}"
-     
+   
 class sin(OperationNode):
     def __init__(self):
         super().__init__(1)
@@ -350,7 +325,6 @@ class cos(OperationNode):
 #cos       R
 #tan       x != (pi / 2) + kn
 #Valore assoluto R
-
 
 
 #MANCA IL CALCOLO INVERSO GENERALE (QUINDI CREARE CLASSI APPOSITE DI INSIEMI CHE GESTISCONO PIù SOLUZIONI CONTEMPORANEAMENTE)
