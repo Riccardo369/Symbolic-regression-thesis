@@ -6,6 +6,7 @@ from PIL import Image
 import io
 
 import Domains as dm
+import Exceptions as ex
 
 class OperationNode:
     
@@ -103,9 +104,8 @@ class OperationNode:
           
         def recursion(node):
             for child in node.get_childrens(): recursion(child)
-            if(type(node) == Leaf):
-                node.set_memory("forward", inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name())
-            else: node.set_memory("forward", node.forward_calculation())
+            if(type(node) == Leaf): node.set_memory("forward", inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name())
+            else:                   node.set_memory("forward", node.forward_calculation())
                 
         recursion(self)
         
@@ -259,22 +259,47 @@ class add(OperationNode):
     
     def get_string_structure(self, x):
         return f"{x[0]} + {x[1]}"
-  
+
 class mul(OperationNode):
     def __init__(self):
         super().__init__(2, True)
 
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return inputs[0].get_memory("forward") * inputs[1].get_memory("forward")
+        return inputs[0] * inputs[1]
     
     def backward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        output = self.get_memory("backward") 
-        return [output / inputs[1].get_memory("forward"), output / inputs[0].get_memory("forward")]
+        output = self.get_memory("backward")
+        
+        if(np.any(inputs[0] == 0)): raise ex.BackwardCalculationError("first input = 0 in some points")
+        if(np.any(inputs[1] == 0)): raise ex.BackwardCalculationError("first input = 1 in some points")
+        
+        return [output / inputs[1], output / inputs[0]]
 
     def get_string_structure(self, x):
         return f"{x[0]} * {x[1]}"
+
+class div(OperationNode):
+    def __init__(self):
+        super().__init__(2, True)
+
+    def forward_calculation(self):
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        denominator = inputs[1].get_memory("forward")
+        if(np.any(denominator == 0)): raise ex.ForwardCalculationError("Denominator = 0 in some points")
+        return inputs[0] / denominator
+    
+    def backward_calculation(self):
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        output = self.get_memory("backward")
+        denominator2 = inputs[0]
+        if(np.any(denominator2 == 0)): raise ex.BackwardCalculationError("Denominator = 0 in some points")
+        
+        return [output * inputs[1], output / denominator2]
+
+    def get_string_structure(self, x):
+        return f"{x[0]} / {x[1]}"
    
 class sin(OperationNode):
     def __init__(self):
@@ -287,7 +312,9 @@ class sin(OperationNode):
         return np.sin(self.get_childrens()[0].get_memory("forward"))
     
     def backward_calculation(self):
-        return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))]
+        real_output = self.get_memory("backward")
+        if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward sine")
+        return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
 
     def get_string_structure(self, x):
         return f"np.sin({x[0]})"
@@ -303,10 +330,13 @@ class cos(OperationNode):
         return np.sin(self.get_childrens()[0].get_memory("forward"))
     
     def backward_calculation(self):
-        return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))]
+        real_output = self.get_memory("backward")
+        if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward cosine")
+        return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
 
     def get_string_structure(self, x):
         return f"np.cos({x[0]})"
+
 
 
 #MANCA DA FARE OPERAZIONI

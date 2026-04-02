@@ -155,13 +155,12 @@ class SymbolicRegression:
         return result_function
        
     #Learn phase   
-    def learn(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, LearningAlgorithm, stop_criteria, metric_functions = {}):
+    def learn(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, LearningAlgorithm, metric_functions = {}):
 
         return LearningAlgorithm(self,
                                  TR_inputs_dict,
                                  TR_output,
                                  VL_inputs_dict,
                                  VL_output,
-                                 stop_criteria,
                                  metric_functions)
 
