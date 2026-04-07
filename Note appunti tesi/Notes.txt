@@ -34,19 +34,33 @@ le foglie da sole, senza considerare le influenze tra loro, e verò, ci sarebbe 
 parallelizzazione), ma ci sarebbe un ottimizzazione che si scollega dalla realtà.
 
 
+Per controllare dominio interno all' albero: Semplicemente, far partire i calcoli, e vedere se in radice forward e foglie 
+backward non ci siano NaN od inf, e vedere se niente va in errore, questo perchè: errore in forward, non si può fare per dominio, 
+errore in backward, non si può fare per come è strutturato l' algoritmo. In questo modo l' algoritmo è capace di fare delle 
+variazioni di valori senza fissarsi troppo sulle supposizioni (che possono causare lo scartare delle operazioni che magari erano 
+proprio quelle che servivano).
 
+Invece, ancor prima di provare i singoli nodi, faccio un check sugl inputs e sull output dell' operazione in sè.
+
+per gestire il fatto del dominio che può valere nel TR ma non nel VL, considero anche la VL per decidere le feature accettate 
+in un dominio, questo perchè il significato di VL dipende dalla struttura del modello (in questo caso, usare la VL solo per vedere 
+il modello migliore non ha senso, non è una NN, e questa symbolic regression ha una model selection spalmata lungo tutto 
+l' algoritmo di training).
+
+ 
 
 - MANCA:
 
-- Finire implementazione dominio personalizzato:
+- Aggiungere nuove operazioni e capire come migliorare l' euristica con gli indicatori (si può ottenere ogni operazione con una 
+strategia composta da indicatori ed operazioni con tempo costante)
 
-- * Fai a scaletta dal ramo alla foglia, considerando il dominio del padre ed i forward degl' altri rami se necessario
-- * check_input_domain mantienilo, fai creazione di output domain, e trasferimento di output domain in un input domain 
-(funzione proprio) che ridarà il nuovo dominio modificato in base al nodo ed al forward dell' altro nodo se necessario.
-Il check sull' output si farà direttamente con il set stesso.
+- Capire se bisogna aggiungere anche la versione in cui vai ad aggiungere (e togliere) anche ai nodi intermedi / radice
 
-- Gestire l' afflusso e la gestione delle operazioni se una famiglia perde tutti i suoi operatori
+- Capire se la situazione dei nodi intermedi / radice bisogna farla nel miscuglio delle foglie, o dopo le foglie come forma di 
+emergenza
+
+Se si fa come forma di emergenza, si risparmia tempo, ma potresti essere meno accurato
+Se si fa con le foglie, si spende più tempo, ma potresti essere più preciso
 
 
-
-
+Cosa dire ai prof: dove siamo arrivati, i primi test e l' idea da sviluppare prima di passare alla fase di comparazione

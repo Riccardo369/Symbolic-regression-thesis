@@ -7,12 +7,10 @@ from Model import SymbolicRegression
 import Operations as op
 import Errors as er
 
-X = np.array([x for x in range(1, 100, 1)], dtype = np.float64)
-Y = 2
+X = np.array([x for x in range(1, 10000, 1)], dtype = np.float64) / 100
+Y = np.cos(X)
 
 tree = SymbolicRegression.string_to_tree("0")
-
-
 
 metric_results = tree.learn({"X": X}, Y, {"X": X},
                             Y,

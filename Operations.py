@@ -10,6 +10,8 @@ import Exceptions as ex
 
 class OperationNode:
     
+    _tol = 1e-40
+    
     def __init__(self, channels, is_commutative = False, name = None):
         
         if(type(channels) != int): raise ValueError(f"Channels number must be a int value, cannot be a {channels}")
@@ -88,14 +90,24 @@ class OperationNode:
         value = self.__memories[memory_name]
         return value.copy() if isinstance(value, np.ndarray) else value
 
+    #Return all node of subtree
+    def get_all_subtree_nodes(self):
+        
+        def recursion(n):
+            result = [n]
+            for c in n.get_childrens(): result += recursion(c)
+            return result
+        
+        return recursion(self)
+
     #SET MEMORY ZONE
     def set_memory(self, memory_name, value):  
-        if(not isinstance(value, np.ndarray) and type(value) not in [float, int] and not isinstance(value, np.generic) and value != None): raise ValueError("Memory must contains only a numpy tensor or a number float / int")
+        if(not isinstance(value, np.ndarray) and type(value) not in [float, int] and not isinstance(value, np.generic) and value != None): raise ValueError(f"Memory must contains only a numpy tensor or a number float / int, not a {type(value)}")
         self.__memories[memory_name] = value.copy() if isinstance(value, np.ndarray) else value
         return self
     
     def set_name(self, name):        
-        if(not self.__check_type_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
+        if(not self._check_type_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
         self.__name = name
         return self
 
@@ -140,7 +152,7 @@ class OperationNode:
         return self
     
     #CHECK OPERATION ZONE
-    def __check_type_name(self, name):
+    def _check_type_name(self, name):
         return True
     
     def check_input_domain(self, i, input):
@@ -162,6 +174,11 @@ class OperationNode:
 
     #Calculate backward value. REQUIRE backward from father and forward from childrens
     def backward_calculation(self):
+        return NotImplemented
+
+    def best_constant(self, i):
+        if(self.__channels == 1): raise ValueError("This operations has 1 channel, it has no sense this function")
+        if(i > 2 or i < 0): raise ValueError(f"This operation has {self.__channels}, {i} has no sense")
         return NotImplemented
 
     #Copy all sub tree
@@ -232,7 +249,7 @@ class Leaf(OperationNode):
     def __init__(self, label):
         super().__init__(0, False, label)
     
-    def __check_type_name(self, name):
+    def _check_type_name(self, name):
         return type(name) in [str, int, float] or isinstance(name, np.generic)
     
     def is_variable(self):
@@ -259,6 +276,11 @@ class add(OperationNode):
     
     def get_string_structure(self, x):
         return f"{x[0]} + {x[1]}"
+    
+    def best_constant(self, i):
+        super().best_constant(i)
+        back = self.backward_calculation()
+        return np.mean(back[i])
 
 class mul(OperationNode):
     def __init__(self):
@@ -273,22 +295,31 @@ class mul(OperationNode):
         output = self.get_memory("backward")
         
         if(np.any(inputs[0] == 0)): raise ex.BackwardCalculationError("first input = 0 in some points")
-        if(np.any(inputs[1] == 0)): raise ex.BackwardCalculationError("first input = 1 in some points")
+        if(np.any(inputs[1] == 0)): raise ex.BackwardCalculationError("second input = 0 in some points")
         
         return [output / inputs[1], output / inputs[0]]
 
     def get_string_structure(self, x):
         return f"{x[0]} * {x[1]}"
+    
+    def best_constant(self, i):
+        super().best_constant(i)
+        back = self.backward_calculation()
+        return np.mean(back[i])
 
 class div(OperationNode):
     def __init__(self):
-        super().__init__(2, True)
+        super().__init__(2, False)
+        
+    def check_input_domain(self, i, output):
+        if(not (self._check_type_name(output) and type(output) != str)): return False
+        if(i == 1 and type(output) in [float, int]): return np.abs(output) >= self._tol
+        elif(i == 1): return np.all(np.abs(output) >= self._tol)
 
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        denominator = inputs[1].get_memory("forward")
-        if(np.any(denominator == 0)): raise ex.ForwardCalculationError("Denominator = 0 in some points")
-        return inputs[0] / denominator
+        if(np.any(inputs[1] == 0)): raise ex.ForwardCalculationError("Denominator = 0 in some points")
+        return inputs[0] / inputs[1]
     
     def backward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
@@ -300,13 +331,20 @@ class div(OperationNode):
 
     def get_string_structure(self, x):
         return f"{x[0]} / {x[1]}"
+    
+    def best_constant(self, i):
+        super().best_constant(i)
+        back = self.backward_calculation()
+        return np.mean(back[i])
    
 class sin(OperationNode):
     def __init__(self):
         super().__init__(1)
         
     def check_output_domain(self, output):
-        return np.all(output >= -1 & output <= 1)
+        if(not (self._check_type_name(output) and type(output) != str)): return False
+        if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
+        else: return np.all(np.abs(output) <= 1 + self._tol)
     
     def forward_calculation(self):
         return np.sin(self.get_childrens()[0].get_memory("forward"))
@@ -324,10 +362,12 @@ class cos(OperationNode):
         super().__init__(1)
         
     def check_output_domain(self, output):
-        return np.all(output >= -1 & output <= 1)
+        if(not (self._check_type_name(output) and type(output) != str)): return False
+        if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
+        else: return np.all(np.abs(output) <= 1 + self._tol)
     
     def forward_calculation(self):
-        return np.sin(self.get_childrens()[0].get_memory("forward"))
+        return np.cos(self.get_childrens()[0].get_memory("forward"))
     
     def backward_calculation(self):
         real_output = self.get_memory("backward")
@@ -360,3 +400,7 @@ class cos(OperationNode):
 #MANCA IL CALCOLO INVERSO GENERALE (QUINDI CREARE CLASSI APPOSITE DI INSIEMI CHE GESTISCONO PIù SOLUZIONI CONTEMPORANEAMENTE)
 #PER FUNZIONI SURRIETTIVE
 #MANCA LA GESTIONE DEL DOMINIO
+
+#exp
+#log
+#tan

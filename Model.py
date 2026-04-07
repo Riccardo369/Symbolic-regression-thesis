@@ -27,7 +27,7 @@ class SymbolicRegression:
         return self.__root
     
     def set_root(self, root):
-        if(not isinstance(root, op.OperationNode)): raise ValueError("Root must be a operation node")
+        if(not isinstance(root, op.OperationNode)): raise ValueError(f"Root must be a operation node, not a {type(root)}")
         self.__root = root.copy_sub_tree()
     
     def __str__(self):
@@ -114,7 +114,7 @@ class SymbolicRegression:
                     
         return result
     
-    #Generate the forward function in string form
+    #Generate the forward function in string form and the labels leafs list
     def get_string_function(self):
         
         leaf_labels = []

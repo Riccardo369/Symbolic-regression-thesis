@@ -10,12 +10,24 @@ def spearman_correlation(x, y):
     return spearmanr(x, y)[0]
 
 #For monoton and sinusoidal correlation
-def chatterjee_correlation(x, y):
+import numpy as np
+from scipy.stats import rankdata
 
-    n = len(x)
+def chatterjee_correlation(x, y):
     
-    y_ordered = y[np.argsort(x)]
-    r = rankdata(y_ordered, method='ordinal')
-    gr_r = rankdata(y_ordered, method='max')
+    n = np.float64(len(x))
+    if n < 2: return 0.0
     
-    return 1 - (n * np.sum(np.abs(np.diff(r)))) / (2 * np.sum(gr_r * (n - gr_r)))
+    idx = np.argsort(x)
+    y_ordered = y[idx]
+    
+    r = rankdata(y_ordered, method='ordinal').astype(np.float64)
+    gr_r = rankdata(y_ordered, method='max').astype(np.float64)
+    
+    sum_abs_diff = np.sum(np.abs(np.diff(r)))
+    
+    denominator_term = np.sum(gr_r * (n - gr_r))
+    
+    if(denominator_term == 0): return 0.0
+    
+    return 1 - (sum_abs_diff / ((2.0 / n) * denominator_term))
