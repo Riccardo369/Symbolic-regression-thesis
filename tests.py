@@ -18,7 +18,7 @@ test_functions = ["3",
                   "2**X + np.cos(X)"
                   ]
 
-X = np.array([x for x in range(1, 100000, 1)], dtype = np.float64) / 100
+X = np.array([x for x in range(1, 1000, 1)], dtype = np.float64) / 100
 
 
 for test in test_functions:
@@ -44,7 +44,7 @@ for test in test_functions:
     
     if(show_plot):
         
-        inferred_Y = model.get_dict_function()({"X": X})
+        inferred_Y = model.get_calculation_function()({"X": X})
         
         if(type(Y) in [int, float]): Y = np.array([Y] * len(X))
         if(type(inferred_Y) in [int, float]): inferred_Y = np.array([inferred_Y] * len(X))
@@ -59,7 +59,7 @@ for test in test_functions:
         ax.tick_params(axis='y', colors='white')
 
         plt.plot(X, Y, color = "red", label = f"ideal: {test}")
-        plt.plot(X, inferred_Y, color = "blue", label = f"inferred: {model.get_string_function()['body']}")
+        plt.plot(X, inferred_Y, color = "blue", label = f"inferred: {model.get_root().get_string_calculation_function()['body']}")
 
         plt.legend()
         plt.show(block = False)

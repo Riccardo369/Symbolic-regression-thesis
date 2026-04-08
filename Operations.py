@@ -36,7 +36,7 @@ class OperationNode:
         self.__memories["backward"] = None
 
     def __str__(self):
-        if(isinstance(self, Leaf)): return self.__name if type(self.__name) == "str" else str(self.__name)
+        if(isinstance(self, Leaf)): return self._name if type(self._name) == "str" else str(self._name)
         return f"{self.__class__.__name__}({', '.join([str(x) for x in self.__childrens])})"
        
     #Delete a connection
@@ -76,7 +76,7 @@ class OperationNode:
         return self.__channels
         
     def get_name(self):
-        return self.__name
+        return self._name
         
     def get_father(self):
         return self.__father
@@ -108,7 +108,7 @@ class OperationNode:
     
     def set_name(self, name):        
         if(not self._check_type_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
-        self.__name = name
+        self._name = name
         return self
 
     #CALCULATION AND AUTOMATICALLY SET MEMORY ALL SUB TREE ZONE
@@ -136,8 +136,8 @@ class OperationNode:
 
         recursion(self)
         
-        return self
-
+        return self 
+    
     #CLEAR MEMORY OPERATIONS
     def clear_all_subtree_memory(self, memory_name):
         
@@ -163,10 +163,57 @@ class OperationNode:
         return True
     
     #NODE METHODS (valid only for the node, not for the all sub tree). For correct functions, the require memory must be calculated already
+
+    #Get the string function of all subtree
+    def get_string_calculation_function(self):
+        
+        leaf_labels = []
+        
+        def recursion(node, leaf_labels):
+            if(issubclass(type(node), Leaf)):
+                leaf_label = node.get_name()
+                if(leaf_label not in leaf_labels):
+                    try: float(leaf_label)
+                    except: leaf_labels.append(leaf_label)
+                return leaf_label
+            
+            return f"({node.get_string_calculation_structure([recursion(child, leaf_labels) for child in node.get_childrens()])})"
+        
+        body = recursion(self, leaf_labels)
     
+        return {"leaf_labels": leaf_labels, "body": body}
+    
+    #Get the all deratives string function of all subtree
+    def get_strings_gradient_subtree(self, variable_list):
+        
+        def recursion(node, x):
+
+            extraction = [recursion(c, x) for c in node.get_childrens()]
+            
+            str_derative = [x[0] for x in extraction]
+            exists = [x[1] for x in extraction]
+            
+            return node.get_string_derative_structure(str_derative, exists, x)
+        
+        functions = []
+        
+        for x in variable_list:
+            
+            f = recursion(self, x)[0]
+            if(f == None): f = "0"
+            
+            functions.append(f)
+        
+        return functions
+        
     #Get the operation in string form 
-    def get_string_structure(self, x):
+    def get_string_calculation_structure(self, x):
         return NotImplemented
+
+    #Get the derative operation in string form (for x feature)
+    def get_string_derative_structure(self, sub_strings, x):
+        if(len(sub_strings) != self.__channels): raise ValueError(f"The derative sub string {len(sub_strings)} must be equals to channel's number {self.__channels}")
+        return NotImplemented 
 
     #Calculate forward value. REQUIRE forwards from childrens
     def forward_calculation(self):
@@ -184,7 +231,7 @@ class OperationNode:
     #Copy all sub tree
     def copy_sub_tree(self):
         
-        result = self.__class__(self.__name) if(self.__class__.__name__ == "Leaf") else self.__class__()
+        result = self.__class__(self._name) if(self.__class__.__name__ == "Leaf") else self.__class__()
         
         result.__childrens = [None for _ in self.__childrens]
         
@@ -260,6 +307,13 @@ class Leaf(OperationNode):
     
     def backward_calculation(self):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
+    
+    def get_string_derative_structure(self, sub_strings, exists, x):
+        
+        super().get_string_derative_structure(sub_strings, x)
+        
+        if(x != self._name): return None, False
+        else: return x, True
 
 class add(OperationNode):
     def __init__(self):
@@ -274,13 +328,55 @@ class add(OperationNode):
         output = self.get_memory("backward") 
         return [output - inputs[1], output - inputs[0]]
     
-    def get_string_structure(self, x):
+    def get_string_calculation_structure(self, x):
         return f"{x[0]} + {x[1]}"
     
+    def get_string_derative_structure(self, sub_strings, exists, x):
+        
+        super().get_string_derative_structure(sub_strings, x)
+        
+        if(not exists[0] and not exists[1]): return None, False
+        if(    exists[0] and not exists[1]): return sub_strings[0], True
+        if(not exists[0] and     exists[1]): return sub_strings[1], False
+        if(    exists[0] and     exists[1]): return f"add({sub_strings[0]}, {sub_strings[1]})", False
+
     def best_constant(self, i):
         super().best_constant(i)
         back = self.backward_calculation()
         return np.mean(back[i])
+
+
+class sub(OperationNode):
+    def __init__(self):
+        super().__init__(2, True)
+ 
+    def forward_calculation(self):
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        return inputs[0] - inputs[1]
+    
+    def backward_calculation(self):
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        output = self.get_memory("backward") 
+        return [inputs[1] + output, inputs[0] - output]
+    
+    def get_string_calculation_structure(self, x):
+        return f"{x[0]} - {x[1]}"
+    
+    def get_string_derative_structure(self, sub_strings, exists, x):
+        
+        super().get_string_derative_structure(sub_strings, x)
+        
+        if(not exists[0] and not exists[1]): return None, False
+        if(    exists[0] and not exists[1]): return sub_strings[0], True
+        if(not exists[0] and     exists[1]): return f"sub(0, {sub_strings[1]})", False
+        if(    exists[0] and     exists[1]): return f"sub({sub_strings[0]}, {sub_strings[1]})", False
+
+    def best_constant(self, i):
+        super().best_constant(i)
+        back = self.backward_calculation()
+        return np.mean(back[i])
+
+
 
 class mul(OperationNode):
     def __init__(self):
@@ -299,8 +395,19 @@ class mul(OperationNode):
         
         return [output / inputs[1], output / inputs[0]]
 
-    def get_string_structure(self, x):
+    def get_string_calculation_structure(self, x):
         return f"{x[0]} * {x[1]}"
+    
+    def get_string_derative_structure(self, sub_strings, exists, x):
+        
+        super().get_string_derative_structure(sub_strings, x)
+        
+        str_function = [str(x) for x in self.get_childrens()]
+        
+        if(not exists[0] and not exists[1]): return None, False
+        if(    exists[0] and not exists[1]): return f"mul({sub_strings[0]}, {str_function[1]})", True
+        if(not exists[0] and     exists[1]): return f"mul({sub_strings[1]}, {str_function[0]})", True
+        if(    exists[0] and     exists[1]): return f"add(mul({sub_strings[0]}, {str_function[1]}), mul({sub_strings[1]}, {str_function[0]}))", True
     
     def best_constant(self, i):
         super().best_constant(i)
@@ -329,8 +436,19 @@ class div(OperationNode):
         
         return [output * inputs[1], output / denominator2]
 
-    def get_string_structure(self, x):
+    def get_string_calculation_structure(self, x):
         return f"{x[0]} / {x[1]}"
+    
+    def get_string_derative_structure(self, sub_strings, exists, x):
+        
+        super().get_string_derative_structure(sub_strings, x)
+        
+        str_function = [str(x) for x in self.get_childrens()]
+        
+        if(not exists[0] and not exists[1]): return None, False
+        if(    exists[0] and not exists[1]): return f"div({sub_strings[0]}, {str_function[1]})", True
+        if(not exists[0] and     exists[1]): return f"div(mul(sub(0, {str_function[0]}), {sub_strings[1]}), mul({sub_strings[1]}, {sub_strings[1]}))", True
+        if(    exists[0] and     exists[1]): return f"div(sub(mul({sub_strings[0]}, {str_function[1]}), mul({str_function[0]}, {sub_strings[1]})), mul({str_function[1]}, {str_function[1]}))", True
     
     def best_constant(self, i):
         super().best_constant(i)
@@ -354,8 +472,17 @@ class sin(OperationNode):
         if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward sine")
         return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
 
-    def get_string_structure(self, x):
+    def get_string_calculation_structure(self, x):
         return f"np.sin({x[0]})"
+    
+    def get_string_derative_structure(self, sub_strings, exists, x):
+        
+        super().get_string_derative_structure(sub_strings, x)
+        
+        str_function = [str(x) for x in self.get_childrens()]
+        
+        if(not exists[0]): return None, False
+        if(    exists[0]): return f"mul(cos({str_function[0]}), {sub_strings[0]})", True
 
 class cos(OperationNode):
     def __init__(self):
@@ -374,9 +501,17 @@ class cos(OperationNode):
         if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward cosine")
         return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
 
-    def get_string_structure(self, x):
+    def get_string_calculation_structure(self, x):
         return f"np.cos({x[0]})"
-
+    
+    def get_string_derative_structure(self, sub_strings, exists, x):
+        
+        super().get_string_derative_structure(sub_strings, x)
+        
+        str_function = [str(x) for x in self.get_childrens()]
+        
+        if(not exists[0]): return None, False
+        if(    exists[0]): return f"mul(sub(0, sin({str_function[0]})), {sub_strings[0]})", True
 
 
 #MANCA DA FARE OPERAZIONI

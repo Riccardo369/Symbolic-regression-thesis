@@ -113,30 +113,11 @@ class SymbolicRegression:
         recursion(self.__root, result)
                     
         return result
-    
-    #Generate the forward function in string form and the labels leafs list
-    def get_string_function(self):
-        
-        leaf_labels = []
-        
-        def recursion(node, leaf_labels):
-            if(issubclass(type(node), op.Leaf)):
-                leaf_label = node.get_name()
-                if(leaf_label not in leaf_labels):
-                    try: float(leaf_label)
-                    except: leaf_labels.append(leaf_label)
-                return leaf_label
-            
-            return f"({node.get_string_structure([recursion(child, leaf_labels) for child in node.get_childrens()])})"
-        
-        body = recursion(self.__root, leaf_labels)
-            
-        return {"leaf_labels": leaf_labels, "body": body}
-     
+          
     #Generate the real forward function (to input, insert a dict, important is every parameter of generated function must be inside the input dict)
-    def get_dict_function(self):
+    def get_calculation_function(self):
         
-        f = self.get_string_function()
+        f = self.__root.get_string_calculation_function()
         f = eval(f"lambda {', '.join(f['leaf_labels'])}: {f['body']}")
         
         aviable_parameters = set(f.__code__.co_varnames[:f.__code__.co_argcount])
@@ -153,7 +134,57 @@ class SymbolicRegression:
             return f(**{key: inputs_dict[key] for key in aviable_parameters})
         
         return result_function
-       
+
+    #Generate the gradient of model
+    def get_gradient_function(self, variable_list):
+        
+        gradient_lambdas = []
+        
+        for f_str in self.__root.get_strings_gradient_subtree(variable_list):
+            body = SymbolicRegression.string_to_tree(f_str).get_root().get_string_calculation_function()['body']
+            gradient_lambdas.append(eval(f"lambda {', '.join(variable_list)}: {body}"))
+
+        
+        return lambda inputs_dict: np.stack([
+            np.broadcast_to(f(**{v: inputs_dict[v] for v in variable_list}), max([len(x) for x in inputs_dict.values()])) 
+            for f in gradient_lambdas])
+
+    #Generate the hessian of model
+    def get_hessian_function(self, variable_list):
+        
+        n = len(variable_list)
+        hessian_lambdas = [[None for _ in range(n)] for _ in range(n)]
+        
+        derivates_first_level = self.__root.get_strings_gradient_subtree(variable_list)
+        
+        for i in range(n):
+            current_first_deriv_tree = SymbolicRegression.string_to_tree(derivates_first_level[i])
+            derivates_second_level = current_first_deriv_tree.get_root().get_strings_gradient_subtree(variable_list)
+            
+            for j in range(n):
+                body = SymbolicRegression.string_to_tree(derivates_second_level[j]).get_root().get_string_calculation_function()['body']
+                hessian_lambdas[i][j] = eval(f"lambda {', '.join(variable_list)}: {body}")
+        
+        def hessian_execution(inputs_dict):
+            
+            clean_inputs = {v: inputs_dict[v] for v in variable_list}
+            # Prendiamo la lunghezza del primo array nel dizionario per sapere quanti campioni abbiamo
+            n_samples = len(next(iter(inputs_dict.values())))
+            n = len(variable_list)
+            
+            results = []
+            for i in range(n):
+                for j in range(n):
+                    res = hessian_lambdas[i][j](**clean_inputs)
+                    # Forziamo il risultato a essere un array di n_samples
+                    results.append(np.broadcast_to(res, (n_samples,)))
+            
+            # Stack e reshape finale
+            return np.stack(results).reshape(n, n, n_samples)
+        
+        return hessian_execution
+        
+    
     #Learn phase   
     def learn(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, LearningAlgorithm, metric_functions = {}):
 
@@ -163,4 +194,5 @@ class SymbolicRegression:
                                  VL_inputs_dict,
                                  VL_output,
                                  metric_functions)
+
 

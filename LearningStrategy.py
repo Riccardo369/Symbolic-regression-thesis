@@ -50,11 +50,15 @@ class SymbolicRegressionLearning:
 
 
 
-
-
-
-
 class AnalysisRamification(SymbolicRegressionLearning):
+    
+    
+    class GradPoint:
+        
+        def __init__(self, X, y):
+            self.X = X
+            self.y = y
+            self.X_grad = [None for _ in range(len(X))]
     
     def __init__(self, operations):
         super().__init__()
@@ -114,7 +118,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
      #Process of adding the candidates considering 
     
     #Process of adding the candidates
-    def __process_2_input_leaf(self, i, choices, local_output, childrens, oper_node, node1, node2):
+    def __process_2_input_node(self, i, choices, local_output, childrens, oper_node, node1, node2):
  
         #If domain si not valid in first or second inputs, stop to process
         if((not oper_node.check_input_domain(i, node1.get_memory("forward"))) or 
@@ -217,10 +221,10 @@ class AnalysisRamification(SymbolicRegressionLearning):
                             f2 = op.Leaf(feature2)
                             f2.set_memory("forward", TR_inputs_dict[feature2])
                             
-                            self.__process_2_input_leaf(0, choices, node.get_memory("backward"), childrens, oper_node, copy_original_node, f2)
+                            self.__process_2_input_node(0, choices, node.get_memory("backward"), childrens, oper_node, copy_original_node, f2)
                 
                             if(not oper_node.is_commutative()):
-                                self.__process_2_input_leaf(1, choices, node.get_memory("backward"), childrens, oper_node, copy_original_node, f2)
+                                self.__process_2_input_node(1, choices, node.get_memory("backward"), childrens, oper_node, copy_original_node, f2)
                     
             else:
                 
@@ -242,14 +246,18 @@ class AnalysisRamification(SymbolicRegressionLearning):
                         f2 = op.Leaf(feature2)
                         f2.set_memory("forward", TR_inputs_dict[feature2])
                         
-                        self.__process_2_input_leaf(0, choices, node.get_memory("backward"), childrens, oper_node, f1, f2)
+                        self.__process_2_input_node(0, choices, node.get_memory("backward"), childrens, oper_node, f1, f2)
                         
                         if(not oper_node.is_commutative()):
-                            self.__process_2_input_leaf(1, choices, node.get_memory("backward"), childrens, oper_node, f1, f2)
-                        
+                            self.__process_2_input_node(1, choices, node.get_memory("backward"), childrens, oper_node, f1, f2)            
 
         #For each candidates, calculate the check domain and the error (in TR and VL set)
         choices = [{"tree": x} for x in choices]
+
+        print("Enter node", node, operations)
+        
+        print("Phase 1")
+        for i in choices: print(i)
         
         original_node = node
         
@@ -288,9 +296,15 @@ class AnalysisRamification(SymbolicRegressionLearning):
             
             c["TR_error_delta"] = original_TR_error - c["TR_error_delta"]
             c["VL_error_delta"] = original_VL_error - c["VL_error_delta"]
+            
+        print("Phase 2")
+        for i in choices: print(i)
 
         #In extension, delete all extension that increase TR or VL
         choices = [x for x in choices if x["TR_error_delta"] >= 0 and x["VL_error_delta"] > 0]
+        
+        print("Phase 3")
+        for i in choices: print(i)
 
         #If there is no valid extension
         if(len(choices) == 0): return None
@@ -353,6 +367,8 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 operations = [x for x in operations if x not in operations_used["operations"]]
                 operations_used = [x for x in operations + operations_used["operations"] if x not in operations_used["operations"]]
                 
+            
+                
             #Calculate the best extension   
             result_extension = self.__extend(TR_inputs_dict,
                                              TR_output,
@@ -367,6 +383,8 @@ class AnalysisRamification(SymbolicRegressionLearning):
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
             
             if(result_extension != None): node_to_replace = choices[0]["node"]
+            
+            print("result_extension: ", result_extension)
             
             #Delete the used choice      
             del choices[0]
@@ -443,7 +461,49 @@ class AnalysisRamification(SymbolicRegressionLearning):
 
         return True
 
+    #Estimate gradient taking a dataset of points
+    def estimate_gradient(inputs_dict, output):
+        
+        def incremental(sp, r1, r2, i):
+            delta_y = sp[r2].y - sp[r1].y
+            delta_x =  sp[r2].X[i] - sp[r1].X[i]
+            return delta_y / delta_x  if np.abs(delta_x) >= 1e-40 else 0
+        
+        points = [AnalysisRamification.GradPoint([inputs_dict[k][i] for k in inputs_dict.keys()], output[i]) for i in range(len(output))]
+        
+        for i in range(len(inputs_dict.keys())):
+            
+            #Order point considering the i dimension
+            sp = sorted(points, key = lambda x: x.X[i])
+            
+            #For each point
+            for r in range(len(sp)):
+                
+                if(r != 0):           left =  incremental(sp, r, r-1, i)
+                if(r != len(sp) - 1): right = incremental(sp, r+1, r, i)
+                
+                #If point is the first of dimension
+                if(r == 0): sp[r].X_grad[i] = right
+                  
+                #If point is the last of dimensione  
+                elif(r == len(sp) - 1): sp[r].X_grad[i] = left
 
+                #If point is in the midterm
+                else: sp[r].X_grad[i] = (left + right) / 2
+        
+        
+        return np.array([x.X_grad for x in points])
+    
+    def estimate_hessian(inputs_dict, output):
+        
+        hessian = []
+        
+        for d in AnalysisRamification.estimate_gradient(inputs_dict, output).T:
+            
+            hessian.append(AnalysisRamification.estimate_gradient(inputs_dict, d))
+            
+        return np.array(hessian)
+        
     #TR_inputs_dict: numpy array's dict
     #VL_inputs_dict: numpy array's dict
     #TR_output: constant or numpy array
@@ -494,7 +554,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
             #Do the extension phase (bring the model to overfitting direction)
             while(self.__extension_phase(TR_inputs_dict, VL_inputs_dict, TR_output, VL_output)):
                             
-                print(f"Extension phase, iteration {i+1} {'-'*50}")
+                print(f"Extension phase, iteration {i+1} done {'-'*50}")
                 self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 self.checkpoint_metrics()
                 i += 1
@@ -513,7 +573,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
             #Do the pruning phase (bring the model to underfitting direction)
             while(self.__pruning_phase(TR_inputs_dict, VL_inputs_dict, TR_output, VL_output)): 
                 
-                print(f"Pruning phase, iteration {i+1} {'-'*50}")
+                print(f"Pruning phase, iteration {i+1} done {'-'*50}")
                 self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 self.checkpoint_metrics()
                 i += 1
@@ -528,3 +588,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
         self._model.get_root().clear_all_subtree_memory("forward").clear_all_subtree_memory("backward")
         
         print("Model prepared to use!")
+        
+        
+        
