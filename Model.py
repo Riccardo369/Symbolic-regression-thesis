@@ -3,6 +3,8 @@ import lark
 import Operations as op
 import matplotlib.pyplot as plt
 
+import Exceptions as ex
+
 class SymbolicRegression:
     
     __compiler = lark.Lark(f"""
@@ -22,6 +24,8 @@ class SymbolicRegression:
     
     def __init__(self, root):
         self.set_root(root)
+        
+        self.reduce_inefficient_constant_nodes()
         
     def get_root(self):
         return self.__root
@@ -168,7 +172,6 @@ class SymbolicRegression:
         def hessian_execution(inputs_dict):
             
             clean_inputs = {v: inputs_dict[v] for v in variable_list}
-            # Prendiamo la lunghezza del primo array nel dizionario per sapere quanti campioni abbiamo
             n_samples = len(next(iter(inputs_dict.values())))
             n = len(variable_list)
             
@@ -176,15 +179,52 @@ class SymbolicRegression:
             for i in range(n):
                 for j in range(n):
                     res = hessian_lambdas[i][j](**clean_inputs)
-                    # Forziamo il risultato a essere un array di n_samples
                     results.append(np.broadcast_to(res, (n_samples,)))
             
             # Stack e reshape finale
             return np.stack(results).reshape(n, n, n_samples)
         
         return hessian_execution
+     
+    #Simplify the tree, considering to delete all nodes that can be solved, because all subtree is a simply constant
+    def reduce_inefficient_constant_nodes(self):
         
-    
+        def recursion(node):
+            
+            #If this node is a leaf, return
+            if(isinstance(node, op.Leaf)):
+                if(node.is_constant()): return node.get_name()
+                else:                   return None
+            
+            #Extract values from all childrens
+            extraction = [recursion(c) for c in node.get_childrens()]
+            
+            if(None in extraction): return None
+            
+            #If every child return a value (is a subtree constant)
+            else:
+                
+                try: value = node.forward_calculation_memory_sub_tree({}).get_memory("forward")
+                except ex.ForwardCalculationError: raise ValueError("It is not possible to do the reduction, causes the error domain between the nodes")
+                
+                father = node.get_father()
+                
+                #If this node has no father (is a root)
+                if(father == None): self.__root = op.Leaf(value)
+                    
+                else:
+                    
+                    i = father.get_childrens().index(node)
+                    
+                    op.OperationNode.free_connection(father, node)
+                    op.OperationNode.new_connection(father, op.Leaf(value), i)
+                    
+                return value
+        
+        recursion(self.__root)
+        
+        return self
+
     #Learn phase   
     def learn(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, LearningAlgorithm, metric_functions = {}):
 

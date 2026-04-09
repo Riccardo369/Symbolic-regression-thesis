@@ -51,8 +51,7 @@ class SymbolicRegressionLearning:
 
 
 class AnalysisRamification(SymbolicRegressionLearning):
-    
-    
+
     class GradPoint:
         
         def __init__(self, X, y):

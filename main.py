@@ -10,7 +10,7 @@ import Errors as er
 X = np.array([x for x in range(1, 1000, 1)], dtype = np.float64) / 10
 Y = np.cos(X)
 
-tree = SymbolicRegression.string_to_tree("0")
+#tree = SymbolicRegression.string_to_tree("0")
 
 #metric_results = tree.learn({"X": X}, Y, {"X": X},
 #                            Y,
@@ -25,32 +25,41 @@ tree = SymbolicRegression.string_to_tree("0")
 
 #print(metric_results)
 
+#tree = SymbolicRegression.string_to_tree("add(cos(X), sin(3))")
+#tree = SymbolicRegression.string_to_tree("div(1, 2)")
+tree = SymbolicRegression.string_to_tree("mul(2, 40)")
 
+#tree = SymbolicRegression.string_to_tree("cos(X)")
+#gradient = ls.AnalysisRamification.estimate_gradient({"X": X}, Y)
+#hessian = ls.AnalysisRamification.estimate_hessian({"X": X}, Y)
+real_gradient = tree.get_gradient_function(["X"])({"X": X})
+#real_hessian = tree.get_hessian_function(["X"])({"X": X})
 
-gradient = ls.AnalysisRamification.estimate_gradient({"X": X}, Y)
-hessian = ls.AnalysisRamification.estimate_hessian({"X": X}, Y)
-
-fig = plt.figure(facecolor='black')
-ax = plt.axes()
-
-ax.set_facecolor('black')
-ax.spines['bottom'].set_color('white')
-ax.spines['left'].set_color('white')
-ax.tick_params(axis='x', colors='white')
-ax.tick_params(axis='y', colors='white')
-
-print("function: ", Y.shape)
-print("gradient: ", gradient.shape)
-print("hessian: ", hessian.shape)
-      
-plt.plot(X, Y, color = "red", label = f"function")
-plt.plot(X, gradient, color = "blue", label = f"inferred gradient")
-plt.plot(X, hessian.squeeze(0).squeeze(1), color = "green", label = f"inferred hessian")
-
-plt.legend()
-plt.show()
-
-
+#fig = plt.figure(facecolor='black')
+#ax = plt.axes()
+#
+#ax.set_facecolor('black')
+#ax.spines['bottom'].set_color('white')
+#ax.spines['left'].set_color('white')
+#ax.tick_params(axis='x', colors='white')
+#ax.tick_params(axis='y', colors='white')
+#
+#print("function: ", Y.shape)
+#print("gradient: ", gradient.shape)
+#print("hessian: ", hessian.shape)
+#print("real gradient: ", real_gradient.shape)
+#print("real hessian: ", real_hessian.shape)
+#
+#      
+#plt.plot(X, Y, color = "red", label = f"function")
+#plt.plot(X, gradient.squeeze(1), color = "blue", label = f"inferred gradient")
+#plt.plot(X, hessian.squeeze(0).squeeze(1), color = "green", label = f"inferred hessian")
+#plt.plot(X, real_gradient.squeeze(0), color = "orange", label = f"real gradient")
+#plt.plot(X, real_hessian.squeeze(0).squeeze(0), color = "purple", label = f"real hessian")
+#
+#plt.legend()
+#plt.show()
+#
 #tree = SymbolicRegression.string_to_tree("mul(cos(X), sin(X))")
 #gradient = tree.get_gradient_function(["X", "Y"])
 #hessian = tree.get_hessian_function(["X", "Y"])

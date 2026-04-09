@@ -14,7 +14,7 @@ class OperationNode:
     
     def __init__(self, channels, is_commutative = False, name = None):
         
-        if(type(channels) != int): raise ValueError(f"Channels number must be a int value, cannot be a {channels}")
+        if(type(channels) not in [int]): raise ValueError(f"Channels number must be a int value, cannot be a {channels}")
         
         #Channel numbers
         self.__channels = channels
@@ -71,6 +71,9 @@ class OperationNode:
     #GET PARAMETERS ZONE
     def is_commutative(self):
         return self.__is_commutative
+     
+    def is_constant(self):
+        return type(self._name) in [int, float] or (np.isscalar(self._name) and type(self._name) != str)
          
     def get_channels(self):
         return self.__channels
@@ -189,22 +192,10 @@ class OperationNode:
         def recursion(node, x):
 
             extraction = [recursion(c, x) for c in node.get_childrens()]
-            
-            str_derative = [x[0] for x in extraction]
-            exists = [x[1] for x in extraction]
-            
-            return node.get_string_derative_structure(str_derative, exists, x)
-        
-        functions = []
-        
-        for x in variable_list:
-            
-            f = recursion(self, x)[0]
-            if(f == None): f = "0"
-            
-            functions.append(f)
-        
-        return functions
+            str_derative = [x for x in extraction]
+            return node.get_string_derative_structure(str_derative, x)
+
+        return [recursion(self, x) for x in variable_list]
         
     #Get the operation in string form 
     def get_string_calculation_structure(self, x):
@@ -212,7 +203,7 @@ class OperationNode:
 
     #Get the derative operation in string form (for x feature)
     def get_string_derative_structure(self, sub_strings, x):
-        if(len(sub_strings) != self.__channels): raise ValueError(f"The derative sub string {len(sub_strings)} must be equals to channel's number {self.__channels}")
+        if(len(sub_strings) != self.__channels): raise ValueError(f"sub_strings len {len(sub_strings)} must be equals to childrens number {self.__channels}")
         return NotImplemented 
 
     #Calculate forward value. REQUIRE forwards from childrens
@@ -308,12 +299,10 @@ class Leaf(OperationNode):
     def backward_calculation(self):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
     
-    def get_string_derative_structure(self, sub_strings, exists, x):
+    def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
-        
-        if(x != self._name): return None, False
-        else: return x, True
+        return "1" if x == self._name else "0"
 
 class add(OperationNode):
     def __init__(self):
@@ -331,20 +320,15 @@ class add(OperationNode):
     def get_string_calculation_structure(self, x):
         return f"{x[0]} + {x[1]}"
     
-    def get_string_derative_structure(self, sub_strings, exists, x):
+    def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
-        
-        if(not exists[0] and not exists[1]): return None, False
-        if(    exists[0] and not exists[1]): return sub_strings[0], True
-        if(not exists[0] and     exists[1]): return sub_strings[1], False
-        if(    exists[0] and     exists[1]): return f"add({sub_strings[0]}, {sub_strings[1]})", False
+        return f"add({sub_strings[0]}, {sub_strings[1]})"
 
     def best_constant(self, i):
         super().best_constant(i)
         back = self.backward_calculation()
         return np.mean(back[i])
-
 
 class sub(OperationNode):
     def __init__(self):
@@ -362,21 +346,21 @@ class sub(OperationNode):
     def get_string_calculation_structure(self, x):
         return f"{x[0]} - {x[1]}"
     
-    def get_string_derative_structure(self, sub_strings, exists, x):
+    def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
         
-        if(not exists[0] and not exists[1]): return None, False
-        if(    exists[0] and not exists[1]): return sub_strings[0], True
-        if(not exists[0] and     exists[1]): return f"sub(0, {sub_strings[1]})", False
-        if(    exists[0] and     exists[1]): return f"sub({sub_strings[0]}, {sub_strings[1]})", False
+        #if(not exists[0] and not exists[1]): return None, False
+        #if(    exists[0] and not exists[1]): return sub_strings[0], True
+        #if(not exists[0] and     exists[1]): return f"sub(0, {sub_strings[1]})", False
+        #if(    exists[0] and     exists[1]): return f"sub({sub_strings[0]}, {sub_strings[1]})", False
+        
+        return f"sub({sub_strings[0]}, {sub_strings[1]})"
 
     def best_constant(self, i):
         super().best_constant(i)
         back = self.backward_calculation()
         return np.mean(back[i])
-
-
 
 class mul(OperationNode):
     def __init__(self):
@@ -398,16 +382,18 @@ class mul(OperationNode):
     def get_string_calculation_structure(self, x):
         return f"{x[0]} * {x[1]}"
     
-    def get_string_derative_structure(self, sub_strings, exists, x):
+    def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
         
         str_function = [str(x) for x in self.get_childrens()]
         
-        if(not exists[0] and not exists[1]): return None, False
-        if(    exists[0] and not exists[1]): return f"mul({sub_strings[0]}, {str_function[1]})", True
-        if(not exists[0] and     exists[1]): return f"mul({sub_strings[1]}, {str_function[0]})", True
-        if(    exists[0] and     exists[1]): return f"add(mul({sub_strings[0]}, {str_function[1]}), mul({sub_strings[1]}, {str_function[0]}))", True
+        #if(not exists[0] and not exists[1]): return None, False
+        #if(    exists[0] and not exists[1]): return f"mul({sub_strings[0]}, {str_function[1]})", True
+        #if(not exists[0] and     exists[1]): return f"mul({sub_strings[1]}, {str_function[0]})", True
+        #if(    exists[0] and     exists[1]): return f"add(mul({sub_strings[0]}, {str_function[1]}), mul({sub_strings[1]}, {str_function[0]}))", True
+        
+        return f"add(mul({sub_strings[0]}, {str_function[1]}), mul({sub_strings[1]}, {str_function[0]}))"
     
     def best_constant(self, i):
         super().best_constant(i)
@@ -439,16 +425,18 @@ class div(OperationNode):
     def get_string_calculation_structure(self, x):
         return f"{x[0]} / {x[1]}"
     
-    def get_string_derative_structure(self, sub_strings, exists, x):
+    def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
         
         str_function = [str(x) for x in self.get_childrens()]
         
-        if(not exists[0] and not exists[1]): return None, False
-        if(    exists[0] and not exists[1]): return f"div({sub_strings[0]}, {str_function[1]})", True
-        if(not exists[0] and     exists[1]): return f"div(mul(sub(0, {str_function[0]}), {sub_strings[1]}), mul({sub_strings[1]}, {sub_strings[1]}))", True
-        if(    exists[0] and     exists[1]): return f"div(sub(mul({sub_strings[0]}, {str_function[1]}), mul({str_function[0]}, {sub_strings[1]})), mul({str_function[1]}, {str_function[1]}))", True
+        #if(not exists[0] and not exists[1]): return None, False
+        #if(    exists[0] and not exists[1]): return f"div({sub_strings[0]}, {str_function[1]})", True
+        #if(not exists[0] and     exists[1]): return f"div(mul(sub(0, {str_function[0]}), {sub_strings[1]}), mul({sub_strings[1]}, {sub_strings[1]}))", True
+        #if(    exists[0] and     exists[1]): return f"div(sub(mul({sub_strings[0]}, {str_function[1]}), mul({str_function[0]}, {sub_strings[1]})), mul({str_function[1]}, {str_function[1]}))", True
+        
+        return f"div(sub(mul({sub_strings[0]}, {str_function[1]}), mul({str_function[0]}, {sub_strings[1]})), mul({str_function[1]}, {str_function[1]}))"
     
     def best_constant(self, i):
         super().best_constant(i)
@@ -475,14 +463,16 @@ class sin(OperationNode):
     def get_string_calculation_structure(self, x):
         return f"np.sin({x[0]})"
     
-    def get_string_derative_structure(self, sub_strings, exists, x):
+    def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
         
         str_function = [str(x) for x in self.get_childrens()]
         
-        if(not exists[0]): return None, False
-        if(    exists[0]): return f"mul(cos({str_function[0]}), {sub_strings[0]})", True
+        #if(not exists[0]): return None, False
+        #if(    exists[0]): return f"mul(cos({str_function[0]}), {sub_strings[0]})", True
+        
+        return f"mul(cos({str_function[0]}), {sub_strings[0]})"
 
 class cos(OperationNode):
     def __init__(self):
@@ -504,14 +494,16 @@ class cos(OperationNode):
     def get_string_calculation_structure(self, x):
         return f"np.cos({x[0]})"
     
-    def get_string_derative_structure(self, sub_strings, exists, x):
+    def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
         
         str_function = [str(x) for x in self.get_childrens()]
         
-        if(not exists[0]): return None, False
-        if(    exists[0]): return f"mul(sub(0, sin({str_function[0]})), {sub_strings[0]})", True
+        #if(not exists[0]): return None, False
+        #if(    exists[0]): return f"mul(sub(0, sin({str_function[0]})), {sub_strings[0]})", True
+        
+        return f"mul(sub(0, sin({str_function[0]})), {sub_strings[0]})"
 
 
 #MANCA DA FARE OPERAZIONI
