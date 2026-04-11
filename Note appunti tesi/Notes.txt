@@ -47,7 +47,7 @@ in un dominio, questo perchè il significato di VL dipende dalla struttura del m
 il modello migliore non ha senso, non è una NN, e questa symbolic regression ha una model selection spalmata lungo tutto 
 l' algoritmo di training).
 
- 
+
 
 - MANCA:
 
@@ -64,3 +64,23 @@ Se si fa con le foglie, si spende più tempo, ma potresti essere più preciso
 
 
 Cosa dire ai prof: dove siamo arrivati, i primi test e l' idea da sviluppare prima di passare alla fase di comparazione
+
+IDEA SU COME FORSE IDENTIFICARE UNA GERARCHIA: DERIVARE DAI PUNTI CON DERIVATE STIMATE. Attenzione a 2 cose:
+
+- Rumore
+- Qualità delle derivate stimate (che poi lo sporco si amplifica all' aumentare del grado k di derivate)
+
+Usare le derivate ed hessiane, per capire quale operazione si trova alla radice. Questa cosa mi assicura di usare solo le miglior 
+operazione da mettere con la miglior combinazione di input da mettere. Confermare se questa cosa è vera.
+
+Con gradiente si possono ottenere: quale variabile provare per primo (facendo il gradiente rispetto alle foglie, foglie non nomi delle foglie)
+Con hessiana si possono ottenere: le correlazioni tra feature
+Con hessiana e gradiente si possono ottenere: il tipo di operazioni possibili
+
+Con il gradiente scelgo l' ordine delle foglie (gradiente dell' albero dando un nome diverso ad ogni foglia, poi faccio la media 
+dei valori assoluti dei gradienti tra i punti del dataset). Poi ordino le foglie in base al valore decrescente delle foglie.
+
+Con l hessiana da sola, calcolo quali coppie bisogna provare.
+
+Scelta la foglia, calcolo i coefficienti, e faccio tutte le prove geometriche con hessiana e gradiente stimati dai punti attesi 
+di quella foglia (per scegliere le operazioni).

@@ -9,10 +9,7 @@ def pearson_correlation(x, y):
 def spearman_correlation(x, y):
     return spearmanr(x, y)[0]
 
-#For monoton and sinusoidal correlation
-import numpy as np
-from scipy.stats import rankdata
-
+#For sinusoidal and monoton correlation
 def chatterjee_correlation(x, y):
     
     n = np.float64(len(x))
@@ -31,3 +28,5 @@ def chatterjee_correlation(x, y):
     if(denominator_term == 0): return 0.0
     
     return 1 - (sum_abs_diff / ((2.0 / n) * denominator_term))
+
+

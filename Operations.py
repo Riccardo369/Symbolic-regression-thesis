@@ -116,13 +116,15 @@ class OperationNode:
 
     #CALCULATION AND AUTOMATICALLY SET MEMORY ALL SUB TREE ZONE
     def forward_calculation_memory_sub_tree(self, inputs_dict):
-          
+               
         def recursion(node):
             for child in node.get_childrens(): recursion(child)
             if(type(node) == Leaf): node.set_memory("forward", inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name())
             else:                   node.set_memory("forward", node.forward_calculation())
+        
+        with np.errstate(divide='ignore', invalid='ignore'):  
                 
-        recursion(self)
+            recursion(self)
         
         return self
 
@@ -136,8 +138,10 @@ class OperationNode:
                 for child, backward in zip(node.get_childrens(), node.backward_calculation()):                
                     child.set_memory("backward", backward)
                     recursion(child)
+                    
+        with np.errstate(divide='ignore', invalid='ignore'):  
 
-        recursion(self)
+            recursion(self)
         
         return self 
     
@@ -186,17 +190,16 @@ class OperationNode:
     
         return {"leaf_labels": leaf_labels, "body": body}
     
-    #Get the all deratives string function of all subtree
-    def get_strings_gradient_subtree(self, variable_list):
+    def get_derative_subtree(self, x):
         
         def recursion(node, x):
 
             extraction = [recursion(c, x) for c in node.get_childrens()]
             str_derative = [x for x in extraction]
             return node.get_string_derative_structure(str_derative, x)
-
-        return [recursion(self, x) for x in variable_list]
         
+        return recursion(self, x)
+ 
     #Get the operation in string form 
     def get_string_calculation_structure(self, x):
         return NotImplemented
@@ -328,6 +331,7 @@ class add(OperationNode):
     def best_constant(self, i):
         super().best_constant(i)
         back = self.backward_calculation()
+        if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
 
 class sub(OperationNode):
@@ -360,6 +364,7 @@ class sub(OperationNode):
     def best_constant(self, i):
         super().best_constant(i)
         back = self.backward_calculation()
+        if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
 
 class mul(OperationNode):
@@ -374,8 +379,8 @@ class mul(OperationNode):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward")
         
-        if(np.any(inputs[0] == 0)): raise ex.BackwardCalculationError("first input = 0 in some points")
-        if(np.any(inputs[1] == 0)): raise ex.BackwardCalculationError("second input = 0 in some points")
+        #if(np.any(inputs[0] == 0)): raise ex.BackwardCalculationError("first input = 0 in some points")
+        #if(np.any(inputs[1] == 0)): raise ex.BackwardCalculationError("second input = 0 in some points")
         
         return [output / inputs[1], output / inputs[0]]
 
@@ -398,6 +403,7 @@ class mul(OperationNode):
     def best_constant(self, i):
         super().best_constant(i)
         back = self.backward_calculation()
+        if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
 
 class div(OperationNode):
@@ -411,14 +417,14 @@ class div(OperationNode):
 
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        if(np.any(inputs[1] == 0)): raise ex.ForwardCalculationError("Denominator = 0 in some points")
+        #if(np.any(inputs[1] == 0)): raise ex.ForwardCalculationError("Denominator = 0 in some points")
         return inputs[0] / inputs[1]
     
     def backward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward")
         denominator2 = inputs[0]
-        if(np.any(denominator2 == 0)): raise ex.BackwardCalculationError("Denominator = 0 in some points")
+        #if(np.any(denominator2 == 0)): raise ex.BackwardCalculationError("Denominator = 0 in some points")
         
         return [output * inputs[1], output / denominator2]
 
@@ -441,6 +447,7 @@ class div(OperationNode):
     def best_constant(self, i):
         super().best_constant(i)
         back = self.backward_calculation()
+        if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
    
 class sin(OperationNode):
@@ -457,7 +464,7 @@ class sin(OperationNode):
     
     def backward_calculation(self):
         real_output = self.get_memory("backward")
-        if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward sine")
+        #if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward sine")
         return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
 
     def get_string_calculation_structure(self, x):
@@ -488,7 +495,7 @@ class cos(OperationNode):
     
     def backward_calculation(self):
         real_output = self.get_memory("backward")
-        if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward cosine")
+        #if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward cosine")
         return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
 
     def get_string_calculation_structure(self, x):

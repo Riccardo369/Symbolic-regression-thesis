@@ -139,53 +139,10 @@ class SymbolicRegression:
         
         return result_function
 
-    #Generate the gradient of model
-    def get_gradient_function(self, variable_list):
-        
-        gradient_lambdas = []
-        
-        for f_str in self.__root.get_strings_gradient_subtree(variable_list):
-            body = SymbolicRegression.string_to_tree(f_str).get_root().get_string_calculation_function()['body']
-            gradient_lambdas.append(eval(f"lambda {', '.join(variable_list)}: {body}"))
+    #Get the model that is the derative on variable x of this model
+    def derivate_model(self, x):
+        return SymbolicRegression.string_to_tree(self.__root.get_derative_subtree(x))
 
-        
-        return lambda inputs_dict: np.stack([
-            np.broadcast_to(f(**{v: inputs_dict[v] for v in variable_list}), max([len(x) for x in inputs_dict.values()])) 
-            for f in gradient_lambdas])
-
-    #Generate the hessian of model
-    def get_hessian_function(self, variable_list):
-        
-        n = len(variable_list)
-        hessian_lambdas = [[None for _ in range(n)] for _ in range(n)]
-        
-        derivates_first_level = self.__root.get_strings_gradient_subtree(variable_list)
-        
-        for i in range(n):
-            current_first_deriv_tree = SymbolicRegression.string_to_tree(derivates_first_level[i])
-            derivates_second_level = current_first_deriv_tree.get_root().get_strings_gradient_subtree(variable_list)
-            
-            for j in range(n):
-                body = SymbolicRegression.string_to_tree(derivates_second_level[j]).get_root().get_string_calculation_function()['body']
-                hessian_lambdas[i][j] = eval(f"lambda {', '.join(variable_list)}: {body}")
-        
-        def hessian_execution(inputs_dict):
-            
-            clean_inputs = {v: inputs_dict[v] for v in variable_list}
-            n_samples = len(next(iter(inputs_dict.values())))
-            n = len(variable_list)
-            
-            results = []
-            for i in range(n):
-                for j in range(n):
-                    res = hessian_lambdas[i][j](**clean_inputs)
-                    results.append(np.broadcast_to(res, (n_samples,)))
-            
-            # Stack e reshape finale
-            return np.stack(results).reshape(n, n, n_samples)
-        
-        return hessian_execution
-     
     #Simplify the tree, considering to delete all nodes that can be solved, because all subtree is a simply constant
     def reduce_inefficient_constant_nodes(self):
         
