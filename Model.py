@@ -25,7 +25,7 @@ class SymbolicRegression:
     def __init__(self, root):
         self.set_root(root)
         
-        self.reduce_inefficient_constant_nodes()
+        self.simplify_model()
         
     def get_root(self):
         return self.__root
@@ -143,40 +143,34 @@ class SymbolicRegression:
     def derivate_model(self, x):
         return SymbolicRegression.string_to_tree(self.__root.get_derative_subtree(x))
 
-    #Simplify the tree, considering to delete all nodes that can be solved, because all subtree is a simply constant
-    def reduce_inefficient_constant_nodes(self):
+    #Simplify the tree, considering to simplify every node that it is possible to simplify
+    def simplify_model(self):
         
         def recursion(node):
             
-            #If this node is a leaf, return
-            if(isinstance(node, op.Leaf)):
-                if(node.is_constant()): return node.get_name()
-                else:                   return None
+            if(isinstance(node, op.Leaf)): return
             
-            #Extract values from all childrens
-            extraction = [recursion(c) for c in node.get_childrens()]
-            
-            if(None in extraction): return None
-            
-            #If every child return a value (is a subtree constant)
+            #Go to leafs
+            for c in node.get_childrens(): recursion(c)
+           
+            #Calculate simplification
+            simplification = node.get_simplification_subtree()
+
+            #If it is not possible to do simplification, go on
+            if(simplification == None): return
+
+            #If simplification is possible, 
+            father = node.get_father()
+                
+            #If this node has no father (is a root)
+            if(father == None): self.__root = simplification
+                    
             else:
-                
-                try: value = node.forward_calculation_memory_sub_tree({}).get_memory("forward")
-                except ex.ForwardCalculationError: raise ValueError("It is not possible to do the reduction, causes the error domain between the nodes")
-                
-                father = node.get_father()
-                
-                #If this node has no father (is a root)
-                if(father == None): self.__root = op.Leaf(value)
                     
-                else:
+                i = father.get_childrens().index(node)
                     
-                    i = father.get_childrens().index(node)
-                    
-                    op.OperationNode.free_connection(father, node)
-                    op.OperationNode.new_connection(father, op.Leaf(value), i)
-                    
-                return value
+                op.OperationNode.free_connection(father, node)
+                op.OperationNode.new_connection(father, simplification, i)
         
         recursion(self.__root)
         

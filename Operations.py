@@ -7,6 +7,7 @@ import io
 
 import Domains as dm
 import Exceptions as ex
+import Simplifications as si
 
 class OperationNode:
     
@@ -171,6 +172,14 @@ class OperationNode:
     
     #NODE METHODS (valid only for the node, not for the all sub tree). For correct functions, the require memory must be calculated already
 
+    #Get a simplification considering the position where is the node in global tree (considering also the father etc.)
+    def get_simplification_subtree(self, operations = []):
+            
+        for opt in operations + [si.constant]:
+           
+            try: return opt(self)
+            except ex.SimplificationError: pass
+
     #Get the string function of all subtree
     def get_string_calculation_function(self):
         
@@ -230,8 +239,7 @@ class OperationNode:
         result.__childrens = [None for _ in self.__childrens]
         
         #Non necessita della copia perchè i metodi set fanno una copia già di default
-        for key in self.__memories.keys():
-            result.set_memory(key, self.__memories[key])
+        for key in self.__memories.keys(): result.set_memory(key, self.__memories[key])
         
         for i, child in enumerate(self.__childrens):
             if(child == None): continue
@@ -303,7 +311,6 @@ class Leaf(OperationNode):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
     
     def get_string_derative_structure(self, sub_strings, x):
-        
         super().get_string_derative_structure(sub_strings, x)
         return "1" if x == self._name else "0"
 
@@ -323,8 +330,7 @@ class add(OperationNode):
     def get_string_calculation_structure(self, x):
         return f"{x[0]} + {x[1]}"
     
-    def get_string_derative_structure(self, sub_strings, x):
-        
+    def get_string_derative_structure(self, sub_strings, x):  
         super().get_string_derative_structure(sub_strings, x)
         return f"add({sub_strings[0]}, {sub_strings[1]})"
 
@@ -333,10 +339,13 @@ class add(OperationNode):
         back = self.backward_calculation()
         if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
+    
+    def get_simplification_subtree(self):
+        return super().get_simplification_subtree([si.addition_identity])
 
 class sub(OperationNode):
     def __init__(self):
-        super().__init__(2, True)
+        super().__init__(2, False)
  
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
@@ -351,14 +360,7 @@ class sub(OperationNode):
         return f"{x[0]} - {x[1]}"
     
     def get_string_derative_structure(self, sub_strings, x):
-        
         super().get_string_derative_structure(sub_strings, x)
-        
-        #if(not exists[0] and not exists[1]): return None, False
-        #if(    exists[0] and not exists[1]): return sub_strings[0], True
-        #if(not exists[0] and     exists[1]): return f"sub(0, {sub_strings[1]})", False
-        #if(    exists[0] and     exists[1]): return f"sub({sub_strings[0]}, {sub_strings[1]})", False
-        
         return f"sub({sub_strings[0]}, {sub_strings[1]})"
 
     def best_constant(self, i):
@@ -366,6 +368,9 @@ class sub(OperationNode):
         back = self.backward_calculation()
         if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
+    
+    def get_simplification_subtree(self):
+        return super().get_simplification_subtree([si.substraction_identity, si.substraction_null])
 
 class mul(OperationNode):
     def __init__(self):
@@ -378,10 +383,6 @@ class mul(OperationNode):
     def backward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward")
-        
-        #if(np.any(inputs[0] == 0)): raise ex.BackwardCalculationError("first input = 0 in some points")
-        #if(np.any(inputs[1] == 0)): raise ex.BackwardCalculationError("second input = 0 in some points")
-        
         return [output / inputs[1], output / inputs[0]]
 
     def get_string_calculation_structure(self, x):
@@ -390,14 +391,7 @@ class mul(OperationNode):
     def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
-        
         str_function = [str(x) for x in self.get_childrens()]
-        
-        #if(not exists[0] and not exists[1]): return None, False
-        #if(    exists[0] and not exists[1]): return f"mul({sub_strings[0]}, {str_function[1]})", True
-        #if(not exists[0] and     exists[1]): return f"mul({sub_strings[1]}, {str_function[0]})", True
-        #if(    exists[0] and     exists[1]): return f"add(mul({sub_strings[0]}, {str_function[1]}), mul({sub_strings[1]}, {str_function[0]}))", True
-        
         return f"add(mul({sub_strings[0]}, {str_function[1]}), mul({sub_strings[1]}, {str_function[0]}))"
     
     def best_constant(self, i):
@@ -405,7 +399,10 @@ class mul(OperationNode):
         back = self.backward_calculation()
         if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
-
+    
+    def get_simplification_subtree(self):
+        return super().get_simplification_subtree([si.multiplication_identity, si.multiplication_null])
+    
 class div(OperationNode):
     def __init__(self):
         super().__init__(2, False)
@@ -417,14 +414,12 @@ class div(OperationNode):
 
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        #if(np.any(inputs[1] == 0)): raise ex.ForwardCalculationError("Denominator = 0 in some points")
         return inputs[0] / inputs[1]
     
     def backward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward")
         denominator2 = inputs[0]
-        #if(np.any(denominator2 == 0)): raise ex.BackwardCalculationError("Denominator = 0 in some points")
         
         return [output * inputs[1], output / denominator2]
 
@@ -432,16 +427,9 @@ class div(OperationNode):
         return f"{x[0]} / {x[1]}"
     
     def get_string_derative_structure(self, sub_strings, x):
-        
+    
         super().get_string_derative_structure(sub_strings, x)
-        
         str_function = [str(x) for x in self.get_childrens()]
-        
-        #if(not exists[0] and not exists[1]): return None, False
-        #if(    exists[0] and not exists[1]): return f"div({sub_strings[0]}, {str_function[1]})", True
-        #if(not exists[0] and     exists[1]): return f"div(mul(sub(0, {str_function[0]}), {sub_strings[1]}), mul({sub_strings[1]}, {sub_strings[1]}))", True
-        #if(    exists[0] and     exists[1]): return f"div(sub(mul({sub_strings[0]}, {str_function[1]}), mul({str_function[0]}, {sub_strings[1]})), mul({str_function[1]}, {str_function[1]}))", True
-        
         return f"div(sub(mul({sub_strings[0]}, {str_function[1]}), mul({str_function[0]}, {sub_strings[1]})), mul({str_function[1]}, {str_function[1]}))"
     
     def best_constant(self, i):
@@ -449,6 +437,9 @@ class div(OperationNode):
         back = self.backward_calculation()
         if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
+    
+    def get_simplification_subtree(self):
+        return super().get_simplification_subtree([si.division_identity, si.division_null])
    
 class sin(OperationNode):
     def __init__(self):

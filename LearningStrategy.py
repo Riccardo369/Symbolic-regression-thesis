@@ -209,15 +209,23 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 
             channels = oper_node.get_channels()
             childrens = oper_node.get_childrens()
+            
+            #If node si a leaf
+            if(isinstance(node, op.Leaf)):
  
-            f1 = op.Leaf(feature1)
-            f1.set_memory("forward", TR_inputs_dict[feature1])
+                f1 = op.Leaf(feature1)
+                f1.set_memory("forward", TR_inputs_dict[feature1])
+             
+            #If node is a midterm node or the root, the f1 became che node itself   
+            else: f1 = node.copy_sub_tree()
                 
             if(channels == 1):
-                    
-                if(not oper_node.check_input_domain(0, TR_inputs_dict[feature1]) or 
-                   not oper_node.check_input_domain(0, VL_inputs_dict[feature1])): continue
-                    
+                
+                VL_input = f1.forward_calculation_memory_sub_tree(TR_inputs_dict).get_memory("forward")
+                TR_input = f1.forward_calculation_memory_sub_tree(VL_inputs_dict).get_memory("forward")
+
+                if(not oper_node.check_input_domain(0, TR_input) or not oper_node.check_input_domain(0, VL_input)): continue
+
                 old_node = childrens[0]
                 
                 self.__replace_subtree(old_node, f1)
@@ -227,16 +235,14 @@ class AnalysisRamification(SymbolicRegressionLearning):
             else:
                     
                 for feature2 in TR_inputs_dict.keys():
-                        
-                    if(channels == 2):
+   
+                    f2 = op.Leaf(feature2)
+                    f2.set_memory("forward", TR_inputs_dict[feature2])
                             
-                        f2 = op.Leaf(feature2)
-                        f2.set_memory("forward", TR_inputs_dict[feature2])
-                            
-                        self.__process_2_input_node(0, choices, node.get_memory("backward"), oper_node, f1, f2, TR_inputs_dict)
+                    self.__process_2_input_node(0, choices, node.get_memory("backward"), oper_node, f1, f2, TR_inputs_dict)
                 
-                        if(not oper_node.is_commutative()):
-                            self.__process_2_input_node(1, choices, node.get_memory("backward"), oper_node, f1, f2, TR_inputs_dict)
+                    if(not oper_node.is_commutative()):
+                        self.__process_2_input_node(1, choices, node.get_memory("backward"), oper_node, f1, f2, TR_inputs_dict)
 
         #For each candidates, calculate the check domain and the error (in TR and VL set)
         choices = [{"tree": x} for x in choices]
@@ -279,6 +285,9 @@ class AnalysisRamification(SymbolicRegressionLearning):
             c["TR_error_delta"] = original_TR_error - c["TR_error_delta"]
             c["VL_error_delta"] = original_VL_error - c["VL_error_delta"]
             
+        #print(f"Candidates for substitute {original_node}")
+        #for c in choices: print(c)
+            
         #In extension, delete all extension that increase TR or VL
         choices = [x for x in choices if x["TR_error_delta"] >= 0 and x["VL_error_delta"] > 0]
 
@@ -291,49 +300,52 @@ class AnalysisRamification(SymbolicRegressionLearning):
         #Choose best extension
         return SymbolicRegression.string_to_tree(choices[0]["tree"]).get_root()
 
-    #Analyze leafs and returns the leafs'slist considering the importance
-    def __get_leafs_ordered_by_importance(self, inputs_dict, output):
+    #Analyze nodes and returns the nodes'slist considering the importance
+    def __get_nodes_ordered_by_importance(self, inputs_dict, output):
 
-        #Take all leafs
-        leafs = self._model.get_leafs()
-        
-        #Change names
-        original_names = [x.get_name() for x in leafs]
-        for i, l in enumerate(leafs): l.set_name(f"l{i}")
-        
-        #Create a dictionary actual -> original name
-        translate_names = {l: ol for l, ol in zip([x.get_name() for x in leafs], original_names)}
-        
+        #Take all nodes
+        #nodes = [x for x in self._model.get_root().get_all_subtree_nodes() if isinstance(x, op.Leaf)]
+        nodes = [x for x in self._model.get_root().get_all_subtree_nodes()]
+
         #all nodes with relative information
         informations = []
+ 
+        var_name = "x"
+        while(var_name in inputs_dict.keys()): var_name += "x"
         
-        #Calculate all information for all leafs
-        for l in leafs:
+        var = op.Leaf(var_name)
+        
+        #Calculate all information for all nodes
+        for l in nodes:
+            
+            self.__replace_subtree(l, var)
+            
+            original_name = l.get_name()
             
             #Create the first and second deratives
             first_derivation = self._model.derivate_model(l.get_name())
             second_derivation = first_derivation.derivate_model(l.get_name())
             
-            #Change variable names (used for derivation) in original names (for associate the right variable to each new node if is necessary)
+            self.__replace_subtree(var, l)
+            
+            #Change variable names (used for derivation) in original name (for restore the semantic of model derivating in node l)
             for r in first_derivation.get_leafs():
-                if(r.get_name() in translate_names.keys()): r.set_name(translate_names[r.get_name()])
+                if(r.get_name() == var_name): r.set_name(original_name)
             for r in second_derivation.get_leafs():
-                if(r.get_name() in translate_names.keys()): r.set_name(translate_names[r.get_name()])
-                
+                if(r.get_name() == var_name): r.set_name(original_name)
+      
             first_derivative = first_derivation.get_root().forward_calculation_memory_sub_tree(inputs_dict).get_memory("forward")
             second_derivative =  second_derivation.get_root().forward_calculation_memory_sub_tree(inputs_dict).get_memory("forward")
             
             #Calculate the first informations
-            informations.append({"leaf": l,
+            informations.append({"node": l,
                                  "first_derivate":  first_derivative  if type(first_derivative) not in [int, float]  else np.array([first_derivative]* len(output)),
                                  "second_derivate": second_derivative if type(second_derivative) not in [int, float] else np.array([second_derivative]*len(output))})
              
         del first_derivation, second_derivation
         
-        #Apply all modifications to every leaf information  
-        for name, inf in zip(original_names, informations):
-            
-            inf["leaf"].set_name(name)
+        #Apply all modifications to every node information  
+        for inf in informations:
 
             mask = np.isfinite(inf["first_derivate"])
             inf["first_derivate"] = np.mean(np.abs(inf["first_derivate"][mask]), axis = 0) if np.sum(mask) > 0 else 0
@@ -343,16 +355,10 @@ class AnalysisRamification(SymbolicRegressionLearning):
 
         total_second_derivate = np.sum([x["second_derivate"] for x in informations])
         
-        #Apply the formula for leaf information
-        for inf in informations:
-            
-            inf["importance"] = inf["first_derivate"] * (1 - (inf["second_derivate"] / total_second_derivate))
-            
-            del inf["first_derivate"], inf["second_derivate"]
-        
-        del total_second_derivate
-        
-        return [x["leaf"] for x in sorted(informations, key = lambda x: -x["importance"])]
+        #Apply the formula for node information
+        for inf in informations: inf["importance"] = inf["first_derivate"] * (1 - (inf["second_derivate"] / total_second_derivate))
+
+        return [x["node"] for x in sorted(informations, key = lambda x: -x["importance"])]
 
     #Extension phase (tree already wet with TR set)
     def __extension_phase(self, TR_inputs_dict, VL_inputs_dict, TR_output, VL_output):
@@ -366,7 +372,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         #For all leafs to consider
         
         #Choose the best leafs (considering the gradient and diagonal hessian)
-        for n in self.__get_leafs_ordered_by_importance(TR_inputs_dict, TR_output):
+        for n in self.__get_nodes_ordered_by_importance(TR_inputs_dict, TR_output):
 
             choices = []
  
@@ -374,10 +380,16 @@ class AnalysisRamification(SymbolicRegressionLearning):
             expectated_output = n.get_memory("backward")
   
             #For all features
-            for f in TR_inputs_dict.keys(): self.heuristic_analysis(n, f, choices, TR_inputs_dict[f], expectated_output)
+            for f in TR_inputs_dict.keys():
+                
+                #If n is a leaf
+                if(isinstance(n, op.Leaf)): self.heuristic_analysis(n, f, choices, TR_inputs_dict[f], expectated_output)
+                
+                #If n is a midterm node or the root
+                else: self.heuristic_analysis(n, None, choices, n.get_memory("forward") if n.get_father() != None else TR_output, expectated_output)
 
             #Order choices by best value (all indicators fall in [-1, 1] range)
-            choices = sorted(choices , key = lambda x: np.clip(abs(x["value"]), 0, 1))
+            choices = sorted(choices, key = lambda x: np.clip(abs(x["value"]), 0, 1))
         
             operations_cache = set()    
             
@@ -415,7 +427,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         self.__replace_subtree(node_to_replace, result_extension)
             
         return True
-     
+
     #Pruning phase         
     def __pruning_phase(self, TR_inputs_dict, VL_inputs_dict, TR_output, VL_output):
         
@@ -427,7 +439,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         features = list(TR_inputs_dict.keys())
         
         #For every node considered valid for pruning part
-        for node in self.__get_leafs_ordered_by_importance(TR_inputs_dict, TR_output):
+        for node in self.__get_nodes_ordered_by_importance(TR_inputs_dict, TR_output):
 
             choices = []
             
@@ -577,6 +589,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
                             
                 print(f"Extension phase, iteration {i+1} done {'-'*50}")
                 self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
+                self._model.simplify_model()
                 self.checkpoint_metrics()
                 i += 1
                 
@@ -596,6 +609,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 
                 print(f"Pruning phase, iteration {i+1} done {'-'*50}")
                 self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
+                self._model.simplify_model()
                 self.checkpoint_metrics()
                 i += 1
                 

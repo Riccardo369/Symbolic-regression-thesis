@@ -3,3 +3,6 @@ class ForwardCalculationError(Exception):
 
 class BackwardCalculationError(Exception):
     pass
+
+class SimplificationError(Exception):
+    pass

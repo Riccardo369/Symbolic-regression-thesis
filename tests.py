@@ -8,18 +8,18 @@ import Errors as er
 
 show_plot = True
 
-test_functions = ["3",
-                  "X",
-                  "np.cos(X)",
-                  "X**2 + 2*X",
-                  "X**2 + np.cos(X)",
-                  "X**2 * np.cos(X)",
-                  "X**2 * np.cos(X**2)",
-                  "2**X + np.cos(X)"
+test_functions = [#"3",
+                  #"X",
+                  #"np.cos(X)",
+                  #"X**2 + 2*X",
+                  #"2*(X**2) + 5*X + 6",
+                  #"X**2 + np.cos(X)",
+                  #"X**2 * np.cos(X)",
+                  #"X**2 * np.cos(X**2)",
+                  #"2**X + np.cos(X)"
                   ]
 
-X = np.array([x for x in range(1, 1000, 1)], dtype = np.float64) / 100
-
+X = np.array([x for x in range(1, 100000, 1)], dtype = np.float64) / 100
 
 for test in test_functions:
     
@@ -33,7 +33,7 @@ for test in test_functions:
                                                     op.mul,
                                                     op.div,
                                                     op.cos]),
-                            metric_functions = {"tree": lambda model: str(model.get_root()),
+                            metric_functions = {"tree": lambda model: model.get_root().get_string_calculation_function()["body"],
                                                 "MAE error": lambda model: er.MAE(Y, model.get_root().get_memory("forward"))}
                             )
     
