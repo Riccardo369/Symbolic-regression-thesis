@@ -39,7 +39,19 @@ class OperationNode:
     def __str__(self):
         if(isinstance(self, Leaf)): return self._name if type(self._name) == "str" else str(self._name)
         return f"{self.__class__.__name__}({', '.join([str(x) for x in self.__childrens])})"
-       
+    
+    def __repr__(self):
+        return str(self)
+    
+    def equals_subtree(self, node):
+        
+        my_childrens =    self.get_childrens()
+        other_childrens = node.get_childrens()
+        
+        if(len(my_childrens) != len(other_childrens)): return False
+        if(not isinstance(node, type(self))): return False
+        return all([c.equals_subtree(x) for c, x in zip(my_childrens, other_childrens)])
+     
     #Delete a connection
     def free_connection(father, child):
         if(not issubclass(type(father), OperationNode)): raise ValueError(f"Father must be a Operation node type, not a {type(father)}")
@@ -248,7 +260,7 @@ class OperationNode:
         return result
       
     #View in a plot all sub tree structure
-    def view_sub_tree(self, f = lambda x: " ", block = True):
+    def view_sub_tree(self, f = lambda x: " ", block = True, name = "figure"):
     
         class CounterGraph:
             def __init__(self):
@@ -289,10 +301,11 @@ class OperationNode:
 
         # Mostra l'immagine con matplotlib
         plt.figure(facecolor='black')
+        plt.title(name, color = "white")
         plt.imshow(image)
         plt.axis('off')
         plt.show(block = block)
-     
+
 
 class Leaf(OperationNode):
     def __init__(self, label):
@@ -337,40 +350,11 @@ class add(OperationNode):
     def best_constant(self, i):
         super().best_constant(i)
         back = self.backward_calculation()
-        if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
+        if(~np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
     
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.addition_identity])
-
-class sub(OperationNode):
-    def __init__(self):
-        super().__init__(2, False)
- 
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return inputs[0] - inputs[1]
-    
-    def backward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        output = self.get_memory("backward") 
-        return [inputs[1] + output, inputs[0] - output]
-    
-    def get_string_calculation_structure(self, x):
-        return f"{x[0]} - {x[1]}"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        super().get_string_derative_structure(sub_strings, x)
-        return f"sub({sub_strings[0]}, {sub_strings[1]})"
-
-    def best_constant(self, i):
-        super().best_constant(i)
-        back = self.backward_calculation()
-        if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
-        return np.mean(back[i])
-    
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.substraction_identity, si.substraction_null])
+    #def get_simplification_subtree(self):
+    #    return super().get_simplification_subtree([si.addition_identity])
 
 class mul(OperationNode):
     def __init__(self):
@@ -397,50 +381,61 @@ class mul(OperationNode):
     def best_constant(self, i):
         super().best_constant(i)
         back = self.backward_calculation()
-        if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
+        if(~np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
         return np.mean(back[i])
     
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.multiplication_identity, si.multiplication_null])
+    #def get_simplification_subtree(self):
+    #    return super().get_simplification_subtree([si.multiplication_identity, si.multiplication_null])
+
+class neg(OperationNode):
+    def __init__(self):
+        super().__init__(1, False)
+ 
+    def forward_calculation(self):
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        return -inputs[0]
     
+    def backward_calculation(self):
+        output = self.get_memory("backward") 
+        return [-output]
+    
+    def get_string_calculation_structure(self, x):
+        return f"-{x[0]}"
+    
+    def get_string_derative_structure(self, sub_strings, x):
+        super().get_string_derative_structure(sub_strings, x)
+        return f"neg({sub_strings[0]})"
+
 class div(OperationNode):
     def __init__(self):
-        super().__init__(2, False)
+        super().__init__(1, False)
         
-    def check_input_domain(self, i, output):
-        if(not (self._check_type_name(output) and type(output) != str)): return False
-        if(i == 1 and type(output) in [float, int]): return np.abs(output) >= self._tol
-        elif(i == 1): return np.all(np.abs(output) >= self._tol)
+    def check_input_domain(self, i, input):
+        super().check_input_domain(i, input)
+        if(not (self._check_type_name(input) and type(input) != str)): return False
+        if(i == 0 and type(input) in [float, int]): return np.abs(input) >= self._tol
+        elif(i == 0): return np.all(np.abs(input) >= self._tol)
 
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return inputs[0] / inputs[1]
+        return 1 / inputs[0]
     
     def backward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward")
-        denominator2 = inputs[0]
-        
-        return [output * inputs[1], output / denominator2]
+        return [1 / output]
 
     def get_string_calculation_structure(self, x):
-        return f"{x[0]} / {x[1]}"
+        return f"1 / {x[0]}"
     
     def get_string_derative_structure(self, sub_strings, x):
     
         super().get_string_derative_structure(sub_strings, x)
         str_function = [str(x) for x in self.get_childrens()]
-        return f"div(sub(mul({sub_strings[0]}, {str_function[1]}), mul({str_function[0]}, {sub_strings[1]})), mul({str_function[1]}, {str_function[1]}))"
+        return f"neg(div(mul({str_function[0]}, {str_function[0]})))"
     
-    def best_constant(self, i):
-        super().best_constant(i)
-        back = self.backward_calculation()
-        if(not np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
-        return np.mean(back[i])
-    
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.division_identity, si.division_null])
-   
+    #def get_simplification_subtree(self):
+        #return super().get_simplification_subtree([si.division_identity, si.division_null])
+
 class sin(OperationNode):
     def __init__(self):
         super().__init__(1)
@@ -455,7 +450,6 @@ class sin(OperationNode):
     
     def backward_calculation(self):
         real_output = self.get_memory("backward")
-        #if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward sine")
         return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
 
     def get_string_calculation_structure(self, x):
@@ -464,12 +458,7 @@ class sin(OperationNode):
     def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
-        
         str_function = [str(x) for x in self.get_childrens()]
-        
-        #if(not exists[0]): return None, False
-        #if(    exists[0]): return f"mul(cos({str_function[0]}), {sub_strings[0]})", True
-        
         return f"mul(cos({str_function[0]}), {sub_strings[0]})"
 
 class cos(OperationNode):
@@ -486,7 +475,6 @@ class cos(OperationNode):
     
     def backward_calculation(self):
         real_output = self.get_memory("backward")
-        #if(np.any((real_output < -1) | (real_output > 1))): raise ex.BackwardCalculationError("Output not valid for backward cosine")
         return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
 
     def get_string_calculation_structure(self, x):
@@ -495,37 +483,93 @@ class cos(OperationNode):
     def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
-        
         str_function = [str(x) for x in self.get_childrens()]
+        return f"mul(neg(0, sin({str_function[0]})), {sub_strings[0]})"
+
+class abs(OperationNode):
+    def __init__(self):
+        super().__init__(1)
         
-        #if(not exists[0]): return None, False
-        #if(    exists[0]): return f"mul(sub(0, sin({str_function[0]})), {sub_strings[0]})", True
+    def check_output_domain(self, output):
+        return np.all(output >= 0)
+    
+    def forward_calculation(self):
+        return np.abs(self.get_childrens()[0].get_memory("forward"))
+    
+    def backward_calculation(self):
+        return dm.get_ideal_input_abs(self.get_memory("forward"), self.get_memory("backward"))
+
+    def get_string_calculation_structure(self, x):
+        return f"np.abs({x[0]})"
+    
+    def get_string_derative_structure(self, sub_strings, x):
         
-        return f"mul(sub(0, sin({str_function[0]})), {sub_strings[0]})"
+        super().get_string_derative_structure(sub_strings, x)
+        str_function = [str(x) for x in self.get_childrens()]
+        return f"mul({sub_strings[0]}, div({str_function[0]}, abs({str_function[0]})))"
+
+class exp(OperationNode):
+    def __init__(self):
+        super().__init__(1, False)
+        
+    def check_output_domain(self, output):
+        if(type(output) in [float, int]): return output > 0
+        else: return np.all(output > 0)
+
+    def forward_calculation(self):
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        return np.exp(inputs[0])
+
+    def backward_calculation(self):
+        output = self.get_memory("backward")
+        return [np.log(output)]
+    
+    def get_string_calculation_structure(self, x):
+        return f"{e} ** {x[0]}"
+    
+    def get_string_derative_structure(self, sub_strings, x):
+        super().get_string_derative_structure(sub_strings, x)
+        str_function = [str(x) for x in self.get_childrens()]
+        return f"mul(exp({str_function[0]}), {sub_strings[0]})"
+
+class ln(OperationNode):
+    def __init__(self):
+        super().__init__(1, False)
+
+    def check_input_domain(self, i, input):
+        
+        super().check_input_domain(i, input)
+        if(not (self._check_type_name(input) and type(input) != str)): return False
+
+        #Domain argument
+        if(i == 0 and type(input) in [float, int]): return input > 0
+        elif(i == 0): return np.all(input > 0)
+ 
+    def forward_calculation(self):
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+        return np.log(inputs[0])
+    
+    def backward_calculation(self):
+        return [np.exp(self.get_memory("backward"))]
+        
+    def get_string_calculation_structure(self, x):
+        return f"np.log({x[0]})"
+    
+    def get_string_derative_structure(self, sub_strings, x):
+        super().get_string_derative_structure(sub_strings, x)
+        str_function = [str(x) for x in self.get_childrens()]
+        return f"mul(div({str_function[0]}), {sub_strings[0]})"
 
 
-#MANCA DA FARE OPERAZIONI
+#add   2 input  commutativa
+#mul   2 input  commutativa
 
-#exp richiede log
-#log richiede log
-
-
-#add       R        sposta
-#sub       R        sposta
-#mul       R        sposta
-#div       c2 != 0  sposta
-#exp       if 1/c2 % == 0 c1 >= 0 else R  taglia
-#log       c1 > 0 (argomento) and c2 > 1 (argomento)  taglia
-#sin       R                             
-#cos       R
-#tan       x != (pi / 2) + kn
-#Valore assoluto R
+#neg   1 input
+#div   1 input
+#sin   1 input
+#cos   1 input
+#exp   1 input
+#abs   1 input
+#log   1 input
 
 
-#MANCA IL CALCOLO INVERSO GENERALE (QUINDI CREARE CLASSI APPOSITE DI INSIEMI CHE GESTISCONO PIù SOLUZIONI CONTEMPORANEAMENTE)
-#PER FUNZIONI SURRIETTIVE
-#MANCA LA GESTIONE DEL DOMINIO
-
-#exp
-#log
-#tan

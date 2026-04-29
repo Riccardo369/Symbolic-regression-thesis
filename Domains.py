@@ -25,6 +25,7 @@ def __get_nearest_feature_input(features, output, f):
     return sorted([{"name": key, "err": er.MAE(f(features[key]), output)} for key in features.keys()], key = lambda x: x["err"])[0]["name"]
 
 
+
 def get_ideal_input_sin(real_input, output):
     return __get_ideal_periodic_input(real_input, np.arcsin(output), lambda t: np.pi - t)
 
@@ -37,6 +38,7 @@ def get_ideal_input_tan(real_input, output):
     return real_input + (theta - real_input + period/2) % period - period/2
 
 
+
 def get_nearest_feature_input_sin(features, output):
     return __get_nearest_feature_input(features, output, lambda x: np.sin(x))
 
@@ -45,3 +47,8 @@ def get_nearest_feature_input_cos(features, output):
 
 def get_nearest_feature_input_tan(features, output):
     return __get_nearest_feature_input(features, output, lambda x: np.tan(x))
+
+
+
+def get_ideal_input_abs(real_input, output):
+    return np.abs(output) * np.sign(real_input) #2 valori saranno sempre più vicini se hanno lo stesso segno, rispetto all' antagonista con il segno opposto

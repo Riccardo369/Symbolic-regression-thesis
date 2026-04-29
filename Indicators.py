@@ -1,5 +1,7 @@
 from scipy.stats import pearsonr, spearmanr, rankdata
 import numpy as np
+import Ball
+import dcor
 
 #For linearity correlation
 def pearson_correlation(x, y):
@@ -29,4 +31,36 @@ def chatterjee_correlation(x, y):
     
     return 1 - (sum_abs_diff / ((2.0 / n) * denominator_term))
 
+def ball_covariance_library(X, Y):
+    return Ball.bcor(X, Y)
 
+def distance_covariance_library(X, Y):
+    return dcor.distance_correlation(X, Y)
+
+
+
+if(__name__ == "__main__"):
+
+    import time
+
+    X = np.random.random((3, 100))
+
+    Y = np.random.random((1, 100))
+    
+    print(X.shape, Y.shape)
+
+    start = time.time()
+    risultato = distance_covariance_library(X, Y)
+    finish = time.time()
+    print(f"DCorr correlation tra X (3D) e Y (1D): {risultato}")
+    print("Delta time: ", finish - start)
+    
+    print("")
+    
+    start = time.time()
+    risultato = ball_covariance_library(X, Y)
+    finish = time.time()
+    print(f"Ball correlation tra X (3D) e Y (1D): {risultato}")
+    print("Delta time: ", finish - start)
+
+    

@@ -10,7 +10,12 @@ def MDL(Y, Y_model, model):
     return ((Y.shape[0]*np.log(np.mean(np.abs(Y - Y_model)))) + (count_nodes(model.get_root())*np.log(Y.shape[0]))) / 2  
 
 
+def MaxAE(x, y):
+    return np.max(np.abs(x - y))
+
 def MAE(x, y):
     return np.mean(np.abs(x - y))
 
 
+def MSE(x, y):
+    return np.mean((x - y)**2)

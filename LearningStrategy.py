@@ -36,41 +36,49 @@ class SymbolicRegressionLearning:
             self._metric_results[key].append(result)   
             print(key, ":", result)
         
-    def _body_learning(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output):
+    def _body_learning(self, TR_inputs_dict, TR_output):
         return NotImplemented
         
-    def __call__(self, model, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, metric_functions = {}):
+    def __call__(self, model, TR_inputs_dict, TR_output,  metric_functions = {}):
         self._pre_learning(model, metric_functions, TR_inputs_dict, TR_output)
-        self._body_learning(TR_inputs_dict, TR_output, VL_inputs_dict, VL_output)
+        self._body_learning(TR_inputs_dict, TR_output)
         self._post_learning()
         
         result = self._metric_results.copy()
         self._metric_results = {}
         return result
 
-
-
 class AnalysisRamification(SymbolicRegressionLearning):
-
-    class GradPoint:
-        
-        def __init__(self, X, y):
-            self.X = X
-            self.y = y
-            self.X_grad = [None for _ in range(len(X))]
     
-    def __init__(self, operations):
+    #The order of binary operations is the order of construction every time a node is extended (every node will be extended with all binary operations, and the order is defined by
+    # the order of binary_operations list)
+    
+    #get_package_importance_nodes analyze nodes and returns a list of packages (for importance), where every package contains a list of triples node - feature- operation. 
+    # If it is possible to choose a valid extension with first package, the algorithm will stop, otherwise it will search the extension on next package
+    
+    def __init__(self, unary_operations, binary_operations, get_package_importance_nodes, heuristic_metrics):
+        
         super().__init__()
         
-        for oper in operations:
+        for oper in unary_operations:
             if(not issubclass(oper, op.OperationNode)): raise ValueError(f"The operation {oper} is not a OperationNode type")
+            if(oper().get_channels() != 1): raise TypeError(f"{oper} has no 1 channel, it is not acceptable an unary operation like that")
         
-        self._operations = list(operations)
+        for oper, i in binary_operations:
+            if(not issubclass(oper, op.OperationNode)): raise ValueError(f"The operation {oper} is not a OperationNode type")
+            if(oper().get_channels() != 2): raise TypeError(f"{oper} has no 2 channels, it is not acceptable an binary operation like that")
+        
+        self._unary_operations = list(unary_operations)
+        self._binary_operations = [{"neutral": i, "oper": o} for o, i in binary_operations]
+        
+        self._heuristic_metrics = heuristic_metrics
+        
+        self.__get_package_importance_nodes = get_package_importance_nodes
         
         self._ranges_iterations = []
         
-    def __call__(self, model, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, metric_functions = {}):
-        result = super().__call__(model, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, metric_functions)
+    def __call__(self, model, TR_inputs_dict, TR_output, metric_functions = {}):
+        result = super().__call__(model, TR_inputs_dict, TR_output,   metric_functions)
         result_ranges_iterations = list(self._ranges_iterations)
         self._ranges_iterations = []
         return {"result": result, "ranges_iterations": result_ranges_iterations}
@@ -94,352 +102,152 @@ class AnalysisRamification(SymbolicRegressionLearning):
   
             op.OperationNode.free_connection(father_leaf, node1)
             op.OperationNode.new_connection(father_leaf, node2, i)
-    
-    #Tell if candidate c is accepted for dataset (c["tree"] must be already inserted on tree)
-    def __try_candidate_extension_on_dataset(self, c, label, inputs_dict, output):
-        
-        root = self._model.get_root()
-        
-        #Calculate forward and backward
-        root.forward_calculation_memory_sub_tree(inputs_dict).backward_calculation_memory_sub_tree(output)   
-        #except (ex.ForwardCalculationError, ex.BackwardCalculationError): return False
-        
-        #Calculate domain validation (considering root and all leafs)
-        domain_valid = all(map(lambda x: np.all(np.isfinite(x)), [root.get_memory("forward")] + [x.get_memory("backward") for x in self._model.get_leafs()]))
 
-        #Calculate error on dataset
-        c[f"{label}_error_delta"] = er.MAE(output, root.get_memory("forward"))
+    def __structural_domain_check(model, TR_inputs_dict, TR_output):
         
-        #Return the validation of domain on this dataset
-        return domain_valid
+        model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
+        return np.all(np.isfinite(model.get_root().get_memory("forward"))) & np.all([np.all(np.isfinite(x.get_memory("backward"))) for x in model.get_root().get_all_subtree_nodes() if isinstance(x, op.Leaf)])
 
-
-     #Process of adding the candidates considering 
-    
-    #Process of adding the candidates
-    def __process_2_input_node(self, i, choices, local_output, oper_node, node1, node2, TR_inputs_dict):
- 
-        #If domain si not valid in first or second inputs, stop to process
-        if((not oper_node.check_input_domain(i, node1.get_memory("forward"))) or 
-           (not oper_node.check_input_domain(1-i, node2.get_memory("forward")))): return
+    #Get (if possible) the extension (with delta metric) of this combination
+    def __get_extensions(self, TR_inputs_dict, TR_output, config):
         
-        #Set memory backward
-        oper_node.set_memory("backward", local_output)
+        node = config["node"]
+        feature = config["feature"]
+        unary_oper = config["unary operation"]
         
-        old_childrens = oper_node.get_childrens()
-        
-        self.__replace_subtree(old_childrens[i], node1)
-        self.__replace_subtree(old_childrens[1-i], node2)
-        choices.add(str(oper_node))
-        
-        oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict)
-        
-        #Calculate constant
-        try: c = oper_node.best_constant(1-i)
-        except ex.BackwardCalculationError: return
-        
-        #If constant is not valid in 1-i position, stop to process
-        if(not oper_node.check_input_domain(1-i, c)): return
-        
-        self.__replace_subtree(oper_node.get_childrens()[1-i], op.Leaf(c))
-        choices.add(str(oper_node))
-        
-        new_childrens = oper_node.get_childrens()
-        
-        self.__replace_subtree(new_childrens[i], old_childrens[i])
-        self.__replace_subtree(new_childrens[1-i], old_childrens[1-i])     
-
-    #HEURISTIC LOGIC FOR AVOID TO DO ALL OPERATIONS
-    def heuristic_analysis(self, node, feature, choices, input, output):
-        
-        #Calculate all indicators
-                
-        #If expectated_output is a constant, or an array of same constant
-        if(type(output) in [float, int] or np.var(output) <= 1e-10):
-                    
-            pearson = 1
-            spearman = 0
-            chaterjee = 0
-                 
-        else:
-                    
-            pearson = In.pearson_correlation(input, output)
-            spearman = In.spearman_correlation(input, output)
-            chaterjee = In.chatterjee_correlation(input, output)
-                
-        #Calculate all strategies from indicators for family identification
-        choices.append({"node": node, "feature": feature, "type": "linear",      "value": pearson})
-        choices.append({"node": node, "feature": feature, "type": "monoton",     "value": spearman})
-        choices.append({"node": node, "feature": feature, "type": "sinusoidal",  "value": chaterjee})
-
-    #Find best extension's leaf by operations, node, first feature and TR / VL datasets (tree already wet from TR set)
-    def __extend(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, node, operations, feature1):
-        
-        self._model.get_root().forward_calculation_memory_sub_tree(VL_inputs_dict).backward_calculation_memory_sub_tree(VL_output)
-        VL_expectated_output = node.get_memory("backward") if node.get_father() != None else VL_output
-        
-        self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-        TR_expectated_output = node.get_memory("backward") if node.get_father() != None else TR_output
-        
-        #Create candidates
-
-        #Start with start node
-        original_node_string = str(node)
-        choices = set([original_node_string])
-        
-        #For each operations
-        for oper in operations:
-
-            #If it is not a operation node, but a function
-            if((type(oper) != type) or (not issubclass(oper, op.OperationNode))):
-                choices.add(str(oper(TR_expectated_output)))
-                continue
+        if(config["typology"] in ["constant", "feature"]): oper_node = op.Leaf(feature) if feature != None else node
             
+        if(config["typology"] == "feature - operation"):
+
             #Create node
-            oper_node = oper()
+            oper_node = unary_oper()
             
-            #If considering the expectated output, this operation cannot be valid
-            if(not oper_node.check_output_domain(TR_expectated_output) or
-               not oper_node.check_output_domain(VL_expectated_output)): continue
-                
-            if(oper_node.get_channels() not in [1, 2]): raise TypeError(f"{oper} has no 1 or 2 channels, it is not acceptable for IndipendentRamification learning strategy")
-                
-            #Create childrens
-            for i in range(oper_node.get_channels()): op.OperationNode.new_connection(oper_node, op.Leaf(f"l{i}"), i)
-                
-            channels = oper_node.get_channels()
-            childrens = oper_node.get_childrens()
+            #Domain input check
+            if(not oper_node.check_input_domain(0, TR_inputs_dict[feature] if isinstance(node, op.Leaf) else node.get_memory("forward"))): return None
             
-            #If node si a leaf
-            if(isinstance(node, op.Leaf)):
- 
-                f1 = op.Leaf(feature1)
-                f1.set_memory("forward", TR_inputs_dict[feature1])
-             
+            #Domain output check
+            if(not oper_node.check_output_domain(node.get_memory("backward") if node.get_father() != None else TR_output)): return None
+                
+            #Create children
+            op.OperationNode.new_connection(oper_node, op.Leaf("l0"), 0)
+
+            #If node is a leaf
+            if(isinstance(node, op.Leaf)): f1 = op.Leaf(feature)
+                
             #If node is a midterm node or the root, the f1 became che node itself   
             else: f1 = node.copy_sub_tree()
-                
-            if(channels == 1):
-                
-                VL_input = f1.forward_calculation_memory_sub_tree(TR_inputs_dict).get_memory("forward")
-                TR_input = f1.forward_calculation_memory_sub_tree(VL_inputs_dict).get_memory("forward")
-
-                if(not oper_node.check_input_domain(0, TR_input) or not oper_node.check_input_domain(0, VL_input)): continue
-
-                old_node = childrens[0]
-                
-                self.__replace_subtree(old_node, f1)
-                choices.add(str(oper_node))
-                self.__replace_subtree(f1, old_node)
-                
-            else:
-                    
-                for feature2 in TR_inputs_dict.keys():
-   
-                    f2 = op.Leaf(feature2)
-                    f2.set_memory("forward", TR_inputs_dict[feature2])
-                            
-                    self.__process_2_input_node(0, choices, node.get_memory("backward"), oper_node, f1, f2, TR_inputs_dict)
-                
-                    if(not oper_node.is_commutative()):
-                        self.__process_2_input_node(1, choices, node.get_memory("backward"), oper_node, f1, f2, TR_inputs_dict)
-
-        #For each candidates, calculate the check domain and the error (in TR and VL set)
-        choices = [{"tree": x} for x in choices]
-
-        original_node = node
+            
+            #Attach f1 to the unique children of operation
+            self.__replace_subtree(oper_node.get_childrens()[0], f1)
+           
+        results = []
         
-        for c in choices:
+        try_nodes = [oper_node]
+        
+        #If it is possible to try also with the scaled and trasleted version of oper_node
+        #output_oper_node = oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict).get_memory("forward")
+        #linear_convertion = AnalysisRamification.__scaling_and_traslating(output_oper_node, node.get_memory("backward"))
+
+        #if(np.isfinite(linear_convertion["m"]) and np.isfinite(linear_convertion["q"])):
+            #try_nodes.append(SymbolicRegression.string_to_tree(f"add(mul({oper_node}, {linear_convertion['m']}), {linear_convertion['q']})").get_root())
             
-            new_node = SymbolicRegression.string_to_tree(c["tree"]).get_root()
+        #Try for standard and scaling / translated form
+        for try_oper_node in try_nodes:
+        
+            #Try the substition
+            self.__replace_subtree(node, oper_node)
             
-            #Replace the old node with new node
-            self.__replace_subtree(node, new_node)
+            #Check the structural domain
+            valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
             
-            node = new_node
+            #Calculate the new metrics
+            new_metrics = {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
             
-            #Try on VL dataset
-            if(not self.__try_candidate_extension_on_dataset(c, "VL", VL_inputs_dict, VL_output)): continue
+            #Do the substition
+            self.__replace_subtree(oper_node, node)
             
-            #Try on TR dataset
-            if(not self.__try_candidate_extension_on_dataset(c, "TR", TR_inputs_dict, TR_output)): continue
-                
-        #Reload original node
-        self.__replace_subtree(node, original_node)
+            #Doing functional calculation
+            self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
+            
+            #Check structure domain
+            if(not valid_domain): continue
+            
+            #Collect the parameters if the version is aviable
+            results.append({"new node": try_oper_node} | {key: new_metrics[key] for key in self._heuristic_metrics.keys()})
+        
+        return results
       
-        #Delete che not valid choices               
-        choices = [x for x in choices if set(x.keys()) == set(["tree", "TR_error_delta", "VL_error_delta"])]
-        
-        if(len(choices) == 0): return None
+    def __scaling_and_traslating(X, Y):
 
-        #Take the original node and extract the start TR and VL errors and delete the original node from choices
-        node_reference = [x for x in choices if x["tree"] == original_node_string][0]
-        original_TR_error = node_reference["TR_error_delta"]
-        original_VL_error = node_reference["VL_error_delta"]
+        mean_X = np.mean(X)
+        mean_Y = np.mean(Y)
         
-        choices = [x for x in choices if x["tree"] != original_node_string]
+        m = np.sum((X - mean_X) * (Y - mean_Y)) / np.sum((X - mean_X)**2)
+        q = mean_Y - (m*mean_X)
         
-        #Update the delta about the TR and VL errors
-        for c in choices:
-            
-            c["TR_error_delta"] = original_TR_error - c["TR_error_delta"]
-            c["VL_error_delta"] = original_VL_error - c["VL_error_delta"]
-            
-        #print(f"Candidates for substitute {original_node}")
-        #for c in choices: print(c)
-            
-        #In extension, delete all extension that increase TR or VL
-        choices = [x for x in choices if x["TR_error_delta"] >= 0 and x["VL_error_delta"] > 0]
-
-        #If there is no valid extension
-        if(len(choices) == 0): return None
-        
-        #In choice the best extension, choose the extension that minimize the VL and after the TR
-        choices = sorted(choices, key = lambda x: (-x["VL_error_delta"], -x["TR_error_delta"]))
-        
-        #Choose best extension
-        return SymbolicRegression.string_to_tree(choices[0]["tree"]).get_root()
-
-    #Analyze nodes and returns the nodes'slist considering the importance
-    def __get_nodes_ordered_by_importance(self, inputs_dict, output):
-
-        #Take all nodes
-        #nodes = [x for x in self._model.get_root().get_all_subtree_nodes() if isinstance(x, op.Leaf)]
-        nodes = [x for x in self._model.get_root().get_all_subtree_nodes()]
-
-        #all nodes with relative information
-        informations = []
- 
-        var_name = "x"
-        while(var_name in inputs_dict.keys()): var_name += "x"
-        
-        var = op.Leaf(var_name)
-        
-        #Calculate all information for all nodes
-        for l in nodes:
-            
-            self.__replace_subtree(l, var)
-            
-            original_name = l.get_name()
-            
-            #Create the first and second deratives
-            first_derivation = self._model.derivate_model(l.get_name())
-            second_derivation = first_derivation.derivate_model(l.get_name())
-            
-            self.__replace_subtree(var, l)
-            
-            #Change variable names (used for derivation) in original name (for restore the semantic of model derivating in node l)
-            for r in first_derivation.get_leafs():
-                if(r.get_name() == var_name): r.set_name(original_name)
-            for r in second_derivation.get_leafs():
-                if(r.get_name() == var_name): r.set_name(original_name)
-      
-            first_derivative = first_derivation.get_root().forward_calculation_memory_sub_tree(inputs_dict).get_memory("forward")
-            second_derivative =  second_derivation.get_root().forward_calculation_memory_sub_tree(inputs_dict).get_memory("forward")
-            
-            #Calculate the first informations
-            informations.append({"node": l,
-                                 "first_derivate":  first_derivative  if type(first_derivative) not in [int, float]  else np.array([first_derivative]* len(output)),
-                                 "second_derivate": second_derivative if type(second_derivative) not in [int, float] else np.array([second_derivative]*len(output))})
-             
-        del first_derivation, second_derivation
-        
-        #Apply all modifications to every node information  
-        for inf in informations:
-
-            mask = np.isfinite(inf["first_derivate"])
-            inf["first_derivate"] = np.mean(np.abs(inf["first_derivate"][mask]), axis = 0) if np.sum(mask) > 0 else 0
-            
-            mask = np.isfinite(inf["second_derivate"])
-            inf["second_derivate"] = np.mean(np.abs(inf["second_derivate"][mask]), axis = 0) if np.sum(mask) > 0 else 0
-
-        total_second_derivate = np.sum([x["second_derivate"] for x in informations])
-        
-        #Apply the formula for node information
-        for inf in informations: inf["importance"] = inf["first_derivate"] * (1 - (inf["second_derivate"] / total_second_derivate))
-
-        return [x["node"] for x in sorted(informations, key = lambda x: -x["importance"])]
+        return {"m": m, "q": q}
 
     #Extension phase (tree already wet with TR set)
-    def __extension_phase(self, TR_inputs_dict, VL_inputs_dict, TR_output, VL_output):
-
-        result_extension = None
-        node_to_replace = None
+    def __extension_step(self, TR_inputs_dict, TR_output):
         
-        #Actual extension to do
-        operations_dict = {"linear": [lambda x: np.mean(x), op.add, op.sub, op.mul, op.div], "monoton": [], "sinusoidal": [op.sin, op.cos]}
-   
-        #For all leafs to consider
+        original_metrics = {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
         
-        #Choose the best leafs (considering the gradient and diagonal hessian)
-        for n in self.__get_nodes_ordered_by_importance(TR_inputs_dict, TR_output):
-
-            choices = []
- 
-            #Expectated output
-            expectated_output = n.get_memory("backward")
-  
-            #For all features
-            for f in TR_inputs_dict.keys():
-                
-                #If n is a leaf
-                if(isinstance(n, op.Leaf)): self.heuristic_analysis(n, f, choices, TR_inputs_dict[f], expectated_output)
-                
-                #If n is a midterm node or the root
-                else: self.heuristic_analysis(n, None, choices, n.get_memory("forward") if n.get_father() != None else TR_output, expectated_output)
-
-            #Order choices by best value (all indicators fall in [-1, 1] range)
-            choices = sorted(choices, key = lambda x: np.clip(abs(x["value"]), 0, 1))
-        
-            operations_cache = set()    
+        #Package the choices by importance
+        for package in self.__get_package_importance_nodes(self._model.get_root().get_all_subtree_nodes(), self._unary_operations, TR_inputs_dict, TR_output):
             
-            #Repeat until find the best extension or choices are finished
-            while(result_extension == None and len(choices) > 0):
+            choices = []
+            
+           #For each choice inside the package, calculate the metrics and the possible extension
+            for choice in package:
 
-                #Remove operations already used
-                operations = list(filter(lambda x: x not in operations_cache, operations_dict[choices[0]["type"]]))
+                #Calculate the extension
+                results = self.__get_extensions(TR_inputs_dict, TR_output, choice)
                 
-                #Add new operations to cache
-                for i in operations: operations_cache.add(i)
-      
-                #Calculate the best extension   
-                result_extension = self.__extend(TR_inputs_dict,
-                                                TR_output,
-                                                VL_inputs_dict,
-                                                VL_output,
-                                                choices[0]["node"],
-                                                operations,
-                                                choices[0]["feature"])
-                           
-                self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-                
-                if(result_extension != None): node_to_replace = choices[0]["node"]
+                #If extension is aviable, calculate all data about it
+                if(results != None):
+                    
+                    for result in results:
+                        
+                        choices.append({"new node": result["new node"], "original node": choice["node"]} | 
+                                       {f"{key} delta": original_metrics[key] - result[key] for key in self._heuristic_metrics.keys()})
+
+            if(len(choices) > 0): break
+            
+        for i in choices: print(i)
+            
+        choices = [x for x in choices if np.isfinite(x["Chaterjee delta"]) and x["Chaterjee delta"] > 0]
         
-                #Delete the used choice      
-                del choices[0]
-                
-            if(result_extension != None): break
+        if(len(choices) == 0): return False
+        
+        choices = sorted(choices, key = lambda x: (-x["Chaterjee delta"], -x["MAE delta"]))
 
-        #No extension is possible
-        if(result_extension == None): return False
+        new_node = choices[0]["new node"]
+        
+        for bo in self._binary_operations:
+                
+            oper = bo["oper"]()
+            oper.new_connection(new_node.copy_sub_tree(), 0)
+            oper.new_connection(op.Leaf(bo["neutral"]), 1)
+                
+            new_node = oper
 
         #Do the extension
-        self.__replace_subtree(node_to_replace, result_extension)
-            
+        self.__replace_subtree(choices[0]["original node"], new_node)
+        
         return True
 
     #Pruning phase         
-    def __pruning_phase(self, TR_inputs_dict, VL_inputs_dict, TR_output, VL_output):
+    def __pruning_step(self, TR_inputs_dict, TR_output):
+    
+        choices = []
         
-        #Calculate base errors (on TR and VL dataset) 
-        original_VL_error = er.MAE(VL_output, self._model.get_root().forward_calculation_memory_sub_tree(VL_inputs_dict).get_memory("forward"))
-        original_TR_error = er.MAE(TR_output, self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).get_memory("forward"))
+        original_metrics = {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
         
         #Calculate features
         features = list(TR_inputs_dict.keys())
         
         #For every node considered valid for pruning part
-        for node in self.__get_nodes_ordered_by_importance(TR_inputs_dict, TR_output):
+        for node in self._model.get_root().get_all_subtree_nodes():
 
             choices = []
             
@@ -454,106 +262,53 @@ class AnalysisRamification(SymbolicRegressionLearning):
             for f in features + [np.mean(original_node.get_memory("backward"))]:
                 
                 #Replace the subtree
-                node = SymbolicRegression.string_to_tree(str(f)).get_root()
+                node = op.Leaf(f)
                 self.__replace_subtree(old_node, node)
                 old_node = node
                 
-                #Candidate
-                c = {"node": str(node), "original_node": original_node}
+                valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
                 
-                #Try with TR and VL dataset the domain and calculate the error
-                self.__try_candidate_extension_on_dataset(c, "VL", VL_inputs_dict, VL_output)
-                self.__try_candidate_extension_on_dataset(c, "TR", TR_inputs_dict, TR_output)
+                #Calculate the new metric
+                new_metrics = {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
                 
-                #If candidate c pruning is valid, accept that
-                if(set(c.keys()) == set(["node", "original_node", "TR_error_delta", "VL_error_delta"])): choices.append(c)
-             
-            #Return to the original situation (for doing the correct calculation on next leafs)   
-            self.__replace_subtree(old_node, original_node)
+                #Return to normal state
+                self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
+                
+                #If domain is not valid, do not consider the combination
+                if(not valid_domain): continue
+                
+                choices.append({"new node": node} | {f"{key} delta": original_metrics[key] - new_metrics[key] for key in self._heuristic_metrics.keys()})
+                
+                self.__replace_subtree(old_node, original_node)
             
-            #Finish the TR and VL delta error with original TR and errors
-            for c in choices:
-                
-                c["TR_error_delta"] = original_TR_error - c["TR_error_delta"]
-                c["VL_error_delta"] = original_VL_error - c["VL_error_delta"]
-
-            #Filter choices
-            choices = [x for x in choices if x["TR_error_delta"] >= 0 and x["VL_error_delta"] > 0]
-        
-            #If there is some valid choices break and choose from one of them
-            if(len(choices) > 0): break
-        
+        #Filter choices
+        choices = [x for x in choices if x["Chaterjee delta"] > 0]
+ 
         #If there is no any choices to make, there is no any valid pruning to do
         if(len(choices) == 0): return False
         
         #In choice the best extension, choose the extension that minimize the VL and after the TR
-        choices = sorted(choices, key = lambda x: (-x["VL_error_delta"], -x["TR_error_delta"]))
+        choices = sorted(choices, key = lambda x: (-x["Chaterjee delta"], -x["MAE delta"]))
         
-        #Replace the subtree with the feature / constant best find (pruning part)
-        self.__replace_subtree(choices["node"], op.Leaf(choices["feature"]))
+        self.__replace_subtree(choices[0]["original node"], choices[0]["new node"])
 
         return True
-
-    #Estimate gradient taking a dataset of points
-    def estimate_gradient(inputs_dict, output):
-        
-        def incremental(sp, r1, r2, i):
-            delta_y = sp[r2].y - sp[r1].y
-            delta_x =  sp[r2].X[i] - sp[r1].X[i]
-            return delta_y / delta_x  if np.abs(delta_x) >= 1e-40 else 0
-        
-        points = [AnalysisRamification.GradPoint([inputs_dict[k][i] for k in inputs_dict.keys()], output[i]) for i in range(len(output))]
-        
-        for i in range(len(inputs_dict.keys())):
-            
-            #Order point considering the i dimension
-            sp = sorted(points, key = lambda x: x.X[i])
-            
-            #For each point
-            for r in range(len(sp)):
-                
-                if(r != 0):           left =  incremental(sp, r, r-1, i)
-                if(r != len(sp) - 1): right = incremental(sp, r+1, r, i)
-                
-                #If point is the first of dimension
-                if(r == 0): sp[r].X_grad[i] = right
-                  
-                #If point is the last of dimensione  
-                elif(r == len(sp) - 1): sp[r].X_grad[i] = left
-
-                #If point is in the midterm
-                else: sp[r].X_grad[i] = (left + right) / 2
-        
-        
-        return np.array([x.X_grad for x in points])
     
-    def estimate_hessian(inputs_dict, output):
-        
-        hessian = []
-        
-        for d in AnalysisRamification.estimate_gradient(inputs_dict, output).T:
-            
-            hessian.append(AnalysisRamification.estimate_gradient(inputs_dict, d))
-            
-        return np.array(hessian)
-        
+    
+    
+  
     #TR_inputs_dict: numpy array's dict
     #VL_inputs_dict: numpy array's dict
     #TR_output: constant or numpy array
     #VL_output: constant or numpy array
-    def _body_learning(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output):
-        
-        if(set(TR_inputs_dict.keys()) != set(VL_inputs_dict.keys())): raise ValueError("TR and VL input sets has not same features")
+    def _body_learning(self, TR_inputs_dict, TR_output):
         
         if(np.var([len(TR_inputs_dict[x]) for x in TR_inputs_dict.keys()]) > 0): raise ValueError("All TR features has to have the same value numbers")
-        if(np.var([len(VL_inputs_dict[x]) for x in VL_inputs_dict.keys()]) > 0): raise ValueError("All VL features has to have the same value numbers")
-        
+
         if(type(TR_output) not in [int, float] and len(TR_output) != len(TR_inputs_dict[list(TR_inputs_dict.keys())[0]])): raise ValueError("TR output has no the same points of TR input")
-        if(type(VL_output) not in [int, float] and len(VL_output) != len(VL_inputs_dict[list(VL_inputs_dict.keys())[0]])): raise ValueError("VL output has no the same points of VL input")
 
         #Set the constant in numpy array (so everything is in array)
         if(type(TR_output) in [int, float]): TR_output = np.array([TR_output for _ in range(len(TR_inputs_dict[list(TR_inputs_dict.keys())[0]]))])
-        if(type(VL_output) in [int, float]): VL_output = np.array([VL_output for _ in range(len(VL_inputs_dict[list(VL_inputs_dict.keys())[0]]))])
 
         #Calculate all memory
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
@@ -585,11 +340,11 @@ class AnalysisRamification(SymbolicRegressionLearning):
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
             
             #Do the extension phase (bring the model to overfitting direction)
-            while(self.__extension_phase(TR_inputs_dict, VL_inputs_dict, TR_output, VL_output)):
+            while(self.__extension_step(TR_inputs_dict, TR_output)):
                             
                 print(f"Extension phase, iteration {i+1} done {'-'*50}")
-                self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 self._model.simplify_model()
+                self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 self.checkpoint_metrics()
                 i += 1
                 
@@ -605,11 +360,11 @@ class AnalysisRamification(SymbolicRegressionLearning):
             pruning_memories.append(new_pruning_memory)
             
             #Do the pruning phase (bring the model to underfitting direction)
-            while(self.__pruning_phase(TR_inputs_dict, VL_inputs_dict, TR_output, VL_output)): 
+            while(self.__pruning_step(TR_inputs_dict, TR_output)): 
                 
                 print(f"Pruning phase, iteration {i+1} done {'-'*50}")
-                self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 self._model.simplify_model()
+                self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 self.checkpoint_metrics()
                 i += 1
                 
@@ -623,6 +378,4 @@ class AnalysisRamification(SymbolicRegressionLearning):
         self._model.get_root().clear_all_subtree_memory("forward").clear_all_subtree_memory("backward")
         
         print("Model prepared to use!")
-        
-        
         

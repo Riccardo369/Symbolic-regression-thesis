@@ -37,6 +37,9 @@ class SymbolicRegression:
     def __str__(self):
         return str(self.__root)
     
+    def __repr__(self):
+        return str(self)
+    
     def view(self, f = lambda x: " ", block = True):
         self.__root.view_sub_tree(f, block)
         
@@ -177,13 +180,11 @@ class SymbolicRegression:
         return self
 
     #Learn phase   
-    def learn(self, TR_inputs_dict, TR_output, VL_inputs_dict, VL_output, LearningAlgorithm, metric_functions = {}):
+    def learn(self, TR_inputs_dict, TR_output, LearningAlgorithm, metric_functions = {}):
 
         return LearningAlgorithm(self,
                                  TR_inputs_dict,
                                  TR_output,
-                                 VL_inputs_dict,
-                                 VL_output,
                                  metric_functions)
 
 

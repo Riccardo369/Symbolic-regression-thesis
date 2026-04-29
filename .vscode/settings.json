@@ -13,5 +13,10 @@
     "codegraphy.selectedD3Color": "Spectral",
     "codegraphy.selectedNodeColor": "#fff",
     "codegraphy.favoriteNodeColor": "#ffd700",
-    "codegraphy.outlineColor": "#ffd700"
+    "codegraphy.outlineColor": "#ffd700",
+    "terminal.integrated.minimumContrastRatio": 1,
+    "workbench.colorCustomizations": {
+        "terminal.ansiBlack": "#1e1e1e",
+        "terminal.selectionBackground": "#333333"
+    }
 }
