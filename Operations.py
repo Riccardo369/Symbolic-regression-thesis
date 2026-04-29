@@ -369,16 +369,23 @@ class mul(OperationNode):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward")
         
-        masks = [np.abs(x) <= self._tol for x in inputs]
-        
         with np.errstate(divide='ignore', invalid='ignore'):            
-            backward_input_2 = output / inputs[0]
+            backward_input_0 = output / inputs[0]
             backward_input_1 = output / inputs[1]
         
-        backward_input_1[masks[1]] = inputs[0][masks[1]]   #In questi casi il 2° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
-        backward_input_2[masks[0]] = inputs[1][masks[0]]   #In questi casi il 1° input = 0, quindi il 2° input può essere qualsiasi cosa, quindi anche se stesso
+        #In questi casi il 2° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
+        if(isinstance(inputs[0], np.ndarray)):
+            mask = ~np.isfinite(backward_input_0)
+            backward_input_0[mask] = inputs[0][mask]
         
-        return [backward_input_1, backward_input_2]
+        #In questi casi il 1° input = 0, quindi il 2° input può essere qualsiasi cosa, quindi anche se stesso
+        if(isinstance(inputs[1], np.ndarray)): 
+            mask = ~np.isfinite(backward_input_1)
+            backward_input_1[mask] = inputs[1][mask]
+        
+        #print(np.all(np.isfinite(backward_input_0)), np.all(np.isfinite(backward_input_1)))
+        
+        return [backward_input_0, backward_input_1]
 
     def get_string_calculation_structure(self, x):
         return f"{x[0]} * {x[1]}"
@@ -528,15 +535,17 @@ class exp(OperationNode):
         else: return np.all(output > 0)
 
     def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return np.exp(inputs[0])
+        with np.errstate(over='ignore'):
+            result = np.exp(self.get_childrens()[0].get_memory("forward"))
+        return result
 
     def backward_calculation(self):
-        output = self.get_memory("backward")
-        return [np.log(output)]
+        with np.errstate(over='ignore'):
+            result = np.log(self.get_memory("backward"))
+        return [result]
     
     def get_string_calculation_structure(self, x):
-        return f"{e} ** {x[0]}"
+        return f"np.exp({x[0]})"
     
     def get_string_derative_structure(self, sub_strings, x):
         super().get_string_derative_structure(sub_strings, x)
@@ -557,11 +566,15 @@ class ln(OperationNode):
         elif(i == 0): return np.all(input > 0)
  
     def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return np.log(inputs[0])
+        with np.errstate(over='ignore'):
+            result = np.log(self.get_childrens()[0].get_memory("forward"))
+        return result
     
     def backward_calculation(self):
-        return [np.exp(self.get_memory("backward"))]
+        with np.errstate(over='ignore'):
+            result = np.exp(self.get_memory("backward"))
+
+        return [result]
         
     def get_string_calculation_structure(self, x):
         return f"np.log({x[0]})"

@@ -18,4 +18,5 @@ def MAE(x, y):
 
 
 def MSE(x, y):
-    return np.mean((x - y)**2)
+    with np.errstate(over='ignore'):
+        return np.mean((x - y)**2)

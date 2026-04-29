@@ -34,17 +34,18 @@ def get_package_importance_nodes(nodes, unary_operations, TR_inputs_dict, TR_out
         return [combinations]
 
 
-
-
-
 X = np.array([x for x in range(-10, 10000, 1)], dtype = np.float64) / 10
-Y = 2**X
+Y = 2*X
+
+#print(er.MSE(X, Y))
+
+#raise ValueError("STOP")
 
 tree = SymbolicRegression.string_to_tree("0")
 
 metric_results = tree.learn({"X": X}, Y,
                             ls.AnalysisRamification([op.neg, op.div, op.sin, op.cos, op.abs, op.exp, op.ln], 
-                                                    [(op.mul, 1), (op.add, 0)],
+                                                    #[(op.mul, 1), (op.add, 0)],
                                                     get_package_importance_nodes,
                                                     {"MAE": lambda model: er.MAE(model.get_root().get_memory("forward"), Y),
                                                      "Chaterjee": lambda model: chaterjee_metric(model.get_root().get_memory("forward"), Y)}),
@@ -58,3 +59,4 @@ metric_results = tree.learn({"X": X}, Y,
 
 print(metric_results)
 
+#DA CAPIRE PERCHé NON CON LE ESTENSIONI LINEARI FALLISCE ANCORA, CIOè NON VENGONO PROPRIO CONSIDERATE, PROBLEMA SICURAMENTE SUL BACKWARD DELLA MOLTIPLICAZIONE

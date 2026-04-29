@@ -56,7 +56,9 @@ class AnalysisRamification(SymbolicRegressionLearning):
     #get_package_importance_nodes analyze nodes and returns a list of packages (for importance), where every package contains a list of triples node - feature- operation. 
     # If it is possible to choose a valid extension with first package, the algorithm will stop, otherwise it will search the extension on next package
     
-    def __init__(self, unary_operations, binary_operations, get_package_importance_nodes, heuristic_metrics):
+    def __init__(self, unary_operations, 
+                 #binary_operations,
+                 get_package_importance_nodes, heuristic_metrics):
         
         super().__init__()
         
@@ -64,12 +66,12 @@ class AnalysisRamification(SymbolicRegressionLearning):
             if(not issubclass(oper, op.OperationNode)): raise ValueError(f"The operation {oper} is not a OperationNode type")
             if(oper().get_channels() != 1): raise TypeError(f"{oper} has no 1 channel, it is not acceptable an unary operation like that")
         
-        for oper, i in binary_operations:
-            if(not issubclass(oper, op.OperationNode)): raise ValueError(f"The operation {oper} is not a OperationNode type")
-            if(oper().get_channels() != 2): raise TypeError(f"{oper} has no 2 channels, it is not acceptable an binary operation like that")
+        #for oper, i in binary_operations:
+        #    if(not issubclass(oper, op.OperationNode)): raise ValueError(f"The operation {oper} is not a OperationNode type")
+        #    if(oper().get_channels() != 2): raise TypeError(f"{oper} has no 2 channels, it is not acceptable an binary operation like that")
         
         self._unary_operations = list(unary_operations)
-        self._binary_operations = [{"neutral": i, "oper": o} for o, i in binary_operations]
+        #self._binary_operations = [{"neutral": i, "oper": o} for o, i in binary_operations]
         
         self._heuristic_metrics = heuristic_metrics
         
@@ -126,7 +128,8 @@ class AnalysisRamification(SymbolicRegressionLearning):
             if(not oper_node.check_input_domain(0, TR_inputs_dict[feature] if isinstance(node, op.Leaf) else node.get_memory("forward"))): return None
             
             #Domain output check
-            if(not oper_node.check_output_domain(node.get_memory("backward") if node.get_father() != None else TR_output)): return None
+            if(node.get_father() != None and
+               not oper_node.check_output_domain(node.get_memory("backward") if node.get_father() != None else TR_output)): return None
                 
             #Create children
             op.OperationNode.new_connection(oper_node, op.Leaf("l0"), 0)
@@ -142,20 +145,24 @@ class AnalysisRamification(SymbolicRegressionLearning):
            
         results = []
         
-        try_nodes = [oper_node]
+        try_nodes = []
+        
+        try_nodes.append(SymbolicRegression.string_to_tree(f"add(mul({oper_node}, 1), 0)").get_root())
         
         #If it is possible to try also with the scaled and trasleted version of oper_node
         output_oper_node = oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict).get_memory("forward")
         linear_convertion = AnalysisRamification.__scaling_and_traslating(output_oper_node, node.get_memory("backward"))
-
-        if(np.isfinite(linear_convertion["m"]) and np.isfinite(linear_convertion["q"])):
-            try_nodes.append(SymbolicRegression.string_to_tree(f"add(mul({oper_node}, {linear_convertion['m']}), {linear_convertion['q']})").get_root())
+        
+        m = linear_convertion["m"] if np.isfinite(linear_convertion["m"]) else 1
+        q = linear_convertion["q"] if np.isfinite(linear_convertion["q"]) else 0
+        
+        if(not (m == 1 and q == 0)): try_nodes.append(SymbolicRegression.string_to_tree(f"add(mul({oper_node}, {m}), {q})").get_root())
             
         #Try for standard and scaling / translated form
         for try_oper_node in try_nodes:
-        
+            
             #Try the substition
-            self.__replace_subtree(node, oper_node)
+            self.__replace_subtree(node, try_oper_node)
             
             #Check the structural domain
             valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
@@ -164,7 +171,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
             new_metrics = {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
             
             #Do the substition
-            self.__replace_subtree(oper_node, node)
+            self.__replace_subtree(try_oper_node, node)
             
             #Doing functional calculation
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
@@ -174,18 +181,23 @@ class AnalysisRamification(SymbolicRegressionLearning):
             
             #Collect the parameters if the version is aviable
             results.append({"new node": try_oper_node} | {key: new_metrics[key] for key in self._heuristic_metrics.keys()})
+           
+        #If both version are aviable, consider only the scaled / traslated version
+        if(len(results) == 2): del results[0]
         
         return results
       
     def __scaling_and_traslating(X, Y):
+        
+        with np.errstate(divide='ignore', invalid='ignore'):
 
-        mean_X = np.mean(X)
-        mean_Y = np.mean(Y)
-        
-        m = np.sum((X - mean_X) * (Y - mean_Y)) / np.sum((X - mean_X)**2)
-        q = mean_Y - (m*mean_X)
-        
-        return {"m": m, "q": q}
+            mean_X = np.mean(X)
+            mean_Y = np.mean(Y)
+            
+            m = np.sum((X - mean_X) * (Y - mean_Y)) / np.sum((X - mean_X)**2)
+            q = mean_Y - (m*mean_X)
+            
+            return {"m": m, "q": q}
 
     #Extension phase (tree already wet with TR set)
     def __extension_step(self, TR_inputs_dict, TR_output):
@@ -213,26 +225,16 @@ class AnalysisRamification(SymbolicRegressionLearning):
 
             if(len(choices) > 0): break
             
+        choices = [x for x in choices if (np.isfinite(x["Chaterjee delta"]) and x["Chaterjee delta"] > 0) or (np.isfinite(x["MAE delta"]) and x["MAE delta"] > 0)]
+        
         for i in choices: print(i)
-            
-        choices = [x for x in choices if np.isfinite(x["Chaterjee delta"]) and x["Chaterjee delta"] > 0]
         
         if(len(choices) == 0): return False
         
         choices = sorted(choices, key = lambda x: (-x["Chaterjee delta"], -x["MAE delta"]))
-
-        new_node = choices[0]["new node"]
         
-        for bo in self._binary_operations:
-                
-            oper = bo["oper"]()
-            oper.new_connection(new_node.copy_sub_tree(), 0)
-            oper.new_connection(op.Leaf(bo["neutral"]), 1)
-                
-            new_node = oper
-
         #Do the extension
-        self.__replace_subtree(choices[0]["original node"], new_node)
+        self.__replace_subtree(choices[0]["original node"], choices[0]["new node"])
         
         return True
 
