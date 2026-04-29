@@ -145,11 +145,11 @@ class AnalysisRamification(SymbolicRegressionLearning):
         try_nodes = [oper_node]
         
         #If it is possible to try also with the scaled and trasleted version of oper_node
-        #output_oper_node = oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict).get_memory("forward")
-        #linear_convertion = AnalysisRamification.__scaling_and_traslating(output_oper_node, node.get_memory("backward"))
+        output_oper_node = oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict).get_memory("forward")
+        linear_convertion = AnalysisRamification.__scaling_and_traslating(output_oper_node, node.get_memory("backward"))
 
-        #if(np.isfinite(linear_convertion["m"]) and np.isfinite(linear_convertion["q"])):
-            #try_nodes.append(SymbolicRegression.string_to_tree(f"add(mul({oper_node}, {linear_convertion['m']}), {linear_convertion['q']})").get_root())
+        if(np.isfinite(linear_convertion["m"]) and np.isfinite(linear_convertion["q"])):
+            try_nodes.append(SymbolicRegression.string_to_tree(f"add(mul({oper_node}, {linear_convertion['m']}), {linear_convertion['q']})").get_root())
             
         #Try for standard and scaling / translated form
         for try_oper_node in try_nodes:

@@ -365,9 +365,20 @@ class mul(OperationNode):
         return inputs[0] * inputs[1]
     
     def backward_calculation(self):
+        
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward")
-        return [output / inputs[1], output / inputs[0]]
+        
+        masks = [np.abs(x) <= self._tol for x in inputs]
+        
+        with np.errstate(divide='ignore', invalid='ignore'):            
+            backward_input_2 = output / inputs[0]
+            backward_input_1 = output / inputs[1]
+        
+        backward_input_1[masks[1]] = inputs[0][masks[1]]   #In questi casi il 2° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
+        backward_input_2[masks[0]] = inputs[1][masks[0]]   #In questi casi il 1° input = 0, quindi il 2° input può essere qualsiasi cosa, quindi anche se stesso
+        
+        return [backward_input_1, backward_input_2]
 
     def get_string_calculation_structure(self, x):
         return f"{x[0]} * {x[1]}"

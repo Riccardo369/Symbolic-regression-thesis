@@ -37,8 +37,8 @@ def get_package_importance_nodes(nodes, unary_operations, TR_inputs_dict, TR_out
 
 
 
-X = np.array([x for x in range(1, 10000, 1)], dtype = np.float64) / 10
-Y = 2*X
+X = np.array([x for x in range(-10, 10000, 1)], dtype = np.float64) / 10
+Y = 2**X
 
 tree = SymbolicRegression.string_to_tree("0")
 
