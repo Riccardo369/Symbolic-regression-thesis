@@ -26,8 +26,8 @@ def replace_subtree(model, node1, node2):
             
         i = father_leaf.get_childrens().index(node1)
 
-        op.OperationNode.free_connection(father_leaf, node1)
-        op.OperationNode.new_connection(father_leaf, node2, i)
+        father_leaf.free_connection(node1)
+        father_leaf.new_connection(node2, i)
         
 
 X = np.array([0.5, 1, np.pi/2, 2, 3])

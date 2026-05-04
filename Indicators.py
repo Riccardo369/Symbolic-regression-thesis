@@ -1,7 +1,7 @@
 from scipy.stats import pearsonr, spearmanr, rankdata
 import numpy as np
-import Ball
-import dcor
+#import Ball
+#import dcor
 
 #For linearity correlation
 def pearson_correlation(x, y):
@@ -39,28 +39,3 @@ def distance_covariance_library(X, Y):
 
 
 
-if(__name__ == "__main__"):
-
-    import time
-
-    X = np.random.random((3, 100))
-
-    Y = np.random.random((1, 100))
-    
-    print(X.shape, Y.shape)
-
-    start = time.time()
-    risultato = distance_covariance_library(X, Y)
-    finish = time.time()
-    print(f"DCorr correlation tra X (3D) e Y (1D): {risultato}")
-    print("Delta time: ", finish - start)
-    
-    print("")
-    
-    start = time.time()
-    risultato = ball_covariance_library(X, Y)
-    finish = time.time()
-    print(f"Ball correlation tra X (3D) e Y (1D): {risultato}")
-    print("Delta time: ", finish - start)
-
-    

@@ -56,9 +56,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
     #get_package_importance_nodes analyze nodes and returns a list of packages (for importance), where every package contains a list of triples node - feature- operation. 
     # If it is possible to choose a valid extension with first package, the algorithm will stop, otherwise it will search the extension on next package
     
-    def __init__(self, unary_operations, 
-                 #binary_operations,
-                 get_package_importance_nodes, heuristic_metrics):
+    def __init__(self, unary_operations, filtering_criterion, sorting_criterion, get_package_importance_nodes, heuristic_metrics):
         
         super().__init__()
         
@@ -71,7 +69,9 @@ class AnalysisRamification(SymbolicRegressionLearning):
         #    if(oper().get_channels() != 2): raise TypeError(f"{oper} has no 2 channels, it is not acceptable an binary operation like that")
         
         self._unary_operations = list(unary_operations)
-        #self._binary_operations = [{"neutral": i, "oper": o} for o, i in binary_operations]
+        
+        self.__filtering_criterion = filtering_criterion
+        self.__sorting_criterion = sorting_criterion
         
         self._heuristic_metrics = heuristic_metrics
         
@@ -83,73 +83,33 @@ class AnalysisRamification(SymbolicRegressionLearning):
         result = super().__call__(model, TR_inputs_dict, TR_output,   metric_functions)
         result_ranges_iterations = list(self._ranges_iterations)
         self._ranges_iterations = []
-        return {"result": result, "ranges_iterations": result_ranges_iterations}
+        return {"results": result, "ranges_iterations": result_ranges_iterations}
     
     def _pre_learning(self, model, metrics, TR_inputs_dict, TR_output):
         super()._pre_learning(model, metrics, TR_inputs_dict, TR_output)
         self._ranges_iterations = []
-                
-    #Replace the node1 subtree with node2 subtree                            
-    def __replace_subtree(self, node1, node2):
-        
-        #Get the father
-        father_leaf = node1.get_father()
-                
-        #The leaf is the root
-        if(father_leaf == None): self._model.set_root(node2)
-                   
-        else:
-                
-            i = father_leaf.get_childrens().index(node1)
-  
-            op.OperationNode.free_connection(father_leaf, node1)
-            op.OperationNode.new_connection(father_leaf, node2, i)
 
     def __structural_domain_check(model, TR_inputs_dict, TR_output):
         
         model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
         return np.all(np.isfinite(model.get_root().get_memory("forward"))) & np.all([np.all(np.isfinite(x.get_memory("backward"))) for x in model.get_root().get_all_subtree_nodes() if isinstance(x, op.Leaf)])
 
+    def __checkpoint_heuristic_metrics(self):
+        return {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
+
     #Get (if possible) the extension (with delta metric) of this combination
     def __get_extensions(self, TR_inputs_dict, TR_output, config):
-        
-        node = config["node"]
-        feature = config["feature"]
-        unary_oper = config["unary operation"]
-        
-        if(config["typology"] in ["constant", "feature"]): oper_node = op.Leaf(feature) if feature != None else node
-            
-        if(config["typology"] == "feature - operation"):
-
-            #Create node
-            oper_node = unary_oper()
-            
-            #Domain input check
-            if(not oper_node.check_input_domain(0, TR_inputs_dict[feature] if isinstance(node, op.Leaf) else node.get_memory("forward"))): return None
-            
-            #Domain output check
-            if(node.get_father() != None and
-               not oper_node.check_output_domain(node.get_memory("backward") if node.get_father() != None else TR_output)): return None
                 
-            #Create children
-            op.OperationNode.new_connection(oper_node, op.Leaf("l0"), 0)
-
-            #If node is a leaf
-            if(isinstance(node, op.Leaf)): f1 = op.Leaf(feature)
-                
-            #If node is a midterm node or the root, the f1 became che node itself   
-            else: f1 = node.copy_sub_tree()
-            
-            #Attach f1 to the unique children of operation
-            self.__replace_subtree(oper_node.get_childrens()[0], f1)
-           
+        node = config["old node"]
+        oper_node = config["new node"]
+        
         results = []
         
         try_nodes = []
         
         try_nodes.append(SymbolicRegression.string_to_tree(f"add(mul({oper_node}, 1), 0)").get_root())
         
-        #If it is possible to try also with the scaled and trasleted version of oper_node
+        #If it is possible to try also with the scaled and traslated version of oper_node
         output_oper_node = oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict).get_memory("forward")
         linear_convertion = AnalysisRamification.__scaling_and_traslating(output_oper_node, node.get_memory("backward"))
         
@@ -157,25 +117,22 @@ class AnalysisRamification(SymbolicRegressionLearning):
         q = linear_convertion["q"] if np.isfinite(linear_convertion["q"]) else 0
         
         if(not (m == 1 and q == 0)): try_nodes.append(SymbolicRegression.string_to_tree(f"add(mul({oper_node}, {m}), {q})").get_root())
-            
+                 
         #Try for standard and scaling / translated form
         for try_oper_node in try_nodes:
             
             #Try the substition
-            self.__replace_subtree(node, try_oper_node)
+            self._model.replace_subtree(node, try_oper_node)
             
             #Check the structural domain
             valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
             
             #Calculate the new metrics
-            new_metrics = {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
+            new_metrics = self.__checkpoint_heuristic_metrics()
             
             #Do the substition
-            self.__replace_subtree(try_oper_node, node)
-            
-            #Doing functional calculation
-            self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-            
+            self._model.replace_subtree(try_oper_node, node)
+
             #Check structure domain
             if(not valid_domain): continue
             
@@ -184,6 +141,8 @@ class AnalysisRamification(SymbolicRegressionLearning):
            
         #If both version are aviable, consider only the scaled / traslated version
         if(len(results) == 2): del results[0]
+        
+        if(len(results) == 0): return None
         
         return results
       
@@ -202,14 +161,14 @@ class AnalysisRamification(SymbolicRegressionLearning):
     #Extension phase (tree already wet with TR set)
     def __extension_step(self, TR_inputs_dict, TR_output):
         
-        original_metrics = {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
+        original_metrics = self.__checkpoint_heuristic_metrics()
         
         #Package the choices by importance
         for package in self.__get_package_importance_nodes(self._model.get_root().get_all_subtree_nodes(), self._unary_operations, TR_inputs_dict, TR_output):
-            
+
             choices = []
             
-           #For each choice inside the package, calculate the metrics and the possible extension
+            #For each choice inside the package, calculate the metrics and the possible extension
             for choice in package:
 
                 #Calculate the extension
@@ -219,31 +178,45 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 if(results != None):
                     
                     for result in results:
-                        
-                        choices.append({"new node": result["new node"], "original node": choice["node"]} | 
-                                       {f"{key} delta": original_metrics[key] - result[key] for key in self._heuristic_metrics.keys()})
+                    
+                        choices.append({"original node": choice["old node"], 
+                                        "new node": result["new node"], 
+                                        "delta": {key: original_metrics[key] - result[key] for key in self._heuristic_metrics.keys()}})
 
             if(len(choices) > 0): break
             
-        choices = [x for x in choices if (np.isfinite(x["Chaterjee delta"]) and x["Chaterjee delta"] > 0) or (np.isfinite(x["MAE delta"]) and x["MAE delta"] > 0)]
-        
-        for i in choices: print(i)
-        
+        #for i in choices: print(i)
+            
+        choices = list(filter(lambda x: self.__filtering_criterion(x["delta"]), choices))
+
         if(len(choices) == 0): return False
         
-        choices = sorted(choices, key = lambda x: (-x["Chaterjee delta"], -x["MAE delta"]))
+        choices = sorted(choices, key = lambda x: self.__sorting_criterion(x["delta"]))
         
-        #Do the extension
-        self.__replace_subtree(choices[0]["original node"], choices[0]["new node"])
+        #Continue until the model really change
+        while(len(choices) > 0):
         
-        return True
+            #Do the extension
+            self._model.replace_subtree(choices[0]["original node"], choices[0]["new node"])
+            
+            #Simplify the model
+            try_model = self._model.copy().simplify_model()
+            
+            #If the model has no changing, go with he next valid proposal
+            if(try_model.get_root() != self._model.get_root()): break
+            
+            self._model.replace_subtree(choices[0]["new node"], choices[0]["original node"])
+
+            del choices[0]
+        
+        return len(choices)
 
     #Pruning phase         
     def __pruning_step(self, TR_inputs_dict, TR_output):
-    
+        
         choices = []
         
-        original_metrics = {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
+        original_metrics = self.__checkpoint_heuristic_metrics()
         
         #Calculate features
         features = list(TR_inputs_dict.keys())
@@ -255,7 +228,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
             
             #Save the original node
             original_node = node
-            old_node = node
             
             #Ricalculate model (for calculate the constant)
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
@@ -265,39 +237,33 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 
                 #Replace the subtree
                 node = op.Leaf(f)
-                self.__replace_subtree(old_node, node)
-                old_node = node
+                self._model.replace_subtree(original_node, node)
                 
                 valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
                 
                 #Calculate the new metric
-                new_metrics = {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
+                new_metrics = self.__checkpoint_heuristic_metrics()
                 
                 #Return to normal state
                 self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 
+                self._model.replace_subtree(node, original_node)
+                
                 #If domain is not valid, do not consider the combination
                 if(not valid_domain): continue
                 
-                choices.append({"new node": node} | {f"{key} delta": original_metrics[key] - new_metrics[key] for key in self._heuristic_metrics.keys()})
+                choices.append({"original node": original_node, "new node": node, "delta": {key: original_metrics[key] - new_metrics[key] for key in self._heuristic_metrics.keys()}})
                 
-                self.__replace_subtree(old_node, original_node)
-            
-        #Filter choices
-        choices = [x for x in choices if x["Chaterjee delta"] > 0]
- 
-        #If there is no any choices to make, there is no any valid pruning to do
+        choices = list(filter(lambda x: self.__filtering_criterion(x["delta"]), choices))
+
         if(len(choices) == 0): return False
         
-        #In choice the best extension, choose the extension that minimize the VL and after the TR
-        choices = sorted(choices, key = lambda x: (-x["Chaterjee delta"], -x["MAE delta"]))
+        choices = sorted(choices, key = lambda x: self.__sorting_criterion(x["delta"]))
         
-        self.__replace_subtree(choices[0]["original node"], choices[0]["new node"])
+        self._model.replace_subtree(choices[0]["original node"], choices[0]["new node"])
 
         return True
-    
-    
-    
+      
   
     #TR_inputs_dict: numpy array's dict
     #VL_inputs_dict: numpy array's dict
@@ -341,25 +307,35 @@ class AnalysisRamification(SymbolicRegressionLearning):
             
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
             
+            internal_history = []
+            
             #Do the extension phase (bring the model to overfitting direction)
             while(self.__extension_step(TR_inputs_dict, TR_output)):
-                            
+                
                 print(f"Extension phase, iteration {i+1} done {'-'*50}")
-                self._model.simplify_model()
+                #self._model.simplify_model()
                 self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 self.checkpoint_metrics()
                 i += 1
+                
+                if(str(self._model) in internal_history): break
+                
+                internal_history.append(str(self._model))
                 
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 
             if(r != i): self._ranges_iterations.append({"period": "extension", "range": (r, i)})
                    
             r = i
+            
+            break
          
             #If model is the same of last cycle (considering the last time you start the last pruning), break
             new_pruning_memory = str(self._model)
             if(new_pruning_memory in pruning_memories): break
             pruning_memories.append(new_pruning_memory)
+            
+            internal_history = []
             
             #Do the pruning phase (bring the model to underfitting direction)
             while(self.__pruning_step(TR_inputs_dict, TR_output)): 
@@ -369,6 +345,10 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 self.checkpoint_metrics()
                 i += 1
+                
+                if(str(self._model) in internal_history): break
+                
+                internal_history.append(str(self._model))
                 
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
                 

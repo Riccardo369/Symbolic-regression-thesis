@@ -1,64 +1,340 @@
-import Operations as op
-import Exceptions as ex
 import numpy as np
 
-def constant(node):
+import Operations as op
+import Exceptions as ex
+import utils
+
+def close_to(a, b):
+    return np.abs(a - b) <= 1e-6
+
+def prepare_chain(node, binary_type):
+
+    elements = utils.flat_elements(node, binary_type)
+    constants = [x.get_name() for x in elements if x.is_constant()]
+    functions = [{"f": x} for x in elements if not x.is_constant()]
+    del elements
+        
+    #Extract the coefficient from function multiplied by coefficient
+    for i in range(len(functions)):
+        
+        #If is an multiplication (a coeff * f, f * coeff or f * g)
+        if(isinstance(functions[i]["f"], op.mul)):
+        
+            childrens = functions[i]["f"].get_childrens()
+            
+            #Divide constant from function
+            
+            if(childrens[0].is_constant()):
+                functions[i]["coeff"] = childrens[0].get_name()
+                functions[i]["f"] = childrens[1]
+                
+            elif(childrens[1].is_constant()):
+                functions[i]["coeff"] = childrens[1].get_name()
+                functions[i]["f"] = childrens[0]
+            
+            #It is not possible to divide, so consider the multiplication like an unique piece
+            else: functions[i]["coeff"] = 1
+                
+        #If is not a mul
+        else: functions[i]["coeff"] = 1
+        
+        #Place the extracted coefficient
+        if(isinstance(functions[i]["f"], op.neg)):
+            
+            functions[i]["f"] = functions[i]["f"].get_childrens()[0]
+            functions[i]["coeff"] *= -1
     
-    c = node.get_childrens()
+    return {"functions": functions, "constants": constants}
+
+def release_chain(nodes, binary_type):
     
-    if(not all([x.is_constant() for x in c])): raise ex.SimplificationError()
+    if(len(nodes) == 0): raise ex.SimplificationError
     
-    try: value = eval(node.get_string_calculation_function()['body'])
-    except: raise ex.SimplificationError()
+    elif(len(nodes) == 1): return nodes[0]
     
-    result = op.Leaf(value)
-    result.set_memory("forward", value)
+    #Connect first 2 elements
+    nodes = list(nodes)
+    
+    result = binary_type()
+    
+    result.new_connection(nodes[0], 0)
+    result.new_connection(nodes[1], 1)
+    
+    del nodes[0]
+    del nodes[0]
+    
+    #Continue to connect until the list is empty
+    while(len(nodes) > 0):
+        
+        new_result = binary_type()
+        
+        new_result.new_connection(nodes[0], 0)
+        new_result.new_connection(result.copy_sub_tree(), 1)
+        
+        result = new_result
+        
+        del nodes[0]
+        
     return result
-    
-def addition_identity(node):
-    
-    c = node.get_childrens()
-    
-    if(not (c[0].is_constant() and c[0].get_name() == 0) or (c[1].is_constant() and c[1].get_name() == 0)): raise ex.SimplificationError()
-    
-    if(isinstance(c[0], op.Leaf) and c[0].get_name() == 0): return c[1].copy_sub_tree()
-    if(isinstance(c[1], op.Leaf) and c[1].get_name() == 0): return c[0].copy_sub_tree()
-    
 
-def multiplication_identity(node):
+#a oper1 (b oper2 c) --> (a oper1 b) oper2 (a oper1 c)
+def distributivity_oper1_on_oper2(node, oper1, oper2):
     
-    c = node.get_childrens()
+    if(oper1().get_channels() != 2): raise ValueError(f"Operation 1 {oper1} must has 2 inputs")
+    if(oper2().get_channels() != 2): raise ValueError(f"Operation 2 {oper2} must has 2 inputs")
     
-    if(not (c[0].is_constant() and c[0].get_name() == 1) or (c[1].is_constant() and c[1].get_name() == 1)): raise ex.SimplificationError()
-    
-    if(c[0].is_constant() and c[0].get_name() == 1): return c[1].copy_sub_tree()
-    if(c[1].is_constant() and c[1].get_name() == 1): return c[0].copy_sub_tree()
+    if(not isinstance(node, oper1)): raise ValueError(f"On node {node} it is impossible apply distributivity {oper1} on {oper2}")
 
-def division_identity(node):
-    
     c = node.get_childrens()
-    if(not (c[1].is_constant() and c[1].get_name() == 1)): raise ex.SimplificationError()
-    return c[0].copy_sub_tree()
-
-
-def multiplication_null(node):
+        
+    #Trace the element to split's position
+    if(isinstance(c[1], oper2)): i = 0
+    elif(isinstance(c[0], oper2)): i = 1
+        
+    else: raise ex.SimplificationError()
+        
+    element = c[i]
+        
+    c_observe = c[1-i].get_childrens()
     
-    c = node.get_childrens()
+    left  = oper1()
+    right = oper1()
     
-    if(not (c[0].is_constant() and c[0].get_name() == 0) or (c[1].is_constant() and c[1].get_name() == 0)): raise ex.SimplificationError()
+    left .new_connection(element.copy_sub_tree(), 0)
+    right.new_connection(element.copy_sub_tree(), 0)
+        
+    left .new_connection(c_observe[0].copy_sub_tree(), 1)
+    right.new_connection(c_observe[1].copy_sub_tree(), 1)
+        
+    result = oper2()
     
-    result = op.Leaf(0)
-    result.set_memory("forward", 0)
+    result.new_connection(left, 0)
+    result.new_connection(right, 1)
+        
     return result
 
-def division_null(node):
+def scission_oper1_on_oper2(node, oper1, allow_operations):
     
-    c = node.get_childrens()
-    if(not (str(c[0]) == str(c[1]))): raise ex.SimplificationError()
+    if(oper1().get_channels() != 1): raise ValueError(f"Operation 1 {oper1} must has 1 input")
     
-    result = op.Leaf(1)
-    result.set_memory("forward", 1)
+    if(not isinstance(node, oper1)): raise ValueError(f"On node {node} it is impossible apply scission of {oper1} on own child")
+    
+    child = node.get_childrens()[0]
+    
+    if(child.__class__ not in allow_operations): raise ex.SimplificationError
+
+    result = child.__class__()
+    
+    for i, g in enumerate(child.get_childrens()):
+        
+        new_child = oper1()
+        new_child.new_connection(g.copy_sub_tree(), 0)
+        result.new_connection(new_child, i)
+    
     return result
 
+
+
+class __Simplification:
+    def __init__(self, top_down, bottom_up):
+        self.__top_down = top_down
+        self.__bottom_up = bottom_up
+        
+    def is_top_down(self):
+        return self.__top_down
+    
+    def is_bottom_up(self):
+        return self.__bottom_up
+    
+    def __call__(self, node):
+        return NotImplemented
+
+#BOTTOM UP SIMPLIFICATIONS
+
+class approximation(__Simplification):
+    def __init__(self):
+        super().__init__(False, True)
+        
+    def __call__(self, node):
+        
+        #if(node.is_constant() and close_to(node.get_name(), 0)): return op.Leaf(0)    
+        raise ex.SimplificationError
     
 
+class constant(__Simplification):
+    def __init__(self):
+        super().__init__(False, True)
+        
+    def __call__(self, node):
+        
+        try: value = eval(node.get_string_calculation_function()['body'])
+        except: raise ex.SimplificationError()
+        
+        if(not np.isfinite(value) and isinstance(node, op.div)): value = 0
+        
+        result = op.Leaf(value)
+        result.set_memory("forward", value)
+        return result
+
+class add_chain(__Simplification):
+    def __init__(self):
+        super().__init__(False, True)
+        
+    def __call__(self, node):
+        
+        result_chain = prepare_chain(node, op.add)
+        functions = result_chain["functions"]
+        constants = result_chain["constants"]
+        del result_chain
+        
+        #Take all distinct functions, considering that it is not possible to do with string (for commutative property of + and *, it is necessary __eq__)
+        new_functions = []
+        
+        distinct_functions = []
+        for x in functions:
+            if(x["f"] not in distinct_functions): distinct_functions.append(x["f"])
+          
+        #Consider only the survival functions  
+        for f in distinct_functions:
+            
+            coeff = sum([x["coeff"] for x in functions if x["f"] == f] + [0])
+            if(coeff != 0): new_functions.append({"f": f, "coeff": coeff})
+        
+        del distinct_functions
+        
+        #Calculate the nodes to concatenate
+        results = []
+        
+        for x in new_functions:
+            
+            if(x["coeff"] == 1): m = x["f"].copy_sub_tree()
+            
+            elif(x["coeff"] == -1):
+                m = op.neg()
+                m.new_connection(x["f"].copy_sub_tree(), 0)
+            
+            else:
+                m = op.mul()
+                m.new_connection(op.Leaf(x["coeff"]), 0)
+                m.new_connection(x["f"].copy_sub_tree(), 1)
+            
+            results.append(m)
+        
+        #Calculate the constant
+        const = 0
+        for c in constants: const += c
+        del constants
+        
+        if(const != 0): results.append(op.Leaf(const))
+        
+        return release_chain(results, op.add)
+
+class mul_chain(__Simplification):
+    def __init__(self):
+        super().__init__(False, True)
+        
+    def __call__(self, node):
+        
+        results = []
+        
+        result_chain = prepare_chain(node, op.mul)
+        
+        #Take the natural constants + all coefficients (all will be multiplied)
+        constants = result_chain["constants"] + [x["coeff"] for x in result_chain["functions"]]
+        functions = [x for x in result_chain["functions"]]
+        del result_chain
+        
+        c = 1
+        for x in constants: c *= x
+        
+        #If product of all constants is 0, everything is 0, and return immediatly 0
+        if(c == 0): return op.Leaf(0)
+        else: results.append(op.Leaf(c))
+        
+        #Consider which operation is numerator and which is denominator
+        for x in functions:
+            x["div"] = isinstance(x["f"], op.div)
+            if(x["div"]): x["f"] = x["f"].get_childrens()[0]
+            
+        #Simplify and delete equal numerator and denominator
+        new_functions = []
+        
+        #Take all distinct functions, considering that it is not possible to do with string (for commutative property of + and *, it is necessary __eq__)
+        distinct_functions = []
+        for x in functions:
+            if(x["f"] not in distinct_functions): distinct_functions.append(x["f"])
+          
+        #Consider only the survival functions  
+        for f in distinct_functions:
+            coeff = sum([-1 if x["div"] else 1 for x in functions if x["f"] == f] + [0])
+            if(coeff != 0): new_functions.append({"f": f, "mul_coeff": coeff})
+        
+        del distinct_functions
+        
+        for x in new_functions:
+            
+            standard = x["mul_coeff"] > 0
+            
+            for _ in range(abs(x["mul_coeff"])):
+                
+                if(standard): m = x["f"].copy_sub_tree()
+                
+                else:
+                    m = op.div()
+                    m.new_connection(x["f"].copy_sub_tree(), 0)
+                    
+                results.append(m)
+        
+        return release_chain(results, op.mul)
+
+#TOP DOWN SIMPLIFICATIONS
+
+class relax_neg(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        
+        child = node.get_childrens()[0]
+        
+        result = op.mul()
+        result.new_connection(op.Leaf(-1), 0)
+        result.new_connection(child.copy_sub_tree(), 1)
+        
+        return result
+
+class div_scission(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        return scission_oper1_on_oper2(node, op.div, [op.mul, op.neg])
+
+class abs_scission(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        return scission_oper1_on_oper2(node, op.abs, [op.mul, op.div])
+
+class abs_destroy_neg(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        
+        child = node.get_childrens()[0]
+        
+        if(not isinstance(child, op.neg)): raise ex.SimplificationError
+        
+        result = op.abs()
+        result.new_connection(child.get_childrens()[0].copy_sub_tree(), 0)
+        
+        return result
+
+class mul_distributivity_on_add(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        return distributivity_oper1_on_oper2(node, op.mul, op.add)

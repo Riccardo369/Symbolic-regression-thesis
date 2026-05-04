@@ -7,7 +7,6 @@ if parent_dir not in sys.path: sys.path.append(parent_dir)
 
 import Indicators as ind
 
-
 rng = np.random.default_rng()
 
 n = 10000

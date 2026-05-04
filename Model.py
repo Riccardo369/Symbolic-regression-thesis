@@ -24,15 +24,30 @@ class SymbolicRegression:
     
     def __init__(self, root):
         self.set_root(root)
-        
-        self.simplify_model()
-        
+
     def get_root(self):
         return self.__root
     
     def set_root(self, root):
         if(not isinstance(root, op.OperationNode)): raise ValueError(f"Root must be a operation node, not a {type(root)}")
-        self.__root = root.copy_sub_tree()
+        self.__root = root
+    
+    def replace_subtree(self, tree1, tree2):
+
+        root = self.__root
+        if(not root.is_node_present_in_sub_tree(tree1)): raise ValueError(f"Sub tree 1 {tree1} must be in this tree {self}, its not")
+        if(root.is_node_present_in_sub_tree(tree2)): raise ValueError(f"Sub tree 2 {tree2} cannot be in this tree {self}, it is")
+        
+        father_leaf = tree1.get_father()
+                
+        #The leaf is the root
+        if(father_leaf == None): self.set_root(tree2)
+                    
+        else:
+                    
+            i = father_leaf.get_childrens().index(tree1)
+            father_leaf.free_connection(tree1)
+            father_leaf.new_connection(tree2, i)
     
     def __str__(self):
         return str(self.__root)
@@ -40,11 +55,15 @@ class SymbolicRegression:
     def __repr__(self):
         return str(self)
     
+    def __eq__(self, model):
+        if(not isinstance(model, SymbolicRegression)): return False
+        return self.get_root() == model.get_root()
+        
     def view(self, f = lambda x: " ", block = True):
         self.__root.view_sub_tree(f, block)
         
     def copy(self):
-        return SymbolicRegression(self.__root)
+        return SymbolicRegression(self.__root.copy_sub_tree())
         
     def save_state(self):
         
@@ -97,8 +116,7 @@ class SymbolicRegression:
 
                 if(len(childrens_result) != result.get_channels()): raise ValueError(f"Node {first_children.value} has no {len(childrens_result)}, but {result.get_channels()}")
                 
-                for i, child in enumerate(childrens_result):
-                    op.OperationNode.new_connection(result, child, i)
+                for i, child in enumerate(childrens_result): result.new_connection(child.copy_sub_tree(), i)
                     
                 return result
                
@@ -149,33 +167,53 @@ class SymbolicRegression:
     #Simplify the tree, considering to simplify every node that it is possible to simplify
     def simplify_model(self):
         
+        def apply_simplification(node, filter_simply):
+            
+            simplification = None
+            for opt in node.get_simplification_subtree():
+                simply = opt()
+                if(not filter_simply(simply)): continue
+                try:
+                    simplification = simply(node).copy_sub_tree()
+                    self.replace_subtree(node, simplification)
+                    break
+                except ex.SimplificationError: pass
+                
+            return simplification
+        
         def recursion(node):
             
-            if(isinstance(node, op.Leaf)): return
-            
+            #Calculate the aviable top down simplification until is possible to repeat (the node can change)
+            while(True):
+                new_node = apply_simplification(node, lambda x: x.is_top_down())
+                if(new_node == None or new_node == node): break
+                node = new_node
+                        
             #Go to leafs
             for c in node.get_childrens(): recursion(c)
-           
-            #Calculate simplification
-            simplification = node.get_simplification_subtree()
-
-            #If it is not possible to do simplification, go on
-            if(simplification == None): return
-
-            #If simplification is possible, 
-            father = node.get_father()
-                
-            #If this node has no father (is a root)
-            if(father == None): self.__root = simplification
-                    
-            else:
-                    
-                i = father.get_childrens().index(node)
-                    
-                op.OperationNode.free_connection(father, node)
-                op.OperationNode.new_connection(father, simplification, i)
+            
+            #Calculate the aviable bottom up simplification
+            while(True):
+                new_node = apply_simplification(node, lambda x: x.is_bottom_up())
+                if(new_node == None or new_node == node): break
+                node = new_node
+         
+            return node
         
-        recursion(self.__root)
+        history = []
+        
+        while(self.__root not in history):
+            
+            #Save the actual form of model
+            history.append(self.__root.copy_sub_tree())
+            
+            #Apply again all simplifications
+            recursion(self.__root)
+            
+        best_root = sorted(history, key = lambda x: len(x.get_all_subtree_nodes()))[0]
+
+        #If the semplification is worse (more nodes), do a rollback, backing to original root
+        if(best_root != self.__root): self.replace_subtree(self.__root, best_root)
         
         return self
 
