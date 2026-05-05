@@ -4,6 +4,7 @@ import Operations as op
 import matplotlib.pyplot as plt
 
 import Exceptions as ex
+import utils
 
 class SymbolicRegression:
     
@@ -34,9 +35,8 @@ class SymbolicRegression:
     
     def replace_subtree(self, tree1, tree2):
 
-        root = self.__root
-        if(not root.is_node_present_in_sub_tree(tree1)): raise ValueError(f"Sub tree 1 {tree1} must be in this tree {self}, its not")
-        if(root.is_node_present_in_sub_tree(tree2)): raise ValueError(f"Sub tree 2 {tree2} cannot be in this tree {self}, it is")
+        if(not self.__root.is_node_present_in_sub_tree(tree1)): raise ValueError(f"Sub tree 1 {tree1} must be in this tree {self}, its not")
+        if(self.__root.is_node_present_in_sub_tree(tree2)): raise ValueError(f"Sub tree 2 {tree2} cannot be in this tree {self}, it is")
         
         father_leaf = tree1.get_father()
                 
@@ -44,11 +44,17 @@ class SymbolicRegression:
         if(father_leaf == None): self.set_root(tree2)
                     
         else:
-                    
-            i = father_leaf.get_childrens().index(tree1)
-            father_leaf.free_connection(tree1)
+            
+            for r, c in enumerate(father_leaf.get_childrens()):
+                
+                if(tree1 is c):
+                    i = r
+                    break
+            
+            father_leaf.free_connection(i)
+            
             father_leaf.new_connection(tree2, i)
-    
+
     def __str__(self):
         return str(self.__root)
     

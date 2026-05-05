@@ -14,20 +14,6 @@ import Operations as op
 import Errors as er
 import Indicators as ind
 
-def replace_subtree(model, node1, node2):
-        
-    #Get the father
-    father_leaf = node1.get_father()
-                
-    #The leaf is the root
-    if(father_leaf == None): model.set_root(node2)
-                   
-    else:
-            
-        i = father_leaf.get_childrens().index(node1)
-
-        father_leaf.free_connection(node1)
-        father_leaf.new_connection(node2, i)
         
 
 X = np.array([0.5, 1, np.pi/2, 2, 3])
@@ -63,12 +49,12 @@ def f(node, target, derative = False):
     copy_node = node.copy_sub_tree()
       
     #Set name of enter to primal name (only for calculate the backward for other leaf)
-    replace_subtree(function, leaf, copy_node)
+    function.replace_subtree(leaf, copy_node)
     
     #Calculate backward
     function.get_root().forward_calculation_memory_sub_tree({"X": X, "Y": Y}).backward_calculation_memory_sub_tree(target)
 
-    replace_subtree(function, copy_node, leaf)
+    function.replace_subtree(copy_node, leaf)
 
         
     if(derative): function = function.derivate_model(var)
@@ -87,7 +73,7 @@ Model.get_root().view_sub_tree(lambda x: f(x, Y, True), name = "Derative Model")
 Loss = SymbolicRegression.string_to_tree(f"pow(sub(m, Y), 2)")
 original_loss_leafs = Loss.get_leafs()
 Loss.get_root().set_memory("backward", 0)
-replace_subtree(Loss, original_loss_leafs[0], Model.get_root())
+Loss.replace_subtree(original_loss_leafs[0], Model.get_root())
 
 Loss.get_root().view_sub_tree(lambda x: f(x, 0, False), name = "Quadratic loss")
 Loss.get_root().view_sub_tree(lambda x: f(x, 0, True), name = "Derative Quadratic Loss")

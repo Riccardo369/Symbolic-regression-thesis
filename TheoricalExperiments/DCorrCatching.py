@@ -13,21 +13,6 @@ from Model import SymbolicRegression
 import Operations as op
 import Errors as er
 import Indicators as ind
-
-def replace_subtree(model, node1, node2):
-        
-    #Get the father
-    father_leaf = node1.get_father()
-
-    #The leaf is the root
-    if(father_leaf == None): model.set_root(node2)
-                   
-    else:
-            
-        i = father_leaf.get_childrens().index(node1)
-
-        father_leaf.free_connection(node1)
-        father_leaf.new_connection(node2, i)
         
         
 def linear_result(X, Y, n):

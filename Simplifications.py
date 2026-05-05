@@ -133,7 +133,21 @@ def scission_oper1_on_oper2(node, oper1, allow_operations):
     
     return result
 
+def double_oper_null(node, oper):
 
+    if(oper().get_channels() != 1): raise ValueError(f"Operation 1 {oper} must has 1 input")
+    
+    if(not isinstance(node, oper)): raise ValueError(f"On node {node} it is impossible apply scission of {oper} on own child")
+    
+    child = node.get_childrens()[0]
+    
+    try: gran_child = child.get_childrens()[0]
+    except: raise ex.SimplificationError
+    
+    if(not isinstance(child, oper)): raise ex.SimplificationError
+    
+    return gran_child.copy_sub_tree()
+    
 
 class __Simplification:
     def __init__(self, top_down, bottom_up):
@@ -156,10 +170,8 @@ class approximation(__Simplification):
         super().__init__(False, True)
         
     def __call__(self, node):
-        
-        #if(node.is_constant() and close_to(node.get_name(), 0)): return op.Leaf(0)    
+        if(node.is_constant() and close_to(node.get_name(), 0)): return op.Leaf(0)    
         raise ex.SimplificationError
-    
 
 class constant(__Simplification):
     def __init__(self):
@@ -209,9 +221,9 @@ class add_chain(__Simplification):
             
             if(x["coeff"] == 1): m = x["f"].copy_sub_tree()
             
-            elif(x["coeff"] == -1):
-                m = op.neg()
-                m.new_connection(x["f"].copy_sub_tree(), 0)
+            #elif(x["coeff"] == -1):
+            #    m = op.neg()
+            #    m.new_connection(x["f"].copy_sub_tree(), 0)
             
             else:
                 m = op.mul()
@@ -249,7 +261,7 @@ class mul_chain(__Simplification):
         
         #If product of all constants is 0, everything is 0, and return immediatly 0
         if(c == 0): return op.Leaf(0)
-        else: results.append(op.Leaf(c))
+        elif(c != 1): results.append(op.Leaf(c))
         
         #Consider which operation is numerator and which is denominator
         for x in functions:
@@ -288,6 +300,27 @@ class mul_chain(__Simplification):
         return release_chain(results, op.mul)
 
 #TOP DOWN SIMPLIFICATIONS
+
+class neg_null(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        return double_oper_null(node, op.neg)
+    
+class div_null(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        return double_oper_null(node, op.div)
+    
+class abs_null(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        return double_oper_null(node, op.abs)
 
 class relax_neg(__Simplification):
     def __init__(self):

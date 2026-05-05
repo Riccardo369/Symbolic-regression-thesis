@@ -88,22 +88,21 @@ class OperationNode:
         return all([c.equals_subtree(x) for c, x in zip(my_childrens, other_childrens)])
      
     #Delete a connection
-    def free_connection(self, child):
-        if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
-        
-        if(child not in self.__childrens): raise ValueError(f"Father {self} has not {child} in own childrens")
+    def free_connection(self, i):
+
+        if(i >= self.__channels or i < 0): raise ValueError(f"Cannot set a {i}-th channel in a node with {self.__channels} children for father")
         
         brothers = self.__childrens
-        brothers[brothers.index(child)] = None
-        del brothers
         
+        child = brothers[i]
+        brothers[i] = None
         child.__father = None
         
         return self
        
     #Create a connection 
     def new_connection(self, child, i):
-        
+
         if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
         
         if(child.__father != None): raise ValueError(f"Child {child} has also a father {self}, so connection is useless")
@@ -129,7 +128,7 @@ class OperationNode:
         if(not isinstance(node, OperationNode)): raise ValueError(f"Node {node} must be an OperationNode")
         
         def recursion(n):
-            return any([recursion(c) for c in n.get_childrens()] + [n is node])
+            return any([recursion(c) for c in n.get_childrens()] + [id(n) == id(node)])
 
         return recursion(self)
            
@@ -378,6 +377,9 @@ class Leaf(OperationNode):
 class add(OperationNode):
     def __init__(self):
         super().__init__(2, True)
+        
+    def __str__(self):
+        return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
  
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
@@ -389,7 +391,7 @@ class add(OperationNode):
         return [output - inputs[1], output - inputs[0]]
     
     def get_string_calculation_structure(self, x):
-        return f"{x[0]} + {x[1]}"
+        return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
     
     def get_string_derative_structure(self, sub_strings, x):  
         super().get_string_derative_structure(sub_strings, x)
@@ -407,6 +409,9 @@ class add(OperationNode):
 class mul(OperationNode):
     def __init__(self):
         super().__init__(2, True)
+        
+    def __str__(self):
+        return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
 
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
@@ -418,23 +423,25 @@ class mul(OperationNode):
         output = self.get_memory("backward")
         
         with np.errstate(divide='ignore', invalid='ignore'):            
-            backward_input_0 = output / inputs[0]
-            backward_input_1 = output / inputs[1]
+            backward_input_0 = output / inputs[1]
+            backward_input_1 = output / inputs[0]
         
         #In questi casi il 2° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
-        if(isinstance(inputs[0], np.ndarray)):
+        if(isinstance(inputs[1], np.ndarray)):
             mask = ~np.isfinite(backward_input_0)
-            backward_input_0[mask] = inputs[0][mask]
+            if(not np.isscalar(inputs[0])): backward_input_0[mask] = inputs[0][mask]
+            else: backward_input_0 = inputs[0]
         
-        #In questi casi il 1° input = 0, quindi il 2° input può essere qualsiasi cosa, quindi anche se stesso
-        if(isinstance(inputs[1], np.ndarray)): 
+        #In questi casi il 1° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
+        if(isinstance(inputs[0], np.ndarray)): 
             mask = ~np.isfinite(backward_input_1)
-            backward_input_1[mask] = inputs[1][mask]
+            if(not np.isscalar(inputs[1])): backward_input_1[mask] = inputs[1][mask]
+            else: backward_input_1 = inputs[1]
         
         return [backward_input_0, backward_input_1]
 
     def get_string_calculation_structure(self, x):
-        return f"{x[0]} * {x[1]}"
+        return f"{' * '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
     
     def get_string_derative_structure(self, sub_strings, x):
         
@@ -472,7 +479,8 @@ class neg(OperationNode):
         return f"neg({sub_strings[0]})"
     
     def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.relax_neg])
+        return super().get_simplification_subtree([si.neg_null,
+                                                   si.relax_neg])
 
 class div(OperationNode):
     def __init__(self):
@@ -510,7 +518,8 @@ class div(OperationNode):
         return f"neg(div(mul({str_function[0]}, {str_function[0]})))"
     
     def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.div_scission])
+        return super().get_simplification_subtree([si.div_null,
+                                                   si.div_scission])
 
 class sin(OperationNode):
     def __init__(self):
@@ -585,7 +594,8 @@ class abs(OperationNode):
         return f"mul({sub_strings[0]}, div({str_function[0]}, abs({str_function[0]})))"
     
     def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.abs_scission,
+        return super().get_simplification_subtree([si.abs_null,
+                                                   si.abs_scission,
                                                    si.abs_destroy_neg])
 
 class exp(OperationNode):
