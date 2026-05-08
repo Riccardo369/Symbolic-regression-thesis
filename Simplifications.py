@@ -170,8 +170,10 @@ class approximation(__Simplification):
         super().__init__(False, True)
         
     def __call__(self, node):
-        if(node.is_constant() and close_to(node.get_name(), 0)): return op.Leaf(0)    
-        raise ex.SimplificationError
+        if(not node.is_constant()): raise ex.SimplificationError
+        
+        #tolerance fissata in base alle capacità della macchina nella precisione numerica
+        return op.Leaf(int(node.get_name())) if np.abs(node.get_name() - int(node.get_name())) <= 1e-6 else node
 
 class constant(__Simplification):
     def __init__(self):
@@ -364,6 +366,22 @@ class abs_destroy_neg(__Simplification):
         result.new_connection(child.get_childrens()[0].copy_sub_tree(), 0)
         
         return result
+
+class abs_double_mul_null(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        
+        child = node.get_childrens()[0]
+        
+        if(not isinstance(child, op.mul)): raise ex.SimplificationError
+        
+        childrens = child.get_childrens()
+        
+        if(childrens[0] == childrens[1]): return child
+        
+        raise ex.SimplificationError
 
 class mul_distributivity_on_add(__Simplification):
     def __init__(self):

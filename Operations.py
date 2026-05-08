@@ -8,10 +8,12 @@ import io
 import Domains as dm
 import Exceptions as ex
 import Simplifications as si
+import Indicators as ind
+import Errors as er
 import utils
 
 class OperationNode:
-    
+
     _tol = 1e-40
     
     def __init__(self, channels, is_commutative = False, name = None):
@@ -105,7 +107,7 @@ class OperationNode:
 
         if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
         
-        if(child.__father != None): raise ValueError(f"Child {child} has also a father {self}, so connection is useless")
+        if(child.__father != None): raise ValueError(f"Child {child} has already a father {self}, so connection is useless")
         if(self.__childrens[i] != None): raise ValueError(f"Father {self} has {child} in own childrens in position {i}, so connection is useless")
         
         if(i >= self.__channels or i < 0): raise ValueError(f"Cannot set a {i}-th channel in a node with {self.__channels} children for father")
@@ -167,7 +169,7 @@ class OperationNode:
         return self
     
     def set_name(self, name):        
-        if(not self._check_type_name(name) and name != None): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
+        if(not self._check_type_name(name)): raise ValueError(f"For this node {self.__class__.__name__}, {name} like name is not acceptable")
         self._name = name
         return self
 
@@ -282,6 +284,10 @@ class OperationNode:
     def backward_calculation(self):
         return NotImplemented
 
+    #Calculate the confidence of this node. REQUIRE backward from father and forward from childrens
+    def calculation_confidence(self):
+        return NotImplemented
+
     def best_constant(self, i):
         if(self.__channels == 1): raise ValueError("This operations has 1 channel, it has no sense this function")
         if(i > 2 or i < 0): raise ValueError(f"This operation has {self.__channels}, {i} has no sense")
@@ -352,11 +358,12 @@ class OperationNode:
 
 
 class Leaf(OperationNode):
+    
     def __init__(self, label):
         super().__init__(0, False, label)
     
     def _check_type_name(self, name):
-        return type(name) in [str, int, float] or isinstance(name, np.generic)
+        return (type(name) in [str, int, float] and not isinstance(name, np.ndarray)) or np.isscalar(name)
     
     def is_variable(self):
         return type(self.get_name()) in [str]
@@ -367,6 +374,10 @@ class Leaf(OperationNode):
     def backward_calculation(self):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
     
+    def calculation_confidence(self):
+        if(self.is_constant()): return 1 / (np.var(self.get_memory("backward")) + 1)
+        else: return ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+
     def get_string_derative_structure(self, sub_strings, x):
         super().get_string_derative_structure(sub_strings, x)
         return "1" if x == self._name else "0"
@@ -389,6 +400,9 @@ class add(OperationNode):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward") 
         return [output - inputs[1], output - inputs[0]]
+    
+    def calculation_confidence(self):
+        return ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
     
     def get_string_calculation_structure(self, x):
         return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
@@ -422,23 +436,33 @@ class mul(OperationNode):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward")
         
-        with np.errstate(divide='ignore', invalid='ignore'):            
-            backward_input_0 = output / inputs[1]
-            backward_input_1 = output / inputs[0]
+        try: backward_output_0 = output / inputs[1]
+        except ZeroDivisionError: backward_output_0 = np.nan
+        
+        with np.errstate(divide='ignore', invalid='ignore'): 
+              
+            try: backward_output_0 = output / inputs[1]
+            except ZeroDivisionError: backward_output_0 = inputs[1]
+                    
+            try: backward_output_1 = output / inputs[0]
+            except ZeroDivisionError: backward_output_1 = inputs[0]
         
         #In questi casi il 2° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
         if(isinstance(inputs[1], np.ndarray)):
-            mask = ~np.isfinite(backward_input_0)
-            if(not np.isscalar(inputs[0])): backward_input_0[mask] = inputs[0][mask]
-            else: backward_input_0 = inputs[0]
+            mask = ~np.isfinite(backward_output_0)
+            if(not np.isscalar(inputs[0])): backward_output_0[mask] = inputs[0][mask]
+            else: backward_output_0 = inputs[0]
         
         #In questi casi il 1° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
         if(isinstance(inputs[0], np.ndarray)): 
-            mask = ~np.isfinite(backward_input_1)
-            if(not np.isscalar(inputs[1])): backward_input_1[mask] = inputs[1][mask]
-            else: backward_input_1 = inputs[1]
+            mask = ~np.isfinite(backward_output_1)
+            if(not np.isscalar(inputs[1])): backward_output_1[mask] = inputs[1][mask]
+            else: backward_output_1 = inputs[1]
         
-        return [backward_input_0, backward_input_1]
+        return [backward_output_0, backward_output_1]
+    
+    def calculation_confidence(self):
+        return ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
 
     def get_string_calculation_structure(self, x):
         return f"{' * '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
@@ -460,6 +484,7 @@ class mul(OperationNode):
                                                    si.mul_chain])
 
 class neg(OperationNode):
+    
     def __init__(self):
         super().__init__(1, False)
  
@@ -471,6 +496,9 @@ class neg(OperationNode):
         output = self.get_memory("backward") 
         return [-output]
     
+    def calculation_confidence(self):
+        return -ind.pearson_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+ 
     def get_string_calculation_structure(self, x):
         return f"-{x[0]}"
     
@@ -483,6 +511,7 @@ class neg(OperationNode):
                                                    si.relax_neg])
 
 class div(OperationNode):
+    
     def __init__(self):
         super().__init__(1, False)
         
@@ -493,21 +522,38 @@ class div(OperationNode):
         elif(i == 0): return np.all(np.abs(input) >= self._tol)
 
     def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return 1 / inputs[0]
+        inputs = [x.get_memory("forward") for x in self.get_childrens()]  
+            
+        try: return 1 / inputs[0] 
+        except ZeroDivisionError: np.nan
     
     def backward_calculation(self):
         
+        input = self.get_memory("backward")
+        
         with np.errstate(divide='ignore', invalid='ignore'):
-            output = 1 / self.get_memory("backward")
+
+            try: output = 1 / input
+            except ZeroDivisionError: output = np.nan
             
         if(isinstance(output, np.ndarray)):
             mask = ~np.isfinite(output)
-            input = self.get_childrens()[0].get_memory("forward")
             output[mask] = input[mask] if isinstance(input, np.ndarray) else input
             
         return [output]
+    
+    def calculation_confidence(self):
 
+        In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+    
+        mask_left = In < 0
+        mask_right = In > 0
+        
+        result_left = ind.spearman_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
+        result_right = -ind.spearman_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
+
+        return np.abs(result_left * result_right)
+    
     def get_string_calculation_structure(self, x):
         return f"1 / {x[0]}"
     
@@ -516,12 +562,13 @@ class div(OperationNode):
         super().get_string_derative_structure(sub_strings, x)
         str_function = [str(x) for x in self.get_childrens()]
         return f"neg(div(mul({str_function[0]}, {str_function[0]})))"
-    
+
     def get_simplification_subtree(self):
         return super().get_simplification_subtree([si.div_null,
                                                    si.div_scission])
 
 class sin(OperationNode):
+    
     def __init__(self):
         super().__init__(1)
         
@@ -536,6 +583,9 @@ class sin(OperationNode):
     def backward_calculation(self):
         real_output = self.get_memory("backward")
         return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
+    
+    def calculation_confidence(self):
+        return ind.chatterjee_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
 
     def get_string_calculation_structure(self, x):
         return f"np.sin({x[0]})"
@@ -547,6 +597,7 @@ class sin(OperationNode):
         return f"mul(cos({str_function[0]}), {sub_strings[0]})"
 
 class cos(OperationNode):
+    
     def __init__(self):
         super().__init__(1)
         
@@ -561,6 +612,9 @@ class cos(OperationNode):
     def backward_calculation(self):
         real_output = self.get_memory("backward")
         return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
+    
+    def calculation_confidence(self):
+        return ind.chatterjee_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
 
     def get_string_calculation_structure(self, x):
         return f"np.cos({x[0]})"
@@ -572,6 +626,7 @@ class cos(OperationNode):
         return f"mul(neg(0, sin({str_function[0]})), {sub_strings[0]})"
 
 class abs(OperationNode):
+    
     def __init__(self):
         super().__init__(1)
         
@@ -584,6 +639,18 @@ class abs(OperationNode):
     def backward_calculation(self):
         return [dm.get_ideal_input_abs(self.get_memory("forward"), self.get_memory("backward"))]
 
+    def calculation_confidence(self):
+
+        In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+    
+        mask_left = In <= 0
+        mask_right = In >= 0
+        
+        result_left = ind.pearson_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
+        result_right = -ind.pearson_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
+
+        return np.abs(result_left * result_right)
+
     def get_string_calculation_structure(self, x):
         return f"np.abs({x[0]})"
     
@@ -595,10 +662,12 @@ class abs(OperationNode):
     
     def get_simplification_subtree(self):
         return super().get_simplification_subtree([si.abs_null,
+                                                   si.abs_double_mul_null,
                                                    si.abs_scission,
                                                    si.abs_destroy_neg])
 
 class exp(OperationNode):
+    
     def __init__(self):
         super().__init__(1, False)
         
@@ -616,6 +685,9 @@ class exp(OperationNode):
             result = np.log(self.get_memory("backward"))
         return [result]
     
+    def calculation_confidence(self):
+        return ind.chatterjee_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+    
     def get_string_calculation_structure(self, x):
         return f"np.exp({x[0]})"
     
@@ -625,6 +697,7 @@ class exp(OperationNode):
         return f"mul(exp({str_function[0]}), {sub_strings[0]})"
 
 class ln(OperationNode):
+    
     def __init__(self):
         super().__init__(1, False)
 
@@ -647,6 +720,14 @@ class ln(OperationNode):
             result = np.exp(self.get_memory("backward"))
 
         return [result]
+    
+    def calculation_confidence(self):
+
+        In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+    
+        mask_right = In > 0
+
+        return ind.pearson_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
         
     def get_string_calculation_structure(self, x):
         return f"np.log({x[0]})"

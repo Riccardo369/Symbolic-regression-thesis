@@ -149,6 +149,9 @@ class SymbolicRegression:
     def get_calculation_function(self):
         
         f = self.__root.get_string_calculation_function()
+        
+        #print(f"f[body]:", f["body"], self)
+        
         f = eval(f"lambda {', '.join(f['leaf_labels'])}: {f['body']}")
         
         aviable_parameters = set(f.__code__.co_varnames[:f.__code__.co_argcount])

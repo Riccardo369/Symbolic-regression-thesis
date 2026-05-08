@@ -1,0 +1,85 @@
+import numpy as np
+
+import sys
+from pathlib import Path
+parent_dir = str(Path(__file__).resolve().parent.parent)
+if parent_dir not in sys.path: sys.path.append(parent_dir)
+
+import Indicators as ind
+
+def approx(n, k = 10):
+    if(np.isnan(n)): return n
+    return int(n * (10**k)) / (10**k)
+
+
+#Questo script mostra l' andamento dei 3 coefficienti al variare della funzione ed al variare della scalatura lineare di queste funzioni ad una variabile X randomica
+
+rng = np.random.default_rng()
+
+a = -50
+b = 50
+
+non_linear_transformation = ["X",           #P std, S std, P ext e S ext     1
+                             "-X",          #P std, S std, P ext e S ext    -1
+                             "1/X",         #P ext e S ext                   1
+                             "np.sin(X)",   #C ext e C ext costanti         -1
+                             "np.cos(X)",   #C ext e C ext costanti         -1
+                             "np.abs(X)",   #P ext e S ext              1 / -1    (entrambi negativi o positivi)
+                             "np.exp(X)",   #S std, P ext e S ext            1    (a volte P è negativo altre positivo)
+                             "np.log(X)",   #P ext e S ext              1 / -1    (entrambi negativi o positivi)   (P, S, C std = nan)
+                             ]
+
+
+dict_aviable = {"X":         ["f", "P std", "S std", "P ext", "S ext"],
+                "-X":        ["f", "P std", "S std", "P ext", "S ext"],
+                "1/X":       ["f", "P ext", "S ext"],
+                "np.sin(X)": ["f", "C std", "C ext"],
+                "np.cos(X)": ["f", "C std", "C ext"],
+                "np.abs(X)": ["f", "P ext", "S ext"],
+                "np.exp(X)": ["f", "S std", "P ext", "S ext"],
+                "np.log(X)": ["f", "P ext", "S ext"]
+                }
+
+for nlt in non_linear_transformation:
+    
+    for _ in range(10):
+
+        X = np.array(rng.uniform(a, b, int(rng.uniform(10, 10000))))
+        X = X[np.isfinite(X) & ~np.isnan(X)]
+        
+        #print(np.any(np.isnan(X)))
+        
+        Y1 = eval(nlt) #Apply non linear transformation
+        
+        #print(np.any(np.isnan(Y1)))
+        
+        mean_X = np.mean(X)
+        mean_Y = np.mean(Y1)
+                
+        #m = np.sum((X - mean_X) * (Y1 - mean_Y)) / np.sum((X - mean_X)**2)
+        #q = mean_Y - (m*mean_X)
+        
+        #m = m if np.isfinite(m) else rng.uniform(a, b)
+        #q = q if np.isfinite(q) else rng.uniform(a, b)
+        
+        m = rng.uniform(a, b)
+        q = rng.uniform(a, b)
+
+        Y2 = (m * X) + q
+        
+        result = {"f": nlt,
+                  "P std": approx(ind.pearson_correlation(X, Y1)),
+                  "S std": approx(ind.spearman_correlation(X, Y1)),
+                  "C std": approx(ind.chatterjee_correlation(X, Y1)),
+                  "P ext": approx(ind.pearson_correlation(X, Y2)),
+                  "S ext": approx(ind.spearman_correlation(X, Y2)),
+                  "C ext": approx(ind.chatterjee_correlation(X, Y2))
+                  }
+     
+        print(result)
+        #print({i: result[i] for i in dict_aviable[nlt]})
+        
+
+
+
+
