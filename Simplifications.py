@@ -170,6 +170,7 @@ class approximation(__Simplification):
         super().__init__(False, True)
         
     def __call__(self, node):
+        raise ex.SimplificationError
         if(not node.is_constant()): raise ex.SimplificationError
         
         #tolerance fissata in base alle capacità della macchina nella precisione numerica
@@ -323,6 +324,28 @@ class abs_null(__Simplification):
         
     def __call__(self, node):
         return double_oper_null(node, op.abs)
+    
+class exp_ln_null(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        
+        child = node.get_childrens()[0]
+        
+        if(isinstance(child, op.ln)): return child.get_childrens()[0]
+        else: raise ex.SimplificationError
+        
+class ln_exp_null(__Simplification):
+    def __init__(self):
+        super().__init__(True, False)
+        
+    def __call__(self, node):
+        
+        child = node.get_childrens()[0]
+        
+        if(isinstance(child, op.exp)): return child.get_childrens()[0]
+        else: raise ex.SimplificationError
 
 class relax_neg(__Simplification):
     def __init__(self):

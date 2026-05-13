@@ -19,14 +19,22 @@ def prepare(x, y):
 #For linearity correlation
 def pearson_correlation(x, y):
     x, y = prepare(x, y)
+    
+    if(np.var(y) == 0): return 1
+    if(np.var(x) == 0 and np.var(y) > 0): return 0
+    
     result = pearsonr(x, y)[0]
-    return result if not np.isnan(result) else 0
+    return result
 
 #For monoton correlation
 def spearman_correlation(x, y):
     x, y = prepare(x, y)
+    
+    if(np.var(y) == 0): return 1
+    if(np.var(x) == 0 and np.var(y) > 0): return 0
+    
     result = spearmanr(x, y)[0]
-    return result if not np.isnan(result) else 0
+    return result
 
 #For sinusoidal and monoton correlation
 def chatterjee_correlation(x, y):
@@ -50,4 +58,36 @@ def chatterjee_correlation(x, y):
     
     result = 1 - (sum_abs_diff / ((2.0 / n) * denominator_term))
     
-    return result if not np.isnan(result) else 0
+    return result
+
+
+
+
+if(__name__ == "__main__"):
+    
+    x = 3
+    y = np.array([1, 2, 3])
+
+    f = lambda x, y: pearson_correlation(x, y)
+
+    print("Pearson")
+    print(f(x, x))
+    print(f(x, y))
+    print(f(y, x))
+    print(f(y, y))
+
+    f = lambda x, y: spearman_correlation(x, y)
+
+    print("Spearman")
+    print(f(x, x))
+    print(f(x, y))
+    print(f(y, x))
+    print(f(y, y))
+
+    f = lambda x, y: chatterjee_correlation(x, y)
+
+    print("Chaterjee")
+    print(f(x, x))
+    print(f(x, y))
+    print(f(y, x))
+    print(f(y, y))

@@ -227,11 +227,12 @@ class SymbolicRegression:
         return self
 
     #Learn phase   
-    def learn(self, TR_inputs_dict, TR_output, LearningAlgorithm, metric_functions = {}):
+    def learn(self, TR_inputs_dict, TR_output, LearningAlgorithm, stop_criteria = lambda x: False, metric_functions = {}):
 
         return LearningAlgorithm(self,
                                  TR_inputs_dict,
                                  TR_output,
+                                 stop_criteria,
                                  metric_functions)
 
 

@@ -284,8 +284,8 @@ class OperationNode:
     def backward_calculation(self):
         return NotImplemented
 
-    #Calculate the confidence of this node. REQUIRE backward from father and forward from childrens
-    def calculation_confidence(self):
+    #Calculate the confidence of this node (considering the childrens). REQUIRE backward from father and forward from childrens
+    def calculation_hat_confidence(self):
         return NotImplemented
 
     def best_constant(self, i):
@@ -374,9 +374,11 @@ class Leaf(OperationNode):
     def backward_calculation(self):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
     
-    def calculation_confidence(self):
+    def calculation_hat_confidence(self):
         if(self.is_constant()): return 1 / (np.var(self.get_memory("backward")) + 1)
-        else: return ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+        else:
+            result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+            return result if np.isfinite(result) else 0
 
     def get_string_derative_structure(self, sub_strings, x):
         super().get_string_derative_structure(sub_strings, x)
@@ -386,6 +388,7 @@ class Leaf(OperationNode):
         return super().get_simplification_subtree([si.approximation])
 
 class add(OperationNode):
+    
     def __init__(self):
         super().__init__(2, True)
         
@@ -401,8 +404,9 @@ class add(OperationNode):
         output = self.get_memory("backward") 
         return [output - inputs[1], output - inputs[0]]
     
-    def calculation_confidence(self):
-        return ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+    def calculation_hat_confidence(self):
+        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+        return result
     
     def get_string_calculation_structure(self, x):
         return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
@@ -421,6 +425,7 @@ class add(OperationNode):
         return super().get_simplification_subtree([si.add_chain])
 
 class mul(OperationNode):
+    
     def __init__(self):
         super().__init__(2, True)
         
@@ -461,9 +466,16 @@ class mul(OperationNode):
         
         return [backward_output_0, backward_output_1]
     
-    def calculation_confidence(self):
+    #def calculation_hat_confidence(self):
         return ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
 
+    def calculation_hat_confidence(self):
+        #print("calculation_hat_confidence mul")
+        #print(self.get_memory("forward"))
+        #print(self.get_memory("backward"))
+        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+        return result
+    
     def get_string_calculation_structure(self, x):
         return f"{' * '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
     
@@ -496,8 +508,9 @@ class neg(OperationNode):
         output = self.get_memory("backward") 
         return [-output]
     
-    def calculation_confidence(self):
-        return -ind.pearson_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+    def calculation_hat_confidence(self):
+        result = -ind.pearson_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+        return result
  
     def get_string_calculation_structure(self, x):
         return f"-{x[0]}"
@@ -542,8 +555,8 @@ class div(OperationNode):
             
         return [output]
     
-    def calculation_confidence(self):
-
+    def calculation_hat_confidence(self):
+    
         In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
     
         mask_left = In < 0
@@ -551,8 +564,10 @@ class div(OperationNode):
         
         result_left = ind.spearman_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
         result_right = -ind.spearman_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
-
-        return np.abs(result_left * result_right)
+        
+        result = np.abs(result_left * result_right)
+        return result
+ 
     
     def get_string_calculation_structure(self, x):
         return f"1 / {x[0]}"
@@ -584,8 +599,9 @@ class sin(OperationNode):
         real_output = self.get_memory("backward")
         return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
     
-    def calculation_confidence(self):
-        return ind.chatterjee_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+    def calculation_hat_confidence(self):
+        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+        return result
 
     def get_string_calculation_structure(self, x):
         return f"np.sin({x[0]})"
@@ -613,9 +629,10 @@ class cos(OperationNode):
         real_output = self.get_memory("backward")
         return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
     
-    def calculation_confidence(self):
-        return ind.chatterjee_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
-
+    def calculation_hat_confidence(self):
+        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+        return result
+    
     def get_string_calculation_structure(self, x):
         return f"np.cos({x[0]})"
     
@@ -639,8 +656,8 @@ class abs(OperationNode):
     def backward_calculation(self):
         return [dm.get_ideal_input_abs(self.get_memory("forward"), self.get_memory("backward"))]
 
-    def calculation_confidence(self):
-
+    def calculation_hat_confidence(self):
+    
         In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
     
         mask_left = In <= 0
@@ -648,8 +665,9 @@ class abs(OperationNode):
         
         result_left = ind.pearson_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
         result_right = -ind.pearson_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
-
-        return np.abs(result_left * result_right)
+        
+        result = np.abs(result_left * result_right)
+        return result
 
     def get_string_calculation_structure(self, x):
         return f"np.abs({x[0]})"
@@ -685,8 +703,9 @@ class exp(OperationNode):
             result = np.log(self.get_memory("backward"))
         return [result]
     
-    def calculation_confidence(self):
-        return ind.chatterjee_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+    def calculation_hat_confidence(self):
+        result = ind.spearman_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+        return result
     
     def get_string_calculation_structure(self, x):
         return f"np.exp({x[0]})"
@@ -695,6 +714,9 @@ class exp(OperationNode):
         super().get_string_derative_structure(sub_strings, x)
         str_function = [str(x) for x in self.get_childrens()]
         return f"mul(exp({str_function[0]}), {sub_strings[0]})"
+
+    def get_simplification_subtree(self):
+        return super().get_simplification_subtree([si.exp_ln_null])
 
 class ln(OperationNode):
     
@@ -721,14 +743,16 @@ class ln(OperationNode):
 
         return [result]
     
-    def calculation_confidence(self):
-
+    def calculation_hat_confidence(self):
+    
         In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
     
         mask_right = In > 0
-
-        return ind.pearson_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
         
+        result = ind.spearman_correlation(In[mask_right], Out[mask_right])
+    
+        return result if np.sum(mask_right) > 1 else 0
+   
     def get_string_calculation_structure(self, x):
         return f"np.log({x[0]})"
     
@@ -737,6 +761,8 @@ class ln(OperationNode):
         str_function = [str(x) for x in self.get_childrens()]
         return f"mul(div({str_function[0]}), {sub_strings[0]})"
 
+    def get_simplification_subtree(self):
+        return super().get_simplification_subtree([si.ln_exp_null])
 
 #add   2 input  commutativa
 #mul   2 input  commutativa
