@@ -375,10 +375,9 @@ class Leaf(OperationNode):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
     
     def calculation_hat_confidence(self):
-        if(self.is_constant()): return 1 / (np.var(self.get_memory("backward")) + 1)
-        else:
-            result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-            return result if np.isfinite(result) else 0
+        if(self.is_constant()): result = 1 / (np.var(self.get_memory("backward")) + 1)
+        else: result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+        return result if np.isfinite(result) else 0
 
     def get_string_derative_structure(self, sub_strings, x):
         super().get_string_derative_structure(sub_strings, x)
@@ -394,7 +393,7 @@ class add(OperationNode):
         
     def __str__(self):
         return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
- 
+
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         return inputs[0] + inputs[1]
@@ -562,13 +561,12 @@ class div(OperationNode):
         mask_left = In < 0
         mask_right = In > 0
         
-        result_left = ind.spearman_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
-        result_right = -ind.spearman_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
+        result_left = -ind.spearman_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
+        result_right = ind.spearman_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
         
         result = np.abs(result_left * result_right)
         return result
- 
-    
+   
     def get_string_calculation_structure(self, x):
         return f"1 / {x[0]}"
     
@@ -612,6 +610,43 @@ class sin(OperationNode):
         str_function = [str(x) for x in self.get_childrens()]
         return f"mul(cos({str_function[0]}), {sub_strings[0]})"
 
+class arcsin(OperationNode):
+    
+    def __init__(self):
+        super().__init__(1)
+        
+    def check_output_domain(self, output):
+        if(not (self._check_type_name(output) and type(output) != str)): return False
+        if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
+        else: return np.all(np.abs(output) <= 1 + self._tol)
+        
+    def check_input_domain(self, i, input):
+        super().check_input_domain(i, input)
+        if(not (self._check_type_name(input) and type(input) != str)): return False
+        if(type(input) in [float, int]): return np.abs(input) <= 1 + self._tol
+        else: return np.all(np.abs(input) <= 1 + self._tol)
+    
+    def forward_calculation(self):
+        return np.arcsin(self.get_childrens()[0].get_memory("forward"))
+    
+    def backward_calculation(self):
+        return [np.sin(self.get_memory("backward"))]
+
+    def calculation_hat_confidence(self):
+        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+        return result
+
+    def get_string_calculation_structure(self, x):
+        return f"np.arcsin({x[0]})"
+    
+    def get_string_derative_structure(self, sub_strings, x):
+        
+        super().get_string_derative_structure(sub_strings, x)
+        str_function = [str(x) for x in self.get_childrens()]
+        return f"div({sub_strings[0]}, cos(arcsin({str_function[0]})))"
+
+#Il cos non è altro che: cos(x) = sin(x + pi*1.5)
+
 class cos(OperationNode):
     
     def __init__(self):
@@ -640,7 +675,7 @@ class cos(OperationNode):
         
         super().get_string_derative_structure(sub_strings, x)
         str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(neg(0, sin({str_function[0]})), {sub_strings[0]})"
+        return f"mul(neg(sin({str_function[0]})), {sub_strings[0]})"
 
 class abs(OperationNode):
     
@@ -774,5 +809,3 @@ class ln(OperationNode):
 #exp   1 input
 #abs   1 input
 #log   1 input
-
-

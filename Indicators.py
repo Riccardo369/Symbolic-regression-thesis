@@ -1,4 +1,4 @@
-from scipy.stats import pearsonr, spearmanr, rankdata
+from scipy.stats import pearsonr, spearmanr, rankdata, kendalltau
 import numpy as np
 
 def prepare(x, y):
@@ -36,7 +36,14 @@ def spearman_correlation(x, y):
     result = spearmanr(x, y)[0]
     return result
 
+#For monoton correlation
+def kendall_correlation(x, y):
+    result = kendalltau(*prepare(x, y))[0]
+    if(np.isnan(result)): result = 0
+    return result
+
 #For sinusoidal and monoton correlation
+#With less points, chatterjee is less precise with identification
 def chatterjee_correlation(x, y):
     
     x, y = prepare(x, y)
@@ -83,6 +90,14 @@ if(__name__ == "__main__"):
     print(f(x, y))
     print(f(y, x))
     print(f(y, y))
+    
+    f = lambda x, y: kendall_correlation(x, y)
+    
+    print("Kendall")
+    print(f(x, x))
+    print(f(x, y))
+    print(f(y, x))
+    print(f(y, y))
 
     f = lambda x, y: chatterjee_correlation(x, y)
 
@@ -91,3 +106,4 @@ if(__name__ == "__main__"):
     print(f(x, y))
     print(f(y, x))
     print(f(y, y))
+    

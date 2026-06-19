@@ -30,3 +30,4 @@ def linear_extension(X, Y):
     q = mean_Y - (m*mean_X)
     
     return {"m": m, "q": q}
+

@@ -7,7 +7,6 @@ import Errors as er
 import Indicators as In
 import Exceptions as ex
 import utils
-import TheoricalExperiments.ConstantOptimization as co
 
 class SymbolicRegressionLearning:
     
@@ -29,7 +28,7 @@ class SymbolicRegressionLearning:
         for key in self._metric_results:
             result = self._metric_functions[key](self._model)
             self._metric_results[key].append(result)   
-            print(key, ":", result)
+            #print(key, ":", result)
         
     def _body_learning(self, TR_inputs_dict, TR_output, stop_criteria):
         return NotImplemented
@@ -43,6 +42,15 @@ class SymbolicRegressionLearning:
         self._metric_results = {}
         return result
 
+    def get_model(self):
+        return self._model
+    
+    def get_metrics(self):
+        return self._metric_results.copy()
+    
+    def set_metrics(self, metrics):
+        self._metrics = metrics.copy()
+
 class AnalysisRamification(SymbolicRegressionLearning):
     
     #The order of binary operations is the order of construction every time a node is extended (every node will be extended with all binary operations, and the order is defined by
@@ -50,7 +58,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
     
     #get_package_importance_nodes analyze nodes and returns a list of packages (for importance), where every package contains a list of triples node - feature- operation. 
     # If it is possible to choose a valid extension with first package, the algorithm will stop, otherwise it will search the extension on next package
-    
     def __init__(self, unary_operations, filtering_criterion, sorting_criterion, get_package_importance_nodes, heuristic_metrics):
         
         super().__init__()
@@ -72,15 +79,12 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         #Every values of dict = (index of package, index of extension to start inside the package)
         self._dict_extension_history = dict()
-        self._dict_pruning_history = dict()
         
     def __call__(self, model, TR_inputs_dict, TR_output, stop_criteria, metric_functions = {}):
         result = super().__call__(model, TR_inputs_dict, TR_output, stop_criteria, metric_functions)
-        result = {"results": result, "ranges_iterations": list(self._ranges_iterations), "history_dicts": {"extension": self._dict_extension_history,
-                                                                                                        "pruning": self._dict_pruning_history}}
+        result = {"results": result, "ranges_iterations": list(self._ranges_iterations), "history_dicts": {"extension": self._dict_extension_history}}
         
         self._dict_extension_history = dict()
-        self._dict_pruning_history = dict()
         
         return result
     
@@ -108,16 +112,26 @@ class AnalysisRamification(SymbolicRegressionLearning):
             
         return True
  
+    def get_dict_extension_history(self):
+        return self._dict_extension_history.copy()
+    
     def set_dict_extension_history(self, Dict):
         valid = AnalysisRamification.__valid_dict_history_form(Dict)
         if(valid): self._dict_extension_history = Dict.copy()
         return valid
-    
-    def set_dict_pruning_history(self, Dict):
-        valid = AnalysisRamification.__valid_dict_history_form(Dict)
-        if(valid): self._dict_pruning_history = Dict.copy()
-        return valid
 
+    def __add_linear_extension(node, m, q):
+        
+        Q = op.add()
+        M = op.mul()
+        
+        M.new_connection(node.copy_sub_tree(), 0)
+        M.new_connection(op.Leaf(m), 1)
+        Q.new_connection(M, 0)
+        Q.new_connection(op.Leaf(q), 1)
+        
+        return q
+           
     def linear_extend_model(model):
         
         def recursion(node):
@@ -126,7 +140,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
             
             for c in node.get_childrens(): recursion(c)
             
-            model.replace_subtree(node, SymbolicRegression.string_to_tree(f"add(mul({node}, 1), 0)").get_root())
+            model.replace_subtree(node, AnalysisRamification.__add_linear_extension(node, 1, 0))
             
         recursion(model.get_root())
 
@@ -140,7 +154,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         m = linear_ext["m"] if np.isfinite(linear_ext["m"]) else 1
         q = linear_ext["q"] if np.isfinite(linear_ext["q"]) else 0
 
-        for try_node in [oper_node, SymbolicRegression.string_to_tree(f"add(mul({oper_node}, {m}), {q})").get_root()]:
+        for try_node in [AnalysisRamification.__add_linear_extension(node, m, q), oper_node]:
         
             #Try the substition
             self._model.replace_subtree(node, try_node)
@@ -155,8 +169,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
             self._model.replace_subtree(try_node, node)
             
             config["new node"] = try_node
-            
-            #print(try_node, valid_domain)
 
             #Check structure domain
             if(valid_domain): return {key: new_metrics[key] for key in self._heuristic_metrics.keys()}
@@ -178,7 +190,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
         
         #Package the choices by importance
-        for package in self.__get_package_importance_nodes(self._model.get_root().get_all_subtree_nodes(), self._unary_operations, TR_inputs_dict, TR_output)[k:]:
+        for package in self.__get_package_importance_nodes(self._model.get_root().get_all_subtree_nodes(), self._unary_operations, TR_inputs_dict)[k:]:
 
             choices = []
             
@@ -192,7 +204,8 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 if(result != None):
 
                     choices.append(choice | {"delta heuristic metrics": {key: original_metrics[key] - result[key] for key in self._heuristic_metrics.keys()}})
-            
+
+
             choices = self.__filtering_criterion(choices)
 
             choices = self.__sorting_criterion(choices)
@@ -223,149 +236,41 @@ class AnalysisRamification(SymbolicRegressionLearning):
 
         return len(choices) > 0
 
-    #Pruning phase
-    def __pruning_step(self, TR_inputs_dict, TR_output):
-        
-        choices = []
-        
-        original_metrics = self.__checkpoint_heuristic_metrics()
-        
-        #Calculate features
-        features = list(TR_inputs_dict.keys())
-        
-        #For every node considered valid for pruning part
-        for node in self._model.get_root().get_all_subtree_nodes():
-
-            choices = []
-            
-            #Save the original node
-            original_node = node
-            
-            #Ricalculate model (for calculate the constant)
-            self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-
-            #For each feature + the constant
-            for f in features + [np.mean(original_node.get_memory("backward"))]:
-                
-                #Replace the subtree
-                node = op.Leaf(f)
-                self._model.replace_subtree(original_node, node)
-                
-                valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
-                
-                #Calculate the new metric
-                new_metrics = self.__checkpoint_heuristic_metrics()
-                
-                #Return to normal state
-                self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-                
-                self._model.replace_subtree(node, original_node)
-                
-                #If domain is not valid, do not consider the combination
-                if(not valid_domain): continue
-                
-                choices.append({"original node": original_node, "new node": node, "delta": {key: original_metrics[key] - new_metrics[key] for key in self._heuristic_metrics.keys()}})
-                
-        choices = self.__filtering_criterion(choices)
-
-        if(len(choices) == 0): return False
-        
-        choices = self.__sorting_criterion(choices)
-        
-        self._model.replace_subtree(choices[0]["original node"], choices[0]["new node"])
-
-        return True
-   
-        
-        
+    
     #TR_inputs_dict: numpy array's dict
     #VL_inputs_dict: numpy array's dict
     #TR_output: constant or numpy array
     #VL_output: constant or numpy array
     def _body_learning(self, TR_inputs_dict, TR_output, stop_criteria):
         
-        if(np.var([len(TR_inputs_dict[x]) for x in TR_inputs_dict.keys()]) > 0): raise ValueError("All TR features has to have the same value numbers")
+        len_inputs = [len(TR_inputs_dict[x]) for x in TR_inputs_dict.keys()]
+        
+        if(np.var(len_inputs) > 0): raise ValueError("All TR features has to have the same value numbers")
 
-        if(type(TR_output) not in [int, float] and len(TR_output) != len(TR_inputs_dict[list(TR_inputs_dict.keys())[0]])): raise ValueError("TR output has no the same points of TR input")
+        if(len(len_inputs) == 0 and np.var(TR_output) >= 1e-15): raise ValueError("TR inputs are not exists and output is not a constant")
+        elif(type(TR_output) not in [int, float] and len(TR_output) != np.mean(len_inputs)): raise ValueError("TR output has no the same points of TR input")
 
         #Set the constant in numpy array (so everything is in array)
-        if(type(TR_output) in [int, float]): TR_output = np.array([TR_output for _ in range(len(TR_inputs_dict[list(TR_inputs_dict.keys())[0]]))])
+        if(type(TR_output) in [int, float]): TR_output = np.array([TR_output for _ in range(np.var(len_inputs))])
 
         #Calculate all memory
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-
+        
         #Checkpoint
         self.checkpoint_metrics()
         
-        extension_memories = []
-        pruning_memories = []
-        
-        new_extension_memory = None
-        new_pruning_memory = None
-        
         i = 0
-        r = 0
         
         print(f"Start training")
         
-        #In a cycle, bring the model in a equilibrium between underfitting and overfitting, with a zig zag strategy
-        while(True):
-        
-            #If model is the same of last cycle (considering the last time you start the last extension), break
-            new_extension_memory = str(self._model)
-            if(new_extension_memory in extension_memories): break
-            extension_memories.append(new_extension_memory)
-
-            r = i
-
+        while(not stop_criteria(self) and self.__extension_step(TR_inputs_dict, TR_output)):
+                
+            #print(f"Extension phase, iteration {i+1} done {'-'*50}")
+                
+            self._model.simplify_model()
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-            
-            #Do the extension phase (bring the model to overfitting direction)
-            while(not stop_criteria(self._metric_results) and self.__extension_step(TR_inputs_dict, TR_output)):
+            self.checkpoint_metrics()
                 
-                print(f"Extension phase, iteration {i+1} done {'-'*50}")
-                
-                self._model.simplify_model()
-                #co.linear_extension_optimization(self._model, TR_inputs_dict, TR_output)
-                self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-                self.checkpoint_metrics()
-                
-                i += 1
-                
-            if(r != i): self._ranges_iterations.append({"period": "extension", "range": (r, i)})
-                   
-            r = i
-            
-            break
-         
-            #If model is the same of last cycle (considering the last time you start the last pruning), break
-            new_pruning_memory = str(self._model)
-            if(new_pruning_memory in pruning_memories): break
-            pruning_memories.append(new_pruning_memory)
-            
-            internal_history = []
-            
-            #Do the pruning phase (bring the model to underfitting direction)
-            while(not stop_criteria(self._metric_results) and self.__pruning_step(TR_inputs_dict, TR_output)): 
-                
-                print(f"Pruning phase, iteration {i+1} done {'-'*50}")
-                self._model.simplify_model()
-                self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-                self.checkpoint_metrics()
-                i += 1
-                
-                if(str(self._model) in internal_history): break
-                
-                internal_history.append(str(self._model))
-                
-            if(r != i): self._ranges_iterations.append({"period": "pruning", "range": (r, i)})
+            i += 1
             
         print("Training done!")
-        
-        #Last check
-        self._model.get_root().clear_all_subtree_memory("forward").clear_all_subtree_memory("backward")
-        
-        self._model.simplify_model()
-        
-        print("Model prepared to use!")
-        

@@ -5,25 +5,26 @@ import LearningStrategy as ls
 from Model import SymbolicRegression
 import Operations as op
 import Errors as er
-import utils
-
 import Indicators as ind
-import TheoricalExperiments.TotalConfidence as tc
+
+import time
 
 
-
-
-
-def chaterjee_package_extensions(nodes, unary_operations, TR_inputs_dict, TR_output):
+def indicators_package_extensions(nodes, unary_operations, TR_inputs_dict):
     
-    combinations = default_package_extensions(nodes, unary_operations, TR_inputs_dict, TR_output)[0]
+    combinations = default_package_extensions(nodes, unary_operations, TR_inputs_dict)[0]
     
     result = []
     
-    analyzed_nodes = [{"node": x, "chaterjee": ind.chatterjee_correlation(x.get_memory("forward"), x.get_memory("backward"))} for x in nodes]
+    analyzed_nodes = [{"node": x, 
+                       "constant": 1 / (np.var(x.get_memory("backward")) + 1),
+                       "pearson": ind.pearson_correlation(x.get_memory("forward"), x.get_memory("backward")),
+                       "chaterjee": ind.chatterjee_correlation(x.get_memory("forward"), x.get_memory("backward"))} for x in nodes]
     
-    for s in sorted([x for x in analyzed_nodes if np.isfinite(x["Chaterjee"])], key = lambda x: x["chaterjee"])[::-1]:
-        result.append([x for x in combinations if x["node"] == s])
+    #Consider the node like: the linear distance correlation between output and excepted output (explain this), and if 2 nodes are with same distance linear correlation.
+    #considering the node with more potential construction with chaterjee (explain this).
+    for s in sorted(analyzed_nodes, key = lambda x: ((np.abs(x["pearson"]) if not x["node"].is_constant() else x["constant"]), -np.abs(x["chaterjee"]))):
+        result.append([x for x in combinations if x["old node"] is s["node"]])
 
     return result
 
@@ -38,7 +39,7 @@ def chaterjee_package_extensions(nodes, unary_operations, TR_inputs_dict, TR_out
 
 #f su foglia feature perchè: (se costante ci metti tutte le f + costante, altrimenti tutte le f - quella attuale + la costante)
 
-def default_package_extensions(nodes, unary_operations, TR_inputs_dict, TR_output):
+def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
 
     def get_constant(memory):
         
@@ -54,7 +55,7 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict, TR_outpu
     for n in nodes:
         
         #f or f + 1 (about leaf cost)
-        if(isinstance(n, op.Leaf)):
+        if(isinstance(n, op.Leaf) or True):
             
             leafs = [op.Leaf(x) for x in TR_inputs_dict.keys() if x != n.get_name()]
             leafs.append(op.Leaf(get_constant(n.get_memory("backward"))))
@@ -62,7 +63,7 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict, TR_outpu
             for l in leafs: combinations.append({"old node": n, "new node": l})
         
         #ou - 1 (substitution unary operation) + directly child (without node so)
-        else:
+        if(not isinstance(n, op.Leaf)):
             
             if(n.get_channels() == 1):
                 
@@ -126,7 +127,7 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict, TR_outpu
 
 
 
-ideal_function = "4 * np.sin(X) + 5"
+ideal_function = "np.sin(X) * X"
 
 X = np.array([x for x in range(-1000, 1000, 1)], dtype = np.float64) / 10
 Y = eval(ideal_function)
@@ -147,40 +148,70 @@ class Counter:
         return self.__r >= self.__i
     
 
-counter = Counter(20)
+counter = Counter(10)
 
-def filter_phase(candidates):
-    return candidates
 
-def sort_phase(candidates):
-    return sorted(candidates, key = lambda x: abs(x["delta heuristic metrics"]["MAE"]) * x["delta heuristic metrics"]["Chaterjee"])
+def total_confidence_leafs(node):
+    
+    def f(node):
+    
+        result = []
+        for c in node.get_childrens(): result += f(c)
+        return result + [node.calculation_hat_confidence()] if isinstance(node, op.Leaf) else result
+    
+    result = f(node)
+    
+    return np.mean(result)
+
+def root_metric(model, metric):
+    root = model.get_root()
+    return metric(root.get_memory("forward"), root.get_memory("backward"))
+
+
+
+param_guides = [lambda model: root_metric(model, ind.spearman_correlation),
+                lambda model: root_metric(model, ind.chatterjee_correlation),
+                lambda model: root_metric(model, er.MAE),
+                #Manca il parametro Kendal
+                lambda model: total_confidence_leafs(model)]
+
+strategies_package_nodes = [default_package_extensions,
+                            indicators_package_extensions]
+
+strategies_filter_nodes = [lambda x: True,
+                           lambda x: isinstance(x, op.Leaf)]
+
+
+def stop_criteria_function(strategy_learning, counter, TR_output):
+    
+    model = strategy_learning.get_model()
+    
+    go = counter() or er.MAE(model.get_root().get_memory("forward"), TR_output) <= 1e-6
+    
+    return go
 
 
 metric_results = tree.learn(TR_inputs,
                             TR_output,
-                            ls.AnalysisRamification([op.neg, op.div, op.abs, op.exp, op.ln, op.sin, op.cos],
-                                                    filter_phase,
+                            ls.AnalysisRamification([op.neg, op.div, op.abs, op.exp, op.ln, op.sin, op.arcsin],
                                                     
-                                                    sort_phase,
+                                                    lambda candidates: candidates,  #Filter phase
                                                     
-                                                    default_package_extensions,
+                                                    lambda candidates: sorted(candidates, key = lambda x: -x["delta heuristic metrics"]["Param"]),   #Sort phase
                                                     
-                                                    {"MAE": lambda model: er.MAE(model.get_calculation_function()(TR_inputs), TR_output),
-                                                     "Chaterjee": lambda model: abs(ind.chatterjee_correlation(model.get_calculation_function()(TR_inputs), TR_output)),
-                                                     "Total confidence": lambda model: tc.total_confidence(model.get_root())}),
+                                                    lambda n, uo, TR_inputs: strategies_package_nodes[1]([x for x in n if strategies_filter_nodes[1](x)], uo, TR_inputs),
+                                                    
+                                                    {"Param": param_guides[0]}),
                             
-                            stop_criteria = lambda x: counter(),
-                                
-                            metric_functions = {"tree": lambda model: str(model),
-                                                "Count nodes": lambda model: len(model.get_root().get_all_subtree_nodes()),
-                                                "MAE error": lambda model: er.MAE(model.get_root().get_memory("forward"), Y),
-                                                "formula": lambda model: model.get_root().get_string_calculation_function()["body"],
-                                                "Chaterjee": lambda model: ind.chatterjee_correlation(model.get_calculation_function()(TR_inputs), TR_output),
-                                                "Total confidence": lambda model: tc.total_confidence(model.get_root()),
-                                                }
+                            stop_criteria = lambda ls: stop_criteria_function(ls, counter, TR_output),
+                            
+                            metric_functions = {"tree": lambda model: str(model), "timestamp": lambda model: time.time()}
                             )
 
 #MAE_list = [x / max(MAE_list) for x in MAE_list]
+
+raise ValueError("STOP")
+
 
 def plot(x, color, label):
 
@@ -188,8 +219,8 @@ def plot(x, color, label):
     plt.legend()
     plt.show()
     
-plot(metric_results["results"]["Count nodes"], "black", "Count nodes")
-plot(metric_results["results"]["Total confidence"], "green", "Count nodes")
+plot(metric_results["results"]["Param"], "black", "Count nodes")
+plot(metric_results["results"]["Total confidence"], "green", "Total confidence")
 plot(metric_results["results"]["MAE error"], "red", "MAE error")
 plot(metric_results["results"]["Chaterjee"], "purple", "Chaterjee")
 
@@ -218,3 +249,4 @@ plt.show()
 # DALLA BACKWARD, E QUESTO PORTA AD INCOERENZE, PERCHè TI PERDI I COEFFICIENTI DELLE ESTENSIONI LINEARI
 
 # E' ORA DI CERCARE I COMPETITOR E FARE LE PROVE, PER FAVORE
+

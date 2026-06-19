@@ -1,77 +1,52 @@
-Funzionamento:
+Si fa un estensione lineare di ogni nodo, così durante la scelta ci si può concentrare solo alle operazioni unarie, senza far esplodere il numero 
+di combinazioni. L' estensione lineare è quella di identità, dove ogni nodo n diventa 1*n + 0.
 
-L' algoritmo fa, un ciclo di extension steps, seguito da un ciclo di pruning steps, ricominciando con un altro ciclo di extension steps e così via, il tutto finchè non ci sono modifiche 
-valide sia in extension che in pruning. Ad ogni extension e pruning step, l' albero viene semplificato con delle proprietà che derivano da ogni operazione (ad esempio add(f, 0) = f, 
-mul(f, 0) = 0, etc.).
+Si prende ogni nodo, si calcolano pearson e chatterjee, si ordinano in base all' importanza:
 
+(|P|, -|C|), quindi minima correlazione lineare, massima correlazione potenziale (cioè tra calcolato ed atteso)
 
+Da quel nodo, calcolo tutte le estensioni possibili, e scelgo l' estensione che abbassa di più l' errore scalato alla 1 - total confidence.
 
-* Scelta dei nodi da toccare:
+La confidence totale viene fatta facendo la confidence locale di ogni nodo, cioè |pearson| se il nodo non è costante, 
+altrimenti 1 / (1 + var(output atteso del nodo)) se il nodo è una costante.
 
-Si prendono tutti i nodi da considerare da estendere, per ogni nodo: si calcola l' albero della derivata prima e seconda (sempre rispetto a quella foglia), e si calcolano i valori su tutto 
-il dataset. Sempre per ogni nodo, si otterranno più valori di derivata prima e seconda (un valore per ogni punto nel dataset). Essendo che un punto in una funzione se esiste, non è detto 
-che esista nella derivata, si considerano i valori di derivate prime e seconde dove il punto esiste, poi si fa la media dei valori assoluti tra tutte le derivate prime, e stesse cosa per 
-le derivate seconde. 
+Questo perchè:
 
-Fatto questo per ogni nodo, si rendono in distribuzioni di densità, tutti i valori delle derivate seconde di tutti i nodi, questi coefficienti descrivono poi quanto 
-toccare quel nodo, renda la modifica instabile rispetto all' errore / risultato finale, quindi ad ogni nodo, con d' \in R+ e d'' \in [0, 1], si associa un valore di importance i:
+- Se la confidence è alta e l' errore alto, la forma è quella giusta, quindi si riduce l' errore. 
+- Se la confidence è bassa e l' errore alto, l' errore si mantiene alto, considerando che la forma non è quella
+- Se la confidence è alta e l' errore basso, l' errore viene graziato venendo ancora più ridotto, essendo che la forma è quella
+- Se la confidence è bassa e l' errore basso, l' errore viene mantenuto così com'è, perchè non viene graziato, essendo che la forma non è quella
 
-i = d' * (1 - d'')
-
-In questo modo, ogni nodo n avrà la sua i importanza data da: quanto è importante il nodo per la funzione (d') scalata alla robustezza della modifica su quel nodo (d'').
-
-Si ordinano alla fine tutti i nodi dal più importante al meno importante.
-
-I nodi da considerare possono essere solo le foglie, od anche i nodi interni.
+Poi semplifico il tutto con semplificazione sintattica (per mantenere il numero di nodi in modo controllato ed elimino tutte le estensioni lineari 
+non toccate) e ricomincio.
 
 
+Test fatti:
 
-* Extension step:
+- Modificare le costanti cambia i coefficienti di pearson, spearman e chatterjee dei nodi, a prescindere da dove si trovano questi nodi. C'è ora da 
+capire quando cambiano in modo brutale, con quali operazioni in mezzo etc.(ConfidenceInvariantToConstant.py)
 
-Si calcolano e si ordinano in base all' importanza tutti i nodi su cui si può fare la modifica. Si sceglie il nodo più importante e: si calcolano i 3 coefficienti Pearson, Spearmen e 
-Chaterjee per ogni coppia feature - output atteso su quella foglia per ogni feature (se il nodo non è una foglia, si fanno i coefficienti tra input calcolato ed output atteso di quel nodo,
-se il nodo è la radice, tra input calcolato ed output atteso dal dataset), ogni coefficiente rappresenta un insieme di operazioni. Se da quel nodo non esce nessuna estensione valida, si 
-passa al prossimo nodo, e se nessun nodo ha un estensione valida, l' algoritmo si ferma.
+- Chatterjee ha un grado che si aggira al 80% - 90% nell' identificare sotto alberi complessi che usano una sola feature, tra un insieme di features.
+Ma se ci sono pochi punti (o poche volte quando ci sono molti punti) chatterjee ridà lo stesso valore a tutti. (ChatterjeeCatchingFeature.py)
 
-Si ordinano le configurazioni (che contengono: feature da provare, nodo da modificare ed insieme di famiglie), e si provano tutte le combinazioni possibili. Nel caso delle operazioni 
-unarie, si provano con la feature e basta, nel caso delle operazioni binari, si provano le combinazioni di: feature scelta, tutte le altre feature (e se l' operazione non è commutativa, 
-si fa la prova scambiandosi anche i versi) e feature scelta con una costante calcolata al momento. Per i nodi non foglia, si considera il sotto albero come una feature e tutto come se 
-fosse una foglia (il nodo da sostituire). Se da quella configurazione non esce nessuna estensione valida, si va avanti con la prossima configurazione, fino a finirle tutte.
+- Tutti e 3 i coefficienti Pearson, Spearman e Chatterjee sono invarianti alle costanti (IndicatorStudy.py).
 
-Si calcola, per ogni estensione possibile, il TR e VL error, e si scartano tutte le estensioni che fanno aumentare il VL ed il TR error. Se non è rimasta nessuna estensione possibile,
-si passa alla prossima configurazione, altrimenti, tra tutte quelle rimaste, si sceglie l' estensione che abbassa di più i 2 errori, dando priorità al VL error, si estende l' albero su 
-quella foglia con quella estensione, e si termina l' extension step.
+- Trovare il miglior candidato usando |Pearson| e -|Chatterjee| non garantisce di trovare il miglior nodo da provare prima (TotalConfidence.py).
 
-Durante il calcolo, vengono fatti dei controlli sui domini di input su ogni operazione e sull output sia sull' operazione da aggiungere, e sia su tutto l' albero ogni volta, questo per il 
-TR e VL. Se un estensione distrugge il dominio, viene scartata a priori.
+- Usare pearson e spearman alla radice per capire se il modello va in overfitting non risolve niente. La total confidence entrando in overfitting,
+smette di crescere in modo significativo (ma qualche salita di grado e-6 potrebbe sempre farla), mentre chatterjee prima scende, poi risale, e sull'
+overfitting rimane uguale, sempre (test fatti con l' aumento di grado di polinomio ad una variabile). Pearson, spearman, total confidence e 
+chatterjee usati tutti alla radice dell' albero (Indicators_MSE_effecy.py).
 
-
-
-* Pruning step:
-
-Si calcolano e si ordinano in base all' importanza tutti i nodi su cui si può fare la modifica. Si sceglie il nodo più importante e: si prova a sostituire quel nodo con ogni feature 
-possibile + una costante calcolata al momento. Se da quel nodo non esce un pruning valido, si passa al prossimo nodo.
-
-Si scartano tutte le sostituzioni che peggiorano il TR e VL error, e tra tutte quelle salve, si sceglie quella che migliora di più gli errori, dando priorità al VL.
+- La DCorr e la Ball covariance, già con pochi dati, sono impraticabili. Considerando anche che la loro precisione possa aumentare con l' aumentare 
+dei dati, ma all' aumentare dei dati il tempo computazionale aumenta (ComputationalCost.py).
 
 
 
 
-Caratteristiche:
 
-(Euristica): Si sceglie la derivata prima e seconda come euristica per scegliere il prossimo nodo: parti da dove ti trovi, e vai dove pensi sia più prudente (complementare del peso 
-derivato dalla derivata seconda), ed importante andare (derivata prima). Il problema è che sono sensibili, ma è bilanciato anche dal fatto che la semplificazione poi riduce la complessità.
 
-(Euristica): Si scelgono i coefficienti per non scegliere ogni volta tutte le operazioni (riduzione dello spazio di ricerca nella media). Rischio di fermarsi a scegliere un operazione 
-che non è la migliore in una famiglia vista prima (magari l' operazione migliore si trova nella famiglia successiva ma non lo sai), è un compromesso per ridurre il costo computazionale.
 
-Scelta nel semplificare l' albero ogni volta: in modo tale da ridurre l esplosività e la sensibilità (variance), e riducendo anche i tempi computazionali (se si fa la semplificazione
- ogni volta, l' albero poi dovrà fare meno modifiche al prossimo passo).
 
-Scelta di vedere anche i nodi interni da estendere: migliora la capacità del modello di catturare relazioni. Alcune relazioni vengono a galla dopo aver esteso certi rami, estendere solo i 
-rami non ti permette di catturare tutte le relazioni.
-
-Scelta nel scartare i domini: se un albero ha domini non compatibili tra i nodi in quei punti, non può essere di certo il modello da cercare, ed è anche un modo per ridurre il costo 
-computazionale.
 
 
