@@ -393,7 +393,7 @@ class add(OperationNode):
         
     def __str__(self):
         return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
-
+ 
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         return inputs[0] + inputs[1]

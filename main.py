@@ -9,7 +9,6 @@ import Indicators as ind
 
 import time
 
-
 def indicators_package_extensions(nodes, unary_operations, TR_inputs_dict):
     
     combinations = default_package_extensions(nodes, unary_operations, TR_inputs_dict)[0]
@@ -32,12 +31,15 @@ def indicators_package_extensions(nodes, unary_operations, TR_inputs_dict):
 
 #Foreach node:
 
-#unary operation: 2*ou
 #Nodo interno: ou
-#foglia feature : f + ou*f
-#foglia const   : f+1 + ou*f
+#foglia feature : f + ou
+#foglia const   : f+1 + ou
 
-#f su foglia feature perchè: (se costante ci metti tutte le f + costante, altrimenti tutte le f - quella attuale + la costante)
+# Nodo interno: aggiungo tutte le varie possibili operazioni sopra
+# Foglia: aggiungo tutte le feature + costante, non ci metto la combinazione di operazione unaria + feature per osservare il comportamento del modello senza provare a 
+# scavalcare con dei pattern già complessi (perchè sennò bisognava provare anche con pattern complessi di 2 livello, 3 livello etc.), e da lì poi l' esplosione,
+# quindi per vedere se il modello riesce a catturare le relazioni strutturali giuste senza fare i salti
+
 
 def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
 
@@ -55,36 +57,14 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
     for n in nodes:
         
         #f or f + 1 (about leaf cost)
-        if(isinstance(n, op.Leaf) or True):
+        if(isinstance(n, op.Leaf)):
             
             leafs = [op.Leaf(x) for x in TR_inputs_dict.keys() if x != n.get_name()]
             leafs.append(op.Leaf(get_constant(n.get_memory("backward"))))
                 
             for l in leafs: combinations.append({"old node": n, "new node": l})
         
-        #ou - 1 (substitution unary operation) + directly child (without node so)
-        if(not isinstance(n, op.Leaf)):
-            
-            if(n.get_channels() == 1):
-                
-                child_copy = n.get_childrens()[0]
-                
-                combinations.append({"old node": n, "new node": child_copy.copy_sub_tree()})
-                
-                for ou in [x for x in unary_operations if not isinstance(n, x)]:
-                    
-                    oper = ou()
-                    
-                    if(not oper.check_input_domain(0, n.get_memory("forward"))): continue
-                    
-                    oper.new_connection(child_copy.copy_sub_tree(), 0)
-                    
-                    combinations.append({"old node": n, "new node": oper.copy_sub_tree()})
-                    
-                    oper.free_connection(0)
-            
         
-
         #ou (add unary operation)
         for ou in unary_operations:
             
@@ -99,35 +79,25 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
                 oper.new_connection(leaf, 0)
                 combinations.append({"old node": n, "new node": oper.copy_sub_tree()})
                 oper.free_connection(0)
-            
-            #f (only for leaf)
-            if(isinstance(n, op.Leaf)):
-            
-                leafs = [op.Leaf(x) for x in TR_inputs_dict.keys() if x != n.get_name()]
-                        
-                for leaf in leafs:
-                    
-                    oper.new_connection(leaf, 0)
-                    
-                    oper.forward_calculation_memory_sub_tree(TR_inputs_dict).set_memory("backward", n.get_memory("backward"))
-                    combinations.append({"old node": n, "new node": oper.copy_sub_tree()})   
-                    oper.free_connection(0)
+
 
     for i in range(len(combinations)):
         
         combinations[i]["new node"].forward_calculation_memory_sub_tree(TR_inputs_dict).set_memory("backward", combinations[i]["old node"].get_memory("backward"))
         
 
-    #print("COMBINATIONS" + '-'*100)
-    #for i in combinations: print(i)
-    
-    #raise ValueError("STOP")
     
     return [combinations]
 
 
 
-ideal_function = "np.sin(X) * X"
+
+
+
+
+
+
+ideal_function = "np.sin(X) * X**2"
 
 X = np.array([x for x in range(-1000, 1000, 1)], dtype = np.float64) / 10
 Y = eval(ideal_function)
@@ -148,7 +118,7 @@ class Counter:
         return self.__r >= self.__i
     
 
-counter = Counter(10)
+counter = Counter(100)
 
 
 def total_confidence_leafs(node):

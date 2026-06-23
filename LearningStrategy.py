@@ -28,7 +28,7 @@ class SymbolicRegressionLearning:
         for key in self._metric_results:
             result = self._metric_functions[key](self._model)
             self._metric_results[key].append(result)   
-            #print(key, ":", result)
+            print(key, ":", result)
         
     def _body_learning(self, TR_inputs_dict, TR_output, stop_criteria):
         return NotImplemented
@@ -120,18 +120,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
         if(valid): self._dict_extension_history = Dict.copy()
         return valid
 
-    def __add_linear_extension(node, m, q):
-        
-        Q = op.add()
-        M = op.mul()
-        
-        M.new_connection(node.copy_sub_tree(), 0)
-        M.new_connection(op.Leaf(m), 1)
-        Q.new_connection(M, 0)
-        Q.new_connection(op.Leaf(q), 1)
-        
-        return q
-           
     def linear_extend_model(model):
         
         def recursion(node):
@@ -140,7 +128,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
             
             for c in node.get_childrens(): recursion(c)
             
-            model.replace_subtree(node, AnalysisRamification.__add_linear_extension(node, 1, 0))
+            model.replace_subtree(node, SymbolicRegression.string_to_tree(f"add(mul({node}, 1), 0)").get_root())
             
         recursion(model.get_root())
 
@@ -154,7 +142,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         m = linear_ext["m"] if np.isfinite(linear_ext["m"]) else 1
         q = linear_ext["q"] if np.isfinite(linear_ext["q"]) else 0
 
-        for try_node in [AnalysisRamification.__add_linear_extension(node, m, q), oper_node]:
+        for try_node in [SymbolicRegression.string_to_tree(f"add(mul({oper_node}, {m}), {q})").get_root(), oper_node]:
         
             #Try the substition
             self._model.replace_subtree(node, try_node)
@@ -265,7 +253,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         while(not stop_criteria(self) and self.__extension_step(TR_inputs_dict, TR_output)):
                 
-            #print(f"Extension phase, iteration {i+1} done {'-'*50}")
+            print(f"Extension phase, iteration {i+1} done {'-'*50}")
                 
             self._model.simplify_model()
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
