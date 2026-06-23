@@ -73,7 +73,7 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
 
 
 
-ideal_function = "np.sin(X)"
+ideal_function = "np.sin(X) * X**2"
 
 X = np.array([x for x in range(-100, 100, 1)], dtype = np.float64) / 10
 Y = eval(ideal_function)
@@ -97,7 +97,7 @@ class Counter:
         self.__r += 1
         return self.__r >= self.__i
     
-counter = Counter(100)
+counter = Counter(400)
 
 
 
