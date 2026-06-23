@@ -124,8 +124,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
         Q.new_connection(M, 0)
         Q.new_connection(op.Leaf(q), 1)
         
-        #print("__add_linear_extension", node, Q)
-        
         return Q
            
     def linear_extend_model(model):
@@ -143,43 +141,37 @@ class AnalysisRamification(SymbolicRegressionLearning):
     #Get (if possible) the extension (with delta metric) of this combination
     def __analyze_extension(self, TR_inputs_dict, TR_output, config):
                 
-        node = config["old node"]
-        oper_node = config["new node"]
+        old_node = config["node"]
         
-        if(config["type"] == "base"):
-            
-            old_confidence = node.calculation_hat_confidence(node.get_memory("forward"), node.get_memory("backward"))
-            new_confidence = oper_node.calculation_hat_confidence(oper_node.get_memory("forward"), oper_node.get_memory("backward"))
-            
-        else:
-            
-            child_oper_node = oper_node.get_childrens()[0]
-            
-            old_confidence = oper_node.calculation_hat_confidence(node.get_memory("forward"), node.get_memory("backward"))
-            new_confidence = oper_node.calculation_hat_confidence(child_oper_node.get_memory("forward"), oper_node.get_memory("backward"))
-            
-            del child_oper_node
+        if(config["type"] == "change_base"): oper_node = op.Leaf(config["new_feature"])
         
-        config["delta confidence"] = abs(new_confidence) - abs(old_confidence)
+        elif(config["type"] == "add_operation"):
             
-        del config["type"]
+            oper_node = config["new operation"]()
+            oper_node.new_connection(0, old_node.copy_sub_tree())
+            
+        else: raise ValueError(f"Config type must be 'change_base' or ' add_operation', not {config['type']}")
         
-        if(oper_node.is_constant()): return True
+        if(oper_node.is_constant()):
+            config["new node"] = oper_node
+            return True
         
-        linear_ext = utils.linear_extension(oper_node.get_memory("forward"), oper_node.get_memory("backward")) 
+        oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict)
+        
+        linear_ext = utils.linear_extension(oper_node.get_memory("forward"), old_node.get_memory("backward"))
         m = linear_ext["m"] if np.isfinite(linear_ext["m"]) else 1
         q = linear_ext["q"] if np.isfinite(linear_ext["q"]) else 0
 
         for try_node in [AnalysisRamification.__add_linear_extension(oper_node, m, q), oper_node]:
         
             #Try the substition
-            self._model.replace_subtree(node, try_node)
+            self._model.replace_subtree(old_node, try_node)
                 
             #Check the structural domain
             valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
 
             #Do the substition
-            self._model.replace_subtree(try_node, node)
+            self._model.replace_subtree(try_node, old_node)
             
             config["new node"] = try_node
 
@@ -192,7 +184,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
     def __extension_step(self, TR_inputs_dict, TR_output):
         
         model_firm = str(self._model.copy().simplify_model())
-        k, i = self._dict_extension_history[model_firm] if model_firm in self._dict_extension_history.keys() else (0, 0)
+        i = self._dict_extension_history[model_firm] if model_firm in self._dict_extension_history.keys() else 0
         
         choices = []
         
@@ -200,59 +192,34 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
         
-        #Package the choices by importance
-        for package in self.__get_package_importance_nodes(self._model.get_root().get_all_subtree_nodes(), self._unary_operations, TR_inputs_dict)[k:]:
-
-            choices = []
-            
-            #For each choice inside the package, calculate the metrics and the possible extension
-            for choice in package:
-
-                #Analyze the extension
-                result = self.__analyze_extension(TR_inputs_dict, TR_output, choice)
-                
-                #print("---", choice, result)
-                
-                #If extension is aviable, calculate all data about it
-                if(result): choices.append(choice)
-                
-                
-
-
-            choices = self.__filtering_criterion(choices)
-            
-            #print(choices)
-
-            choices = sorted(choices, key = lambda x: -x["delta confidence"])   #Sort phase
-            
-            #print(choices)
-                                                    
+        choices = self.__get_package_importance_nodes(self._model.get_root().get_all_subtree_nodes(), self._unary_operations, TR_inputs_dict)
         
-            #print("Survival choices")
-            #for x in choices: print(x)
+        print("All remaining choices to test")
+        for x in choices[i:]: print(x)
+        
+        #Package the choices by importance
+        for choice in choices[i:]:
 
-            #If there is no any choices, go ahead  
-            if(len(choices) == 0): continue
-            
-            #print("Extension choosed", choices[i])
+            #Analyze the extension
+            result = self.__analyze_extension(TR_inputs_dict, TR_output, choice)
+
+            if(not result): continue  
+                        
+            print("Extension choosed", choices[i])
 
             #Do the extension
-            self._model.replace_subtree(choices[i]["old node"], choices[i]["new node"])
+            self._model.replace_subtree(choice["node"], choice["new node"])
             
             #Go to one step with i index
             if(i < len(choices)): i += 1
-            
-            #Update the indices in the case i reach the next package
-            if(i == len(choices)):
-                i = 0
-                k += 1
-                
+            else: return False
+
             #Save the new position
-            self._dict_extension_history[model_firm] = (k, i)
+            self._dict_extension_history[model_firm] = i
                 
             break
 
-        return len(choices) > 0
+        return True
 
     
     #TR_inputs_dict: numpy array's dict

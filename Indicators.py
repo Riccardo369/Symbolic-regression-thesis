@@ -126,9 +126,9 @@ def total_analysis(x, y, requirements, k = 0):
         y_sorted = y[idx]
                 
         dx, dy = np.diff(x_sorted), np.abs(np.diff(y_sorted))
-        del idx, dx, dy
-                
         pendency = np.divide(dy, dx, out = np.zeros_like(dy), where = dx > 0)
+        
+        del idx, dx, dy
                 
     if("sinusoidal" in requirements):
                 
@@ -143,7 +143,7 @@ def total_analysis(x, y, requirements, k = 0):
                     
         result["sinusoidal"] = oscillation_base * moltiplicatore_saturato
                     
-        del oscillation_base, segni, segni_filtrati, cambi_direzione, moltiplicazione_saturato
+        del oscillation_base, segni, segni_filtrati, cambi_direzione, moltiplicatore_saturato
                 
                 
     if("horizontal_asymptote" in requirements):

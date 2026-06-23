@@ -10,28 +10,6 @@ import Indicators as ind
 import time
 
 
-#Identification a secco di sin:  chatterjee * (1 - spearman)
-
-
-def indicators_package_extensions(nodes, unary_operations, TR_inputs_dict):
-    
-    combinations = default_package_extensions(nodes, unary_operations, TR_inputs_dict)[0]
-    
-    result = []
-    
-    analyzed_nodes = [{"node": x, 
-                       "constant": 1 / (np.var(x.get_memory("backward")) + 1),
-                       "pearson": ind.pearson_correlation(x.get_memory("forward"), x.get_memory("backward")),
-                       "chaterjee": ind.chatterjee_correlation(x.get_memory("forward"), x.get_memory("backward"))} for x in nodes]
-    
-    #Consider the node like: the linear distance correlation between output and excepted output (explain this), and if 2 nodes are with same distance linear correlation.
-    #considering the node with more potential construction with chaterjee (explain this).
-    for s in sorted(analyzed_nodes, key = lambda x: ((np.abs(x["pearson"]) if not x["node"].is_constant() else x["constant"]), -np.abs(x["chaterjee"]))):
-        result.append([x for x in combinations if x["old node"] is s["node"]])
-
-    return result
-
-
 
 #Foreach node:
 
@@ -60,39 +38,36 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
     #n nodes
     for n in nodes:
         
-        #f or f + 1 (about leaf cost)
+        forward = n.get_memory("forward")
+        backward = n.get_memory("backward")
+        
         if(isinstance(n, op.Leaf)):
+     
+            for x in list(TR_inputs_dict.keys()): combinations.append({"type": "change_base", 
+                                                                       "node": n, 
+                                                                       "new_feature": x, 
+                                                                       "score": np.abs(ind.chatterjee_correlation(TR_inputs_dict[x], backward))})
+
+            combinations.append({"type": "change_base", 
+                                 "node": n, 
+                                 "new_feature": get_constant(n.get_memory("backward")),
+                                 "score": 1 / (1 + np.var(backward))})
             
-            leafs = [op.Leaf(x) for x in TR_inputs_dict.keys() if x != n.get_name()]
-            leafs.append(op.Leaf(get_constant(n.get_memory("backward"))))
-                
-            for l in leafs: combinations.append({"old node": n, "new node": l, "type": "base"})
+        if(n.is_constant()): continue
+            
+        total_analysis = ind.total_analysis(forward, backward, ["monoton", "symmetry", "sinusoidal", "vertical_asymptote"])
         
-        
-        #ou (add unary operation)
         for ou in unary_operations:
             
             oper = ou()
             
-            if(not oper.check_input_domain(0, n.get_memory("forward"))): continue
+            if(not oper.check_input_domain(0, forward)): continue
             
-            if(not n.is_constant()):
-            
-                leaf = n.copy_sub_tree()
-
-                oper.new_connection(leaf, 0)
-                combinations.append({"old node": n, "new node": oper.copy_sub_tree(), "type": "hat"})
-                oper.free_connection(0)
-
-
-    for i in range(len(combinations)):
+            combinations.append({"type": "add_operation", "node": n, "new operation": ou, "score": ou.calculate_statistical_score(total_analysis)})
         
-        combinations[i]["new node"].forward_calculation_memory_sub_tree(TR_inputs_dict).set_memory("backward", combinations[i]["old node"].get_memory("backward"))
+    combinations = sorted(combinations, key = lambda x: -x["score"])
 
-    
-    return [combinations]
-
-
+    return [x for x in combinations]
 
 
 
@@ -121,12 +96,6 @@ class Counter:
 counter = Counter(100)
 
 
-strategies_package_nodes = [default_package_extensions,
-                            indicators_package_extensions]
-
-strategies_filter_nodes = [lambda x: True,
-                           lambda x: isinstance(x, op.Leaf)]
-
 
 def stop_criteria_function(strategy_learning, counter, TR_output):
     
@@ -143,7 +112,7 @@ metric_results = tree.learn(TR_inputs,
                                                     
                                                     lambda candidates: candidates,  #Filter phase
                                                     
-                                                    lambda n, uo, TR_inputs: strategies_package_nodes[0]([x for x in n if strategies_filter_nodes[1](x)], uo, TR_inputs)
+                                                    lambda n, uo, TR_inputs: default_package_extensions(n, uo, TR_inputs)
                                                     
                                                     ),
                             
@@ -155,6 +124,7 @@ metric_results = tree.learn(TR_inputs,
 #MAE_list = [x / max(MAE_list) for x in MAE_list]
 
 raise ValueError("STOP")
+
 
 
 def plot(x, color, label):

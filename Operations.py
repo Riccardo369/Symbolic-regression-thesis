@@ -288,6 +288,9 @@ class OperationNode:
     def calculation_hat_confidence(self, x, y):
         return NotImplemented
 
+    def calculate_statistical_score(total_analysis):
+        return NotImplemented
+    
     def best_constant(self, i):
         if(self.__channels == 1): raise ValueError("This operations has 1 channel, it has no sense this function")
         if(i > 2 or i < 0): raise ValueError(f"This operation has {self.__channels}, {i} has no sense")
@@ -357,6 +360,7 @@ class OperationNode:
         plt.show(block = block)
 
 
+
 class Leaf(OperationNode):
     
     def __init__(self, label):
@@ -378,6 +382,9 @@ class Leaf(OperationNode):
         if(self.is_constant()): result = 1 / (np.var(y) + 1)
         else: result = ind.chatterjee_correlation(x, y)
         return result if np.isfinite(result) else 0
+
+    def calculate_statistical_score(total_analysis):
+        raise ValueError("IT is not possible to calculate statistical score of a leaf")
 
     def get_string_derative_structure(self, sub_strings, x):
         super().get_string_derative_structure(sub_strings, x)
@@ -405,6 +412,9 @@ class add(OperationNode):
     
     def calculation_hat_confidence(self, x, y):
         raise TypeError("add is a associative and commutative operation, it not make any sense")
+    
+    def calculate_statistical_score(total_analysis):
+        raise ValueError("IT is not possible to calculate statistical score of an add node")
     
     def get_string_calculation_structure(self, x):
         return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
@@ -463,12 +473,12 @@ class mul(OperationNode):
             else: backward_output_1 = inputs[1]
         
         return [backward_output_0, backward_output_1]
-    
-    #def calculation_hat_confidence(self):
-        return ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
 
     def calculation_hat_confidence(self, x, y):
         raise TypeError("mul is a associative and commutative operation, it not make any sense")
+    
+    def calculate_statistical_score(total_analysis):
+        raise ValueError("IT is not possible to calculate statistical score of an mul node")
     
     def get_string_calculation_structure(self, x):
         return f"{' * '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
@@ -505,6 +515,9 @@ class neg(OperationNode):
     def calculation_hat_confidence(self, x, y):
         result = -ind.pearson_correlation(x, y)
         return result
+    
+    def calculate_statistical_score(total_analysis):
+        return -total_analysis["linear"]
  
     def get_string_calculation_structure(self, x):
         return f"-{x[0]}"
@@ -561,6 +574,9 @@ class div(OperationNode):
         
         result = np.abs(result_left * result_right)
         return result
+    
+    def calculate_statistical_score(total_analysis):
+        return -total_analysis["symmetry"] * np.abs(total_analysis["vertical_asymptote"])
    
     def get_string_calculation_structure(self, x):
         return f"1 / {x[0]}"
@@ -595,6 +611,9 @@ class sin(OperationNode):
     def calculation_hat_confidence(self, x, y):
         result = ind.chatterjee_correlation(x, y) * (1 - np.abs(ind.chatterjee_correlation(x, y)))
         return result
+    
+    def calculate_statistical_score(total_analysis):
+        return np.abs(total_analysis["sinusoidal"])
 
     def get_string_calculation_structure(self, x):
         return f"np.sin({x[0]})"
@@ -631,6 +650,9 @@ class arcsin(OperationNode):
         result = ind.spearman_correlation(x, y)
         return result
 
+    def calculate_statistical_score(total_analysis):
+        return np.abs(total_analysis["monoton"]) * -total_analysis["symmetry"]
+    
     def get_string_calculation_structure(self, x):
         return f"np.arcsin({x[0]})"
     
@@ -668,6 +690,9 @@ class abs(OperationNode):
         
         result = np.abs(result_left * result_right)
         return result
+    
+    def calculate_statistical_score(total_analysis):
+        return total_analysis["symmetry"]
 
     def get_string_calculation_structure(self, x):
         return f"np.abs({x[0]})"
@@ -706,6 +731,9 @@ class exp(OperationNode):
     def calculation_hat_confidence(self, x, y):
         result = ind.spearman_correlation(x, y)
         return result
+    
+    def calculate_statistical_score(total_analysis):
+        return np.abs(total_analysis["monoton"]) * (1 - np.abs(total_analysis["vertical_asymptote"]))
     
     def get_string_calculation_structure(self, x):
         return f"np.exp({x[0]})"
@@ -752,6 +780,9 @@ class ln(OperationNode):
         result = ind.spearman_correlation(In[mask_right], Out[mask_right])
     
         return result if np.sum(mask_right) > 1 else 0
+    
+    def calculate_statistical_score(total_analysis):
+        return np.abs(total_analysis["monoton"]) * np.abs(total_analysis["vertical_asymptote"])
    
     def get_string_calculation_structure(self, x):
         return f"np.log({x[0]})"
