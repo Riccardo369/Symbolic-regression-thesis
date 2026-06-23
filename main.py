@@ -118,7 +118,7 @@ class Counter:
         return self.__r >= self.__i
     
 
-counter = Counter(100)
+counter = Counter(400)
 
 
 def total_confidence_leafs(node):
