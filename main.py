@@ -73,10 +73,14 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
 
 
 
-ideal_function = "X * np.sin(X)"
+ideal_function = "np.sin(X)"
 
 X = np.array([x for x in range(-100, 100, 1)], dtype = np.float64) / 10
 Y = eval(ideal_function)
+
+mask = np.isfinite(Y)
+X = X[mask]
+Y = Y[mask]
 
 TR_inputs = {"X": X}
 TR_output = Y

@@ -148,7 +148,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         elif(config["type"] == "add_operation"):
             
             oper_node = config["new operation"]()
-            oper_node.new_connection(0, old_node.copy_sub_tree())
+            oper_node.new_connection(old_node.copy_sub_tree(), 0)
             
         else: raise ValueError(f"Config type must be 'change_base' or ' add_operation', not {config['type']}")
         
