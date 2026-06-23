@@ -28,7 +28,7 @@ class SymbolicRegressionLearning:
         for key in self._metric_results:
             result = self._metric_functions[key](self._model)
             self._metric_results[key].append(result)   
-            #print(key, ":", result)
+            print(key, ":", result)
         
     def _body_learning(self, TR_inputs_dict, TR_output, stop_criteria):
         return NotImplemented
@@ -58,7 +58,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
     
     #get_package_importance_nodes analyze nodes and returns a list of packages (for importance), where every package contains a list of triples node - feature- operation. 
     # If it is possible to choose a valid extension with first package, the algorithm will stop, otherwise it will search the extension on next package
-    def __init__(self, unary_operations, filtering_criterion, sorting_criterion, get_package_importance_nodes, heuristic_metrics):
+    def __init__(self, unary_operations, filtering_criterion, get_package_importance_nodes):
         
         super().__init__()
         
@@ -69,9 +69,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
         self._unary_operations = list(unary_operations)
         
         self.__filtering_criterion = filtering_criterion
-        self.__sorting_criterion = sorting_criterion
-
-        self._heuristic_metrics = heuristic_metrics
         
         self.__get_package_importance_nodes = get_package_importance_nodes
         
@@ -95,9 +92,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
     def __structural_domain_check(model, TR_inputs_dict, TR_output):
         model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
         return np.all(np.isfinite(model.get_root().get_memory("forward"))) & np.all([np.all(np.isfinite(x.get_memory("backward"))) for x in model.get_root().get_all_subtree_nodes() if isinstance(x, op.Leaf)])
-
-    def __checkpoint_heuristic_metrics(self):
-        return {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
 
     def __valid_dict_history_form(Dict):
         if(not all([type(x) == str for x in Dict.keys()])): return False
@@ -130,7 +124,9 @@ class AnalysisRamification(SymbolicRegressionLearning):
         Q.new_connection(M, 0)
         Q.new_connection(op.Leaf(q), 1)
         
-        return q
+        #print("__add_linear_extension", node, Q)
+        
+        return Q
            
     def linear_extend_model(model):
         
@@ -150,20 +146,37 @@ class AnalysisRamification(SymbolicRegressionLearning):
         node = config["old node"]
         oper_node = config["new node"]
         
+        if(config["type"] == "base"):
+            
+            old_confidence = node.calculation_hat_confidence(node.get_memory("forward"), node.get_memory("backward"))
+            new_confidence = oper_node.calculation_hat_confidence(oper_node.get_memory("forward"), oper_node.get_memory("backward"))
+            
+        else:
+            
+            child_oper_node = oper_node.get_childrens()[0]
+            
+            old_confidence = oper_node.calculation_hat_confidence(node.get_memory("forward"), node.get_memory("backward"))
+            new_confidence = oper_node.calculation_hat_confidence(child_oper_node.get_memory("forward"), oper_node.get_memory("backward"))
+            
+            del child_oper_node
+        
+        config["delta confidence"] = abs(new_confidence) - abs(old_confidence)
+            
+        del config["type"]
+        
+        if(oper_node.is_constant()): return True
+        
         linear_ext = utils.linear_extension(oper_node.get_memory("forward"), oper_node.get_memory("backward")) 
         m = linear_ext["m"] if np.isfinite(linear_ext["m"]) else 1
         q = linear_ext["q"] if np.isfinite(linear_ext["q"]) else 0
 
-        for try_node in [AnalysisRamification.__add_linear_extension(node, m, q), oper_node]:
+        for try_node in [AnalysisRamification.__add_linear_extension(oper_node, m, q), oper_node]:
         
             #Try the substition
             self._model.replace_subtree(node, try_node)
                 
             #Check the structural domain
             valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
-                
-            #Calculate the new metrics (if domain permitted)
-            if(valid_domain): new_metrics = self.__checkpoint_heuristic_metrics()
 
             #Do the substition
             self._model.replace_subtree(try_node, node)
@@ -171,14 +184,12 @@ class AnalysisRamification(SymbolicRegressionLearning):
             config["new node"] = try_node
 
             #Check structure domain
-            if(valid_domain): return {key: new_metrics[key] for key in self._heuristic_metrics.keys()}
+            if(valid_domain): return True
         
-        return None
+        return False
 
     #Extension phase (tree already wet with TR set)
     def __extension_step(self, TR_inputs_dict, TR_output):
-        
-        original_metrics = self.__checkpoint_heuristic_metrics()
         
         model_firm = str(self._model.copy().simplify_model())
         k, i = self._dict_extension_history[model_firm] if model_firm in self._dict_extension_history.keys() else (0, 0)
@@ -200,26 +211,33 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 #Analyze the extension
                 result = self.__analyze_extension(TR_inputs_dict, TR_output, choice)
                 
+                #print("---", choice, result)
+                
                 #If extension is aviable, calculate all data about it
-                if(result != None):
-
-                    choices.append(choice | {"delta heuristic metrics": {key: original_metrics[key] - result[key] for key in self._heuristic_metrics.keys()}})
+                if(result): choices.append(choice)
+                
+                
 
 
             choices = self.__filtering_criterion(choices)
+            
+            #print(choices)
 
-            choices = self.__sorting_criterion(choices)
+            choices = sorted(choices, key = lambda x: -x["delta confidence"])   #Sort phase
+            
+            #print(choices)
+                                                    
         
             #print("Survival choices")
             #for x in choices: print(x)
 
             #If there is no any choices, go ahead  
             if(len(choices) == 0): continue
+            
+            #print("Extension choosed", choices[i])
 
             #Do the extension
             self._model.replace_subtree(choices[i]["old node"], choices[i]["new node"])
-            
-            #print("Extension choosed", choices[i])
             
             #Go to one step with i index
             if(i < len(choices)): i += 1
@@ -265,12 +283,12 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         while(not stop_criteria(self) and self.__extension_step(TR_inputs_dict, TR_output)):
                 
-            #print(f"Extension phase, iteration {i+1} done {'-'*50}")
+            print(f"Extension phase, iteration {i+1} done {'-'*50}")
                 
             self._model.simplify_model()
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
             self.checkpoint_metrics()
-                
+
             i += 1
             
         print("Training done!")

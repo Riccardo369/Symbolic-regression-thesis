@@ -285,7 +285,7 @@ class OperationNode:
         return NotImplemented
 
     #Calculate the confidence of this node (considering the childrens). REQUIRE backward from father and forward from childrens
-    def calculation_hat_confidence(self):
+    def calculation_hat_confidence(self, x, y):
         return NotImplemented
 
     def best_constant(self, i):
@@ -374,9 +374,9 @@ class Leaf(OperationNode):
     def backward_calculation(self):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
     
-    def calculation_hat_confidence(self):
-        if(self.is_constant()): result = 1 / (np.var(self.get_memory("backward")) + 1)
-        else: result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+    def calculation_hat_confidence(self, x, y):
+        if(self.is_constant()): result = 1 / (np.var(y) + 1)
+        else: result = ind.chatterjee_correlation(x, y)
         return result if np.isfinite(result) else 0
 
     def get_string_derative_structure(self, sub_strings, x):
@@ -403,9 +403,8 @@ class add(OperationNode):
         output = self.get_memory("backward") 
         return [output - inputs[1], output - inputs[0]]
     
-    def calculation_hat_confidence(self):
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-        return result
+    def calculation_hat_confidence(self, x, y):
+        raise TypeError("add is a associative and commutative operation, it not make any sense")
     
     def get_string_calculation_structure(self, x):
         return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
@@ -468,12 +467,8 @@ class mul(OperationNode):
     #def calculation_hat_confidence(self):
         return ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
 
-    def calculation_hat_confidence(self):
-        #print("calculation_hat_confidence mul")
-        #print(self.get_memory("forward"))
-        #print(self.get_memory("backward"))
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-        return result
+    def calculation_hat_confidence(self, x, y):
+        raise TypeError("mul is a associative and commutative operation, it not make any sense")
     
     def get_string_calculation_structure(self, x):
         return f"{' * '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
@@ -507,8 +502,8 @@ class neg(OperationNode):
         output = self.get_memory("backward") 
         return [-output]
     
-    def calculation_hat_confidence(self):
-        result = -ind.pearson_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+    def calculation_hat_confidence(self, x, y):
+        result = -ind.pearson_correlation(x, y)
         return result
  
     def get_string_calculation_structure(self, x):
@@ -554,9 +549,9 @@ class div(OperationNode):
             
         return [output]
     
-    def calculation_hat_confidence(self):
+    def calculation_hat_confidence(self, x, y):
     
-        In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+        In, Out = ind.prepare(x, y)
     
         mask_left = In < 0
         mask_right = In > 0
@@ -597,8 +592,8 @@ class sin(OperationNode):
         real_output = self.get_memory("backward")
         return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
     
-    def calculation_hat_confidence(self):
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+    def calculation_hat_confidence(self, x, y):
+        result = ind.chatterjee_correlation(x, y) * (1 - np.abs(ind.chatterjee_correlation(x, y)))
         return result
 
     def get_string_calculation_structure(self, x):
@@ -618,7 +613,7 @@ class arcsin(OperationNode):
     def check_output_domain(self, output):
         if(not (self._check_type_name(output) and type(output) != str)): return False
         if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
-        else: return np.all(np.abs(output) <= 1 + self._tol)
+        else: return np.all(np.abs(output) <= (np.pi/2) + self._tol)
         
     def check_input_domain(self, i, input):
         super().check_input_domain(i, input)
@@ -632,8 +627,8 @@ class arcsin(OperationNode):
     def backward_calculation(self):
         return [np.sin(self.get_memory("backward"))]
 
-    def calculation_hat_confidence(self):
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+    def calculation_hat_confidence(self, x, y):
+        result = ind.spearman_correlation(x, y)
         return result
 
     def get_string_calculation_structure(self, x):
@@ -646,36 +641,6 @@ class arcsin(OperationNode):
         return f"div({sub_strings[0]}, cos(arcsin({str_function[0]})))"
 
 #Il cos non è altro che: cos(x) = sin(x + pi*1.5)
-
-class cos(OperationNode):
-    
-    def __init__(self):
-        super().__init__(1)
-        
-    def check_output_domain(self, output):
-        if(not (self._check_type_name(output) and type(output) != str)): return False
-        if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
-        else: return np.all(np.abs(output) <= 1 + self._tol)
-    
-    def forward_calculation(self):
-        return np.cos(self.get_childrens()[0].get_memory("forward"))
-    
-    def backward_calculation(self):
-        real_output = self.get_memory("backward")
-        return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
-    
-    def calculation_hat_confidence(self):
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-        return result
-    
-    def get_string_calculation_structure(self, x):
-        return f"np.cos({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(neg(sin({str_function[0]})), {sub_strings[0]})"
 
 class abs(OperationNode):
     
@@ -691,9 +656,9 @@ class abs(OperationNode):
     def backward_calculation(self):
         return [dm.get_ideal_input_abs(self.get_memory("forward"), self.get_memory("backward"))]
 
-    def calculation_hat_confidence(self):
+    def calculation_hat_confidence(self, x, y):
     
-        In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+        In, Out = ind.prepare(x, y)
     
         mask_left = In <= 0
         mask_right = In >= 0
@@ -738,8 +703,8 @@ class exp(OperationNode):
             result = np.log(self.get_memory("backward"))
         return [result]
     
-    def calculation_hat_confidence(self):
-        result = ind.spearman_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+    def calculation_hat_confidence(self, x, y):
+        result = ind.spearman_correlation(x, y)
         return result
     
     def get_string_calculation_structure(self, x):
@@ -778,9 +743,9 @@ class ln(OperationNode):
 
         return [result]
     
-    def calculation_hat_confidence(self):
+    def calculation_hat_confidence(self, x, y):
     
-        In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+        In, Out = ind.prepare(x, y)
     
         mask_right = In > 0
         

@@ -10,6 +10,9 @@ import Indicators as ind
 import time
 
 
+#Identification a secco di sin:  chatterjee * (1 - spearman)
+
+
 def indicators_package_extensions(nodes, unary_operations, TR_inputs_dict):
     
     combinations = default_package_extensions(nodes, unary_operations, TR_inputs_dict)[0]
@@ -32,12 +35,15 @@ def indicators_package_extensions(nodes, unary_operations, TR_inputs_dict):
 
 #Foreach node:
 
-#unary operation: 2*ou
 #Nodo interno: ou
-#foglia feature : f + ou*f
-#foglia const   : f+1 + ou*f
+#foglia feature : f + ou
+#foglia const   : f+1 + ou
 
-#f su foglia feature perchè: (se costante ci metti tutte le f + costante, altrimenti tutte le f - quella attuale + la costante)
+# Nodo interno: aggiungo tutte le varie possibili operazioni sopra
+# Foglia: aggiungo tutte le feature + costante, non ci metto la combinazione di operazione unaria + feature per osservare il comportamento del modello senza provare a 
+# scavalcare con dei pattern già complessi (perchè sennò bisognava provare anche con pattern complessi di 2 livello, 3 livello etc.), e da lì poi l' esplosione,
+# quindi per vedere se il modello riesce a catturare le relazioni strutturali giuste senza fare i salti
+
 
 def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
 
@@ -55,36 +61,14 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
     for n in nodes:
         
         #f or f + 1 (about leaf cost)
-        if(isinstance(n, op.Leaf) or True):
+        if(isinstance(n, op.Leaf)):
             
             leafs = [op.Leaf(x) for x in TR_inputs_dict.keys() if x != n.get_name()]
             leafs.append(op.Leaf(get_constant(n.get_memory("backward"))))
                 
-            for l in leafs: combinations.append({"old node": n, "new node": l})
+            for l in leafs: combinations.append({"old node": n, "new node": l, "type": "base"})
         
-        #ou - 1 (substitution unary operation) + directly child (without node so)
-        if(not isinstance(n, op.Leaf)):
-            
-            if(n.get_channels() == 1):
-                
-                child_copy = n.get_childrens()[0]
-                
-                combinations.append({"old node": n, "new node": child_copy.copy_sub_tree()})
-                
-                for ou in [x for x in unary_operations if not isinstance(n, x)]:
-                    
-                    oper = ou()
-                    
-                    if(not oper.check_input_domain(0, n.get_memory("forward"))): continue
-                    
-                    oper.new_connection(child_copy.copy_sub_tree(), 0)
-                    
-                    combinations.append({"old node": n, "new node": oper.copy_sub_tree()})
-                    
-                    oper.free_connection(0)
-            
         
-
         #ou (add unary operation)
         for ou in unary_operations:
             
@@ -97,39 +81,26 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
                 leaf = n.copy_sub_tree()
 
                 oper.new_connection(leaf, 0)
-                combinations.append({"old node": n, "new node": oper.copy_sub_tree()})
+                combinations.append({"old node": n, "new node": oper.copy_sub_tree(), "type": "hat"})
                 oper.free_connection(0)
-            
-            #f (only for leaf)
-            if(isinstance(n, op.Leaf)):
-            
-                leafs = [op.Leaf(x) for x in TR_inputs_dict.keys() if x != n.get_name()]
-                        
-                for leaf in leafs:
-                    
-                    oper.new_connection(leaf, 0)
-                    
-                    oper.forward_calculation_memory_sub_tree(TR_inputs_dict).set_memory("backward", n.get_memory("backward"))
-                    combinations.append({"old node": n, "new node": oper.copy_sub_tree()})   
-                    oper.free_connection(0)
+
 
     for i in range(len(combinations)):
         
         combinations[i]["new node"].forward_calculation_memory_sub_tree(TR_inputs_dict).set_memory("backward", combinations[i]["old node"].get_memory("backward"))
-        
 
-    #print("COMBINATIONS" + '-'*100)
-    #for i in combinations: print(i)
-    
-    #raise ValueError("STOP")
     
     return [combinations]
 
 
 
-ideal_function = "np.sin(X) * X"
 
-X = np.array([x for x in range(-1000, 1000, 1)], dtype = np.float64) / 10
+
+
+
+ideal_function = "X * np.sin(X)"
+
+X = np.array([x for x in range(-100, 100, 1)], dtype = np.float64) / 10
 Y = eval(ideal_function)
 
 TR_inputs = {"X": X}
@@ -147,33 +118,8 @@ class Counter:
         self.__r += 1
         return self.__r >= self.__i
     
+counter = Counter(100)
 
-counter = Counter(10)
-
-
-def total_confidence_leafs(node):
-    
-    def f(node):
-    
-        result = []
-        for c in node.get_childrens(): result += f(c)
-        return result + [node.calculation_hat_confidence()] if isinstance(node, op.Leaf) else result
-    
-    result = f(node)
-    
-    return np.mean(result)
-
-def root_metric(model, metric):
-    root = model.get_root()
-    return metric(root.get_memory("forward"), root.get_memory("backward"))
-
-
-
-param_guides = [lambda model: root_metric(model, ind.spearman_correlation),
-                lambda model: root_metric(model, ind.chatterjee_correlation),
-                lambda model: root_metric(model, er.MAE),
-                #Manca il parametro Kendal
-                lambda model: total_confidence_leafs(model)]
 
 strategies_package_nodes = [default_package_extensions,
                             indicators_package_extensions]
@@ -193,15 +139,13 @@ def stop_criteria_function(strategy_learning, counter, TR_output):
 
 metric_results = tree.learn(TR_inputs,
                             TR_output,
-                            ls.AnalysisRamification([op.neg, op.div, op.abs, op.exp, op.ln, op.sin, op.arcsin],
+                            ls.AnalysisRamification([op.div, op.abs, op.exp, op.ln, op.sin, op.arcsin],
                                                     
                                                     lambda candidates: candidates,  #Filter phase
                                                     
-                                                    lambda candidates: sorted(candidates, key = lambda x: -x["delta heuristic metrics"]["Param"]),   #Sort phase
+                                                    lambda n, uo, TR_inputs: strategies_package_nodes[0]([x for x in n if strategies_filter_nodes[1](x)], uo, TR_inputs)
                                                     
-                                                    lambda n, uo, TR_inputs: strategies_package_nodes[1]([x for x in n if strategies_filter_nodes[1](x)], uo, TR_inputs),
-                                                    
-                                                    {"Param": param_guides[0]}),
+                                                    ),
                             
                             stop_criteria = lambda ls: stop_criteria_function(ls, counter, TR_output),
                             
@@ -238,15 +182,4 @@ plt.show()
 
 
 
-
-
-
-#SISTEMARE I CALCOLI DELLE CONFIDENZE DEI VARI NODI, GESTENDO LE VARIE SITUAZIONI DI OGNI ELEMENTO. QUANDO CALCOLI LA CONFIDENZA, DEVI PRENDERE IL FORWARD DEL NODO SOTTO SE
-#SEI UN OPERAZIONE.
-
-#SISTEMARE IL FATTO CHE CI POSSONO ESSERE DELLE ESTENSIONI LINEARI CHE NASCOSTE CHE NON SI CONOSCONO, QUINDI ADATTARE IL PROPRIO BACKWARD CON FUNZIONI FLESSIBILI. SE CE 
-# BISOGNO DI RISCALARE CON UNA TRASFORMAZIONE LINEARE UN ELEMENTO, ALLORA LO AGGIUNGI ANCHE SUL MODELLO, PERCHè SE FAI UNA BACKWARD DEVIATA, POI HAI UNA FORWARD SCOLLEGATA 
-# DALLA BACKWARD, E QUESTO PORTA AD INCOERENZE, PERCHè TI PERDI I COEFFICIENTI DELLE ESTENSIONI LINEARI
-
-# E' ORA DI CERCARE I COMPETITOR E FARE LE PROVE, PER FAVORE
 

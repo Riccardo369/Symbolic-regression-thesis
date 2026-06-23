@@ -208,24 +208,21 @@ class SymbolicRegression:
          
             return node
         
-        #history = []
-        #
-        #while(self.__root not in history):
-        #    
-        #    #Save the actual form of model
-        #    history.append(self.__root.copy_sub_tree())
-        #    
-        #    #Apply again all simplifications
-        #    recursion(self.__root)
-        #    
-        #best_root = sorted(history, key = lambda x: len(x.get_all_subtree_nodes()))[0]
-        #
+        history = []
+        
+        while(self.__root not in history):
+            
+            #Save the actual form of model
+            history.append(self.__root.copy_sub_tree())
+            
+            #Apply again all simplifications
+            recursion(self.__root)
+           
+        best_root = sorted(history, key = lambda x: len(x.get_all_subtree_nodes()))[0]
+        
         #If the semplification is worse (more nodes), do a rollback, backing to original root
-        #if(best_root != self.__root): self.replace_subtree(self.__root, best_root)
-        
-        best_root = recursion(self.__root.copy_sub_tree())
-        if(len(best_root.get_all_subtree_nodes()) <= len(self.__root.get_all_subtree_nodes())): self.replace_subtree(self.__root, best_root)
-        
+        if(best_root != self.__root): self.replace_subtree(self.__root, best_root)
+
         return self
 
     #Learn phase   
