@@ -58,7 +58,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
     
     #get_package_importance_nodes analyze nodes and returns a list of packages (for importance), where every package contains a list of triples node - feature- operation. 
     # If it is possible to choose a valid extension with first package, the algorithm will stop, otherwise it will search the extension on next package
-    def __init__(self, unary_operations, filtering_criterion, get_package_importance_nodes):
+    def __init__(self, unary_operations, get_package_importance_nodes):
         
         super().__init__()
         
@@ -67,8 +67,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
             if(oper().get_channels() != 1): raise TypeError(f"{oper} has no 1 channel, it is not acceptable an unary operation like that")
         
         self._unary_operations = list(unary_operations)
-        
-        self.__filtering_criterion = filtering_criterion
         
         self.__get_package_importance_nodes = get_package_importance_nodes
         
@@ -156,13 +154,24 @@ class AnalysisRamification(SymbolicRegressionLearning):
             config["new node"] = oper_node
             return True
         
+        
+        choices = [oper_node]
+        
         oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict)
         
-        linear_ext = utils.linear_extension(oper_node.get_memory("forward"), old_node.get_memory("backward"))
-        m = linear_ext["m"] if np.isfinite(linear_ext["m"]) else 1
-        q = linear_ext["q"] if np.isfinite(linear_ext["q"]) else 0
+        analysis = utils.total_analysis(oper_node.get_memory("forward"), old_node.get_memory("backward"), ["linear", "general"])
+        
+        print(analysis)
+        
+        if(np.abs(analysis["linear"]) >= np.abs(analysis["general"])):
+            
+            linear_ext = utils.linear_extension(oper_node.get_memory("forward"), old_node.get_memory("backward"))
+            m = linear_ext["m"] if np.isfinite(linear_ext["m"]) else 1
+            q = linear_ext["q"] if np.isfinite(linear_ext["q"]) else 0
+            
+            choices.insert(0, AnalysisRamification.__add_linear_extension(oper_node, m, q))
 
-        for try_node in [AnalysisRamification.__add_linear_extension(oper_node, m, q), oper_node]:
+        for try_node in choices:
         
             #Try the substition
             self._model.replace_subtree(old_node, try_node)
