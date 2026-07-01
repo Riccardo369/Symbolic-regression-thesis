@@ -16,15 +16,12 @@ class OperationNode:
 
     _tol = 1e-40
     
-    def __init__(self, channels, is_commutative = False, name = None):
+    def __init__(self, max_channels, name = None):
         
-        if(type(channels) not in [int]): raise ValueError(f"Channels number must be a int value, cannot be a {channels}")
+        if(type(max_channels) not in [int] and max_channels != float("inf")): raise ValueError(f"Max channels must be a int number, cannot be {max_channels}")
         
         #Channel numbers
-        self.__channels = channels
-        
-        #Special properties
-        self.__is_commutative = is_commutative
+        self.__max_channels = max_channels
         
         #Father
         self.__father = None
@@ -32,46 +29,30 @@ class OperationNode:
         #Set parameters
         self.set_name(name)
         
-        self.__childrens = [None for _ in range(channels)]
+        self.__childrens = []
         
         self.__memories = dict()   
         
         self.__memories["forward"] = None
         self.__memories["backward"] = None
+        
+    def sort_internal_nodes(self):
+        
+        def recursion(node):
+            
+            for i in node.__childrens: recursion(i)
+            
+            if(isinstance(node, Leaf)): return
+            
+            else: node.__childrens = sorted(node.__childrens, key = lambda x: str(x))
+        
+        recursion(self)
 
     def __eq__(self, x):
         
         #Check if this node is of this type
         if(not isinstance(x, type(self))): return False
-        
-        #If this is a Leaf
-        if(isinstance(x, Leaf)): return self.get_name() == x.get_name()
-        
-        #If this is a unary operation
-        if(self.get_channels() == 1): return self.get_childrens()[0] == x.get_childrens()[0]
-        
-        #If this is a binary operation
-        if(self.get_channels() == 2 and (isinstance(self, add) or isinstance(self, mul))):
-            
-            self_flat = [x for x in utils.flat_elements(self, type(self))]
-            x_flat = [x for x in utils.flat_elements(x, type(x))]
-            
-            same_length = len(self_flat) == len(x_flat)
-            
-            results = []
-            
-            while(len(self_flat) > 0):
-                c = self_flat[0]
-                
-                results.append(c in x_flat)
-                if(not results[-1]): break
-                
-                del self_flat[self_flat.index(c)]
-                del x_flat[x_flat.index(c)]
-            
-            return all(results) and same_length
-        
-        raise ValueError(f"During {self} == {x}, something got wrong, no of previous guards was catched")
+        return str(self) == str(x)
 
     def __str__(self):
         if(isinstance(self, Leaf)): return self._name if type(self._name) == "str" else str(self._name)
@@ -79,48 +60,44 @@ class OperationNode:
     
     def __repr__(self):
         return str(self)
-       
-    def equals_subtree(self, node):
+    
+    def __index_child(self, node):
         
-        my_childrens =    self.get_childrens()
-        other_childrens = node.get_childrens()
-        
-        if(len(my_childrens) != len(other_childrens)): return False
-        if(not isinstance(node, type(self))): return False
-        return all([c.equals_subtree(x) for c, x in zip(my_childrens, other_childrens)])
+        for i, child in enumerate(self.__childrens):
+            if(id(child) == id(node)): return i
+            
+        return None
      
     #Delete a connection
-    def free_connection(self, i):
-
-        if(i >= self.__channels or i < 0): raise ValueError(f"Cannot set a {i}-th channel in a node with {self.__channels} children for father")
+    def free_connection(self, child):
         
-        brothers = self.__childrens
+        if(len(self.get_childrens()) == 0): raise ValueError(f"This node has {len(self.get_childrens())}, it is not possible to remove another child")
         
-        child = brothers[i]
-        brothers[i] = None
+        
+        if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
+        
+        index = self.__index_child(child)
+        if(index == None): raise ValueError(f"Child {child} are not a child of {self}")
+        
+        del self.__childrens[index]
         child.__father = None
         
         return self
        
-    #Create a connection 
-    def new_connection(self, child, i):
-
+    #Create a connection
+    def new_connection(self, child):
+        
+        if(self.__max_channels == len(self.get_childrens())): raise ValueError(f"This node has {len(self.get_childrens())}, can have max {self.__max_channels}, it is not possible to add a new child")
+        
         if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
         
-        if(child.__father != None): raise ValueError(f"Child {child} has already a father {self}, so connection is useless")
-        if(self.__childrens[i] != None): raise ValueError(f"Father {self} has {child} in own childrens in position {i}, so connection is useless")
-        
-        if(i >= self.__channels or i < 0): raise ValueError(f"Cannot set a {i}-th channel in a node with {self.__channels} children for father")
-        if(self.__childrens[i] != None): raise ValueError("Father has already a child in {i}-th position")
-        
-        self.__childrens[i] = child
+        index = self.__index_child(child)
+        if(index != None): raise ValueError(f"This child {child} is already like child (not form, like the real child in memory), it is not possible to add again in childrens {self.__childrens}, otherwise it will create a acycle graph (not acceptable)")
+
+        self.__childrens.append(child)
         child.__father = self
         
         return self
-
-    #GET PARAMETERS ZONE
-    def is_commutative(self):
-        return self.__is_commutative
      
     def is_constant(self):
         return type(self._name) in [int, float] or (np.isscalar(self._name) and type(self._name) != str)
@@ -131,11 +108,19 @@ class OperationNode:
         
         def recursion(n):
             return any([recursion(c) for c in n.get_childrens()] + [id(n) == id(node)])
+        
+        #raise ValueError("STOP")
 
         return recursion(self)
+    
+    def get_max_channels(self):
+        return self.__max_channels
            
     def get_channels(self):
-        return self.__channels
+        return len(self.__childrens)
+    
+    def accept_number_childrens(self, k):
+        return k <= self.__max_channels
         
     def get_name(self):
         return self._name
@@ -222,7 +207,7 @@ class OperationNode:
         return True
     
     def check_input_domain(self, i, input):
-        if(i < 0 or i > self.__channels - 1): raise ValueError(f"Operation {type(self)} has only {self.__channels}, so i = {i} has no coherence (start count from 0)")
+        if(i < 0 or i > len(self.__childrens) - 1): raise ValueError(f"Operation {type(self)} has {len(self.__childrens)}, so i = {i} has no coherence (start count from 0)")
         return True
 
     def check_output_domain(self, output):
@@ -232,7 +217,12 @@ class OperationNode:
 
     #Get the list of simplification considering the position where is the node in global tree (considering also the father etc.)
     def get_simplification_subtree(self, operations = []):
-        return [si.constant] + operations
+        result = operations
+        
+        for i in result:
+            if(not issubclass(i, si.Simplification)): raise TypeError(f"Simplification {i} is not a class Simplification, it must be")
+        
+        return result
 
     #Get the string function of all subtree
     def get_string_calculation_function(self):
@@ -248,8 +238,6 @@ class OperationNode:
                 return leaf_label
             
             result = f"({node.get_string_calculation_structure([recursion(child, leaf_labels) for child in node.get_childrens()])})"
-            
-            #if(node.get_channels() > 1): return f"({result})"
             
             return result
         
@@ -273,7 +261,7 @@ class OperationNode:
 
     #Get the derative operation in string form (for x feature)
     def get_string_derative_structure(self, sub_strings, x):
-        if(len(sub_strings) != self.__channels): raise ValueError(f"sub_strings len {len(sub_strings)} must be equals to childrens number {self.__channels}")
+        if(len(sub_strings) != self.get_channels()): raise ValueError(f"sub_strings len {len(sub_strings)} must be equals to childrens number {self.get_channels()}")
         return NotImplemented 
 
     #Calculate forward value. REQUIRE forwards from childrens
@@ -290,25 +278,17 @@ class OperationNode:
 
     def calculate_statistical_score(total_analysis):
         return NotImplemented
-    
-    def best_constant(self, i):
-        if(self.__channels == 1): raise ValueError("This operations has 1 channel, it has no sense this function")
-        if(i > 2 or i < 0): raise ValueError(f"This operation has {self.__channels}, {i} has no sense")
-        return NotImplemented
 
     #Copy all sub tree
     def copy_sub_tree(self):
         
         result = self.__class__(self._name) if(self.__class__.__name__ == "Leaf") else self.__class__()
         
-        result.__childrens = [None for _ in self.__childrens]
-        
         #Non necessita della copia perchè i metodi set fanno una copia già di default
-        for key in self.__memories.keys(): result.set_memory(key, self.__memories[key])
+        #for key in self.__memories.keys(): result.set_memory(key, self.__memories[key])
         
-        for i, child in enumerate(self.__childrens):
-            if(child == None): continue
-            OperationNode.new_connection(result, child.copy_sub_tree(), i)
+        for child in self.__childrens:
+            result.new_connection(child.copy_sub_tree())
 
         return result
       
@@ -360,11 +340,24 @@ class OperationNode:
         plt.show(block = block)
 
 
+class UnaryOperationNode(OperationNode):
+    
+    def __init__(self):
+        super().__init__(1)
+             
+class ChainOperationNode(OperationNode):
+    
+    def __init__(self):
+        super().__init__(float("inf"))
+        
+    def accept_number_childrens(self, k):
+        return k > 1 and k < self.get_max_channels()
+        
 
 class Leaf(OperationNode):
     
     def __init__(self, label):
-        super().__init__(0, False, label)
+        super().__init__(0, label)
     
     def _check_type_name(self, name):
         return (type(name) in [str, int, float] and not isinstance(name, np.ndarray)) or np.isscalar(name)
@@ -393,22 +386,25 @@ class Leaf(OperationNode):
     def get_simplification_subtree(self):
         return super().get_simplification_subtree([si.approximation])
 
-class add(OperationNode):
+
+class add(ChainOperationNode):
     
     def __init__(self):
-        super().__init__(2, True)
+        super().__init__()
         
     def __str__(self):
         return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
 
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return inputs[0] + inputs[1]
+        result = 0
+        for i in inputs: result += i
+        return result
     
     def backward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward") 
-        return [output - inputs[1], output - inputs[0]]
+        return [output - i for i in inputs]
     
     def calculation_hat_confidence(self, x, y):
         raise TypeError("add is a associative and commutative operation, it not make any sense")
@@ -417,62 +413,49 @@ class add(OperationNode):
         raise ValueError("IT is not possible to calculate statistical score of an add node")
     
     def get_string_calculation_structure(self, x):
-        return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
+        return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
     
     def get_string_derative_structure(self, sub_strings, x):  
         super().get_string_derative_structure(sub_strings, x)
-        return f"add({sub_strings[0]}, {sub_strings[1]})"
-
-    def best_constant(self, i):
-        super().best_constant(i)
-        back = self.backward_calculation()
-        if(~np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
-        return np.mean(back[i])
+        return f"add({', '.join(sub_strings)})"
     
     def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.add_chain])
+        return super().get_simplification_subtree([])
 
-class mul(OperationNode):
+class mul(ChainOperationNode):
     
     def __init__(self):
-        super().__init__(2, True)
+        super().__init__()
         
     def __str__(self):
         return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
 
     def forward_calculation(self):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return inputs[0] * inputs[1]
+        result = 0
+        for i in inputs: result *= i
+        return result
     
     def backward_calculation(self):
         
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward")
         
-        try: backward_output_0 = output / inputs[1]
-        except ZeroDivisionError: backward_output_0 = np.nan
+        result = []
         
-        with np.errstate(divide='ignore', invalid='ignore'): 
-              
-            try: backward_output_0 = output / inputs[1]
-            except ZeroDivisionError: backward_output_0 = inputs[1]
-                    
-            try: backward_output_1 = output / inputs[0]
-            except ZeroDivisionError: backward_output_1 = inputs[0]
+        for input in inputs:
+            
+            try: backward_output = output / input
+            except ZeroDivisionError: backward_output = input
+            
+            if(isinstance(input, np.ndarray)):
+                mask = ~np.isfinite(backward_output)
+                if(not np.isscalar(input)): backward_output[mask] = input[mask]
+                else: backward_output = input
+            
+            result.append(backward_output)
         
-        #In questi casi il 2° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
-        if(isinstance(inputs[1], np.ndarray)):
-            mask = ~np.isfinite(backward_output_0)
-            if(not np.isscalar(inputs[0])): backward_output_0[mask] = inputs[0][mask]
-            else: backward_output_0 = inputs[0]
-        
-        #In questi casi il 1° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
-        if(isinstance(inputs[0], np.ndarray)): 
-            mask = ~np.isfinite(backward_output_1)
-            if(not np.isscalar(inputs[1])): backward_output_1[mask] = inputs[1][mask]
-            else: backward_output_1 = inputs[1]
-        
-        return [backward_output_0, backward_output_1]
+        return result
 
     def calculation_hat_confidence(self, x, y):
         raise TypeError("mul is a associative and commutative operation, it not make any sense")
@@ -480,60 +463,56 @@ class mul(OperationNode):
     def calculate_statistical_score(total_analysis):
         raise ValueError("IT is not possible to calculate statistical score of an mul node")
     
+    def __string_division(self, x):
+        
+        elements = [str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]
+        
+        set_elements = set([x for x in elements])
+        
+        set_elements = [(x, elements.count(x)) for x in set_elements]
+        
+        #print(elements, set_elements)
+        
+        set_elements = [f"({x[0]} ** {x[1]})" if x[1] > 1 else f"{x[0]}" for x in set_elements]
+        
+        return f"{' * '.join(sorted(elements))}"
+        
+    
     def get_string_calculation_structure(self, x):
-        return f"{' * '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
+        
+        numerator = self.__string_division([x for x in self.get_childrens() if not isinstance(x, div)])
+        
+        denominator = self.__string_division([x for x in self.get_childrens() if isinstance(x, div)])
+        
+        return f"{numerator} / {denominator}" if denominator != "" else numerator
     
     def get_string_derative_structure(self, sub_strings, x):
         
         super().get_string_derative_structure(sub_strings, x)
         str_function = [str(x) for x in self.get_childrens()]
-        return f"add(mul({sub_strings[0]}, {str_function[1]}), mul({sub_strings[1]}, {str_function[0]}))"
-    
-    def best_constant(self, i):
-        super().best_constant(i)
-        back = self.backward_calculation()
-        if(~np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
-        return np.mean(back[i])
-    
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.mul_distributivity_on_add,
-                                                   si.mul_chain])
+        
+        parts = []
+        
+        for i in range(self.get_channels()):
+            
+            new_part = []
+            
+            for j in range(self.get_channels()):
+                
+                if(i != j):   new_part.append(str_function[j])
+                elif(i == j): new_part.append(sub_strings[j])
+                
+            parts.append(f"mul({', '.join(new_part)})")
+        
+        return f"add({', '.join(parts)})"
 
-class neg(OperationNode):
+    def get_simplification_subtree(self):
+        return super().get_simplification_subtree([])
+
+class div(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1, False)
- 
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return -inputs[0]
-    
-    def backward_calculation(self):
-        output = self.get_memory("backward") 
-        return [-output]
-    
-    def calculation_hat_confidence(self, x, y):
-        result = -ind.pearson_correlation(x, y)
-        return result
-    
-    def calculate_statistical_score(total_analysis):
-        return -total_analysis["linear"]
- 
-    def get_string_calculation_structure(self, x):
-        return f"-{x[0]}"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        super().get_string_derative_structure(sub_strings, x)
-        return f"neg({sub_strings[0]})"
-    
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.neg_null,
-                                                   si.relax_neg])
-
-class div(OperationNode):
-    
-    def __init__(self):
-        super().__init__(1, False)
+        super().__init__()
         
     def check_input_domain(self, i, input):
         super().check_input_domain(i, input)
@@ -585,16 +564,16 @@ class div(OperationNode):
     
         super().get_string_derative_structure(sub_strings, x)
         str_function = [str(x) for x in self.get_childrens()]
-        return f"neg(div(mul({str_function[0]}, {str_function[0]})))"
+        return f"mul(-1, (div(mul({str_function[0]}, {str_function[0]}))))"
 
     def get_simplification_subtree(self):
         return super().get_simplification_subtree([si.div_null,
                                                    si.div_scission])
 
-class sin(OperationNode):
+class sin(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1)
+        super().__init__()
         
     def check_output_domain(self, output):
         if(not (self._check_type_name(output) and type(output) != str)): return False
@@ -624,10 +603,10 @@ class sin(OperationNode):
         str_function = [str(x) for x in self.get_childrens()]
         return f"mul(cos({str_function[0]}), {sub_strings[0]})"
 
-class arcsin(OperationNode):
+class arcsin(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1)
+        super().__init__()
         
     def check_output_domain(self, output):
         if(not (self._check_type_name(output) and type(output) != str)): return False
@@ -664,10 +643,10 @@ class arcsin(OperationNode):
 
 #Il cos non è altro che: cos(x) = sin(x + pi*1.5)
 
-class abs(OperationNode):
+class abs(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1)
+        super().__init__()
         
     def check_output_domain(self, output):
         return np.all(output >= 0)
@@ -709,10 +688,10 @@ class abs(OperationNode):
                                                    si.abs_scission,
                                                    si.abs_destroy_neg])
 
-class exp(OperationNode):
+class exp(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1, False)
+        super().__init__()
         
     def check_output_domain(self, output):
         if(type(output) in [float, int]): return output > 0
@@ -746,10 +725,10 @@ class exp(OperationNode):
     def get_simplification_subtree(self):
         return super().get_simplification_subtree([si.exp_ln_null])
 
-class ln(OperationNode):
+class ln(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1, False)
+        super().__init__()
 
     def check_input_domain(self, i, input):
         
@@ -795,13 +774,6 @@ class ln(OperationNode):
     def get_simplification_subtree(self):
         return super().get_simplification_subtree([si.ln_exp_null])
 
-#add   2 input  commutativa
-#mul   2 input  commutativa
 
-#neg   1 input
-#div   1 input
-#sin   1 input
-#cos   1 input
-#exp   1 input
-#abs   1 input
-#log   1 input
+
+

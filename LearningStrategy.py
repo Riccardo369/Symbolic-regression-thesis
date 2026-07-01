@@ -117,10 +117,10 @@ class AnalysisRamification(SymbolicRegressionLearning):
         Q = op.add()
         M = op.mul()
         
-        M.new_connection(node.copy_sub_tree(), 0)
-        M.new_connection(op.Leaf(m), 1)
-        Q.new_connection(M, 0)
-        Q.new_connection(op.Leaf(q), 1)
+        M.new_connection(node.copy_sub_tree())
+        M.new_connection(op.Leaf(m))
+        Q.new_connection(M)
+        Q.new_connection(op.Leaf(q))
         
         return Q
            
@@ -146,7 +146,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         elif(config["type"] == "add_operation"):
             
             oper_node = config["new operation"]()
-            oper_node.new_connection(old_node.copy_sub_tree(), 0)
+            oper_node.new_connection(old_node.copy_sub_tree())
             
         else: raise ValueError(f"Config type must be 'change_base' or ' add_operation', not {config['type']}")
         
@@ -160,8 +160,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
         oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict)
         
         analysis = utils.total_analysis(oper_node.get_memory("forward"), old_node.get_memory("backward"), ["linear", "general"])
-        
-        print(analysis)
         
         if(np.abs(analysis["linear"]) >= np.abs(analysis["general"])):
             

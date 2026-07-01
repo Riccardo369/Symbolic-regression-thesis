@@ -37,7 +37,7 @@ def get_package_importance_nodes(nodes, unary_operations, TR_inputs_dict, TR_out
                 if(not oper.check_input_domain(0, TR_inputs_dict[f] if isinstance(n, op.Leaf) else n.get_memory("forward"))): continue
                 if(n.get_father() != None and not oper.check_output_domain(n.get_memory("backward") if n.get_father() != None else TR_output)): continue
                                 
-                oper.new_connection(op.Leaf(f) if(isinstance(n, op.Leaf)) else n.copy_sub_tree(), 0)
+                oper.new_connection(op.Leaf(f) if(isinstance(n, op.Leaf)) else n.copy_sub_tree())
                             
                 combinations.append({"old node": n, "new node": oper})
 

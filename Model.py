@@ -4,6 +4,7 @@ import Operations as op
 import matplotlib.pyplot as plt
 
 import Exceptions as ex
+import Simplifications as si
 
 class SymbolicRegression:
     
@@ -33,26 +34,20 @@ class SymbolicRegression:
         self.__root = root
     
     def replace_subtree(self, tree1, tree2):
-
+        
         if(not self.__root.is_node_present_in_sub_tree(tree1)): raise ValueError(f"Sub tree 1 {tree1} must be in this tree {self}, its not")
         if(self.__root.is_node_present_in_sub_tree(tree2)): raise ValueError(f"Sub tree 2 {tree2} cannot be in this tree {self}, it is")
         
-        father_leaf = tree1.get_father()
+        father = tree1.get_father()
                 
         #The leaf is the root
-        if(father_leaf == None): self.set_root(tree2)
+        if(father == None): self.set_root(tree2)
                     
         else:
             
-            for r, c in enumerate(father_leaf.get_childrens()):
-                
-                if(tree1 is c):
-                    i = r
-                    break
+            father.free_connection(tree1)
             
-            father_leaf.free_connection(i)
-            
-            father_leaf.new_connection(tree2, i)
+            father.new_connection(tree2)
 
     def __str__(self):
         return str(self.__root)
@@ -104,11 +99,11 @@ class SymbolicRegression:
     def tree_to_string(tree):
         if(not isinstance(tree, SymbolicRegression)): raise ValueError("Tree must be a SymbolicRegression type")
         return str(tree.get_root())
-        
+
     def string_to_tree(string):
         
         parsed_tree = SymbolicRegression.__compiler.parse(string)
-        
+
         def recursive_construction(node):
             
             first_children = node.children[0]
@@ -119,16 +114,17 @@ class SymbolicRegression:
                 result = eval(f"op.{first_children.value}()")
                 childrens_result = [recursive_construction(child) for child in node.children[1:]]
 
-                if(len(childrens_result) != result.get_channels()): raise ValueError(f"Node {first_children.value} has no {len(childrens_result)}, but {result.get_channels()} childrens")
+                if(not result.accept_number_childrens(len(childrens_result))): raise ValueError(f"Node {first_children.value} cannot have no {len(childrens_result)}, but {result.get_max_channels()} childrens")
                 
-                for i, child in enumerate(childrens_result): result.new_connection(child.copy_sub_tree(), i)
-                    
+                for child in childrens_result: result.new_connection(child)
+                
                 return result
                
             #If is a leaf
             else:
                 return op.Leaf(first_children.value if first_children.type == "NAME" else float(first_children.value))
-        
+            
+
         return SymbolicRegression(recursive_construction(parsed_tree))
  
     def get_leafs(self):
@@ -148,8 +144,6 @@ class SymbolicRegression:
     def get_calculation_function(self):
         
         f = self.__root.get_string_calculation_function()
-        
-        #print(f"f[body]:", f["body"], self)
         
         f = eval(f"lambda {', '.join(f['leaf_labels'])}: {f['body']}")
         
@@ -171,59 +165,128 @@ class SymbolicRegression:
     #Get the model that is the derative on variable x of this model
     def derivate_model(self, x):
         return SymbolicRegression.string_to_tree(self.__root.get_derative_subtree(x))
-
-    #Simplify the tree, considering to simplify every node that it is possible to simplify
+    
+    
     def simplify_model(self):
         
-        def apply_simplification(node, filter_simply):
+        #Convert the function in canonic form: main add chain that hold more sub mul chains, apply
+        def canonic_form(node):
             
-            simplification = None
-            for opt in node.get_simplification_subtree():
-                simply = opt()
-                if(not filter_simply(simply)): continue
-                try:
-                    simplification = simply(node).copy_sub_tree()
-                    self.replace_subtree(node, simplification)
-                    break
-                except ex.SimplificationError: pass
+            #TOP DOWN
+            
+            #Constant calculation
+            try:
                 
-            return simplification
-        
-        def recursion(node):
-            
-            #Calculate the aviable top down simplification until is possible to repeat (the node can change)
-            while(True):
-                new_node = apply_simplification(node, lambda x: x.is_top_down())
-                if(new_node == None or new_node == node): break
+                new_node = si.constant()(node)
+                self.replace_subtree(node, new_node)
                 node = new_node
-                        
-            #Go to leafs
-            for c in node.get_childrens(): recursion(c)
-            
-            #Calculate the aviable bottom up simplification
-            while(True):
-                new_node = apply_simplification(node, lambda x: x.is_bottom_up())
-                if(new_node == None or new_node == node): break
+                
+            except ex.SimplificationError: pass
+               
+            #Apply the distributivity mul on add property
+            if(isinstance(node, op.mul)):
+                
+                new_node = si.mul_distributivity_on_add()(node)
+                self.replace_subtree(node, new_node)
                 node = new_node
-         
-            return node
-        
-        history = []
-        
-        while(self.__root not in history):
+                
+                
+            #Apply singular simplification (in base of operations)
+            #...
+                
+            #Apply decorporation for each operation (if it is possible)
+            #...
+                
+                
             
-            #Save the actual form of model
-            history.append(self.__root.copy_sub_tree())
+
+            # ------------------------------------------------------
+            # ------------------------------------------------------
+            # ------------------------------------------------------
             
-            #Apply again all simplifications
-            recursion(self.__root)
+            
+            for c in node.get_childrens(): canonic_form(c)
+            
+            
+            # ------------------------------------------------------
+            # ------------------------------------------------------
+            # ------------------------------------------------------
+            
+            
            
-        best_root = sorted(history, key = lambda x: len(x.get_all_subtree_nodes()))[0]
+            #BOTTOM UP
+            
+            #Apply flat of chain
+            if(isinstance(node, op.mul) or isinstance(node, op.add)):
+               
+               new_node = type(node)()
+               for x in si.flat_chain(node): new_node.new_connection(x)
+               self.replace_subtree(node, new_node)
+               node = new_node
+               
+            
+            
+
         
-        #If the semplification is worse (more nodes), do a rollback, backing to original root
-        if(best_root != self.__root): self.replace_subtree(self.__root, best_root)
+        #Apply all simplification (that change in base of node type / operation)
+        def simplification(node):
+            
+            #TOP DOWN
+            
+            #Accorporate operations and repeat the formula from beginning for each accorporation
+            
+            
+            # ------------------------------------------------------
+            # ------------------------------------------------------
+            # ------------------------------------------------------
+            
+            for c in node.get_childrens(): simplification(c)
+            
+            
+            #BOTTOM UP
+            
+            
+            # ------------------------------------------------------
+            # ------------------------------------------------------
+            # ------------------------------------------------------
+            
+            #Simplify chains
+            if(isinstance(node, op.add) or isinstance(node, op.mul)):
+                
+                new_node = si.add_chain()(node) if isinstance(node, op.add) else si.mul_chain()(node)
+                self.replace_subtree(node, new_node)
+                node = new_node
+                
+        
+        def cleaning(node):
+            
+            for c in node.get_childrens(): cleaning(c)
+            
+            new_node = si.cleaning()(node)
+            self.replace_subtree(node, new_node)
+            node = new_node 
+
+        
+        print("ORIGINAL FORM", self.__root)
+        
+        canonic_form(self.__root)
+        
+        print("CANONIC FORM ", self.__root)
+        
+        simplification(self.__root)
+        
+        print("FINAL FORM   ", self.__root)
+        
+        cleaning(self.__root)
+        
+        print("CLEANED FORM ", self.__root)
 
         return self
+        
+        
+        
+        
+
 
     #Learn phase   
     def learn(self, TR_inputs_dict, TR_output, LearningAlgorithm, stop_criteria = lambda x: False, metric_functions = {}):

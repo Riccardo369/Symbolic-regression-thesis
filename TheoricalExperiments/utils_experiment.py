@@ -50,14 +50,14 @@ def create_random_model(features, n, operations):
         
         def f(node, counter, i, node_of_replacing):
                 
-            for e, c in enumerate(node.get_childrens()):
+            for c in node.get_childrens():
                 
-                if(isinstance(c, op.Leaf) or c == None):
+                if(isinstance(c, op.Leaf)):
                     
                     if(counter[0] == i):
                         
-                        if(isinstance(c, op.Leaf)): node.free_connection(e)
-                        node.new_connection(node_of_replacing, e)
+                        if(isinstance(c, op.Leaf)): node.free_connection(c)
+                        node.new_connection(node_of_replacing)
                     
                     counter[0] += 1
         

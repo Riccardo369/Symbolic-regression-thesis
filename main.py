@@ -14,8 +14,9 @@ import utils
 
 #Foreach node:
 
-#Nodo interno: ou
-#foglia: 1 + ou
+#Nodo interno singolo: ou
+#Nodo a catena: f * ou
+#foglia: 2 + ou
 
 # Nodo interno: aggiungo tutte le varie possibili operazioni sopra
 # Foglia: aggiungo tutte le feature + costante, non ci metto la combinazione di operazione unaria + feature per osservare il comportamento del modello senza provare a 
@@ -47,7 +48,6 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
             
             combinations.append({"type": "change_base", "node": n, "new_feature": choice_feature[0]["f"], "score": choice_feature[0]["score"]})
            
-           
             combinations.append({"type": "change_base", 
                                  "node": n, 
                                  "new_feature": get_constant(n.get_memory("backward")),
@@ -56,8 +56,6 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
         if(n.is_constant()): continue
             
         total_analysis = utils.total_analysis(forward, backward, ["monoton", "symmetry", "sinusoidal", "vertical_asymptote"])
-        
-        #print("ANALYSIS", n, total_analysis)
         
         for ou in unary_operations:
             

@@ -1,87 +1,106 @@
 import numpy as np
+import itertools
 
 import Operations as op
 import Exceptions as ex
 import utils
 
+
 def close_to(a, b):
     return np.abs(a - b) <= 1e-6
 
-def prepare_chain(node, binary_type):
+"""
+Preconditions:
 
-    elements = utils.flat_elements(node, binary_type)
+- node must be a chain node
+
+Postconditions:
+
+- all chain (of same type node) flatted (ex. add(add(a, b, c), d, e) -> add(a, b, c, d, e)
+
+"""
+def flat_chain(node):
+    
+    if(not isinstance(node, op.ChainOperationNode)): raise ValueError(f"Node {node} is not a chain")
+    
+    elements = node.get_childrens()
+    
+    oper = type(node)
+    
+    sub_chains = [None]
+    
+    #Flat all oper chain in one chain (like oper(a, b, oper(c, d)) = oper (a, b, c, d))
+    while(len(sub_chains) > 0):
+        
+        sub_chains = [x for x in elements if isinstance(x, oper)]
+        elements =   [x for x in elements if not isinstance(x, oper)]
+        
+        for s in sub_chains: elements += s.get_childrens()
+        
+    return elements
+    
+    
+
+"""
+
+Preconditions:
+
+- node must be a mul or add chain
+- oper must be add or mul (the same type of node)
+- f must be + or * lambda binary function
+- start must be the start value of constant
+
+Post conditions:
+
+- flatted chain of the same type
+- 1 constant (all left)
+- No sub functions that can be a constant will be remain
+
+"""
+def chain_simplification(node, f, start):
+    
+    elements = flat_chain(node)
+        
+    #Transform every element in a constant (if it is possible)
+    for i in range(len(elements)):
+        
+        try: elements[i] = constant()(elements[i])
+        except ex.SimplificationError: pass
+        
     constants = [x.get_name() for x in elements if x.is_constant()]
-    functions = [{"f": x} for x in elements if not x.is_constant()]
+    functions = [x for x in elements if not x.is_constant()]
     del elements
-        
-    #Extract the coefficient from function multiplied by coefficient
-    for i in range(len(functions)):
-        
-        #If is an multiplication (a coeff * f, f * coeff or f * g)
-        if(isinstance(functions[i]["f"], op.mul)):
-        
-            childrens = functions[i]["f"].get_childrens()
-            
-            #Divide constant from function
-            
-            if(childrens[0].is_constant()):
-                functions[i]["coeff"] = childrens[0].get_name()
-                functions[i]["f"] = childrens[1]
-                
-            elif(childrens[1].is_constant()):
-                functions[i]["coeff"] = childrens[1].get_name()
-                functions[i]["f"] = childrens[0]
-            
-            #It is not possible to divide, so consider the multiplication like an unique piece
-            else: functions[i]["coeff"] = 1
-                
-        #If is not a mul
-        else: functions[i]["coeff"] = 1
-        
-        #Place the extracted coefficient
-        if(isinstance(functions[i]["f"], op.neg)):
-            
-            functions[i]["f"] = functions[i]["f"].get_childrens()[0]
-            functions[i]["coeff"] *= -1
     
-    return {"functions": functions, "constants": constants}
+    c = start
+    for i in constants: c = f(c, i)
+    
+    #result = oper()
+    #result.new_connection(op.Leaf(c))
+    
+    #for i in functions: result.new_connection(i.copy_sub_tree())
 
-def release_chain(nodes, binary_type):
+    return c, functions
+
+
+
+
+def accumulation_coefficients(functions):
     
-    if(len(nodes) == 0): raise ex.SimplificationError
+    set_functions = []
     
-    elif(len(nodes) == 1): return nodes[0]
+    for i in functions:
+        if(i["f"] not in set_functions): set_functions.append(i["f"])
     
-    #Connect first 2 elements
-    nodes = list(nodes)
+    dict_accumulation = [{"f": x, "c": 0} for x in set_functions]
+    for x in dict_accumulation:
+        for y in [a for a in functions if a["f"] == x["f"]]: x["c"] += y["c"]
+            
+    return dict_accumulation
     
-    result = binary_type()
-    
-    result.new_connection(nodes[0], 0)
-    result.new_connection(nodes[1], 1)
-    
-    del nodes[0]
-    del nodes[0]
-    
-    #Continue to connect until the list is empty
-    while(len(nodes) > 0):
-        
-        new_result = binary_type()
-        
-        new_result.new_connection(nodes[0], 0)
-        new_result.new_connection(result.copy_sub_tree(), 1)
-        
-        result = new_result
-        
-        del nodes[0]
-        
-    return result
+
 
 #a oper1 (b oper2 c) --> (a oper1 b) oper2 (a oper1 c)
 def distributivity_oper1_on_oper2(node, oper1, oper2):
-    
-    if(oper1().get_channels() != 2): raise ValueError(f"Operation 1 {oper1} must has 2 inputs")
-    if(oper2().get_channels() != 2): raise ValueError(f"Operation 2 {oper2} must has 2 inputs")
     
     if(not isinstance(node, oper1)): raise ValueError(f"On node {node} it is impossible apply distributivity {oper1} on {oper2}")
 
@@ -100,16 +119,16 @@ def distributivity_oper1_on_oper2(node, oper1, oper2):
     left  = oper1()
     right = oper1()
     
-    left .new_connection(element.copy_sub_tree(), 0)
-    right.new_connection(element.copy_sub_tree(), 0)
+    left .new_connection(element.copy_sub_tree())
+    right.new_connection(element.copy_sub_tree())
         
-    left .new_connection(c_observe[0].copy_sub_tree(), 1)
-    right.new_connection(c_observe[1].copy_sub_tree(), 1)
+    left .new_connection(c_observe[0].copy_sub_tree())
+    right.new_connection(c_observe[1].copy_sub_tree())
         
     result = oper2()
     
-    result.new_connection(left, 0)
-    result.new_connection(right, 1)
+    result.new_connection(left)
+    result.new_connection(right)
         
     return result
 
@@ -128,8 +147,8 @@ def scission_oper1_on_oper2(node, oper1, allow_operations):
     for i, g in enumerate(child.get_childrens()):
         
         new_child = oper1()
-        new_child.new_connection(g.copy_sub_tree(), 0)
-        result.new_connection(new_child, i)
+        new_child.new_connection(g.copy_sub_tree())
+        result.new_connection(new_child)
     
     return result
 
@@ -149,7 +168,7 @@ def double_oper_null(node, oper):
     return gran_child.copy_sub_tree()
     
 
-class __Simplification:
+class Simplification:
     def __init__(self, top_down, bottom_up):
         self.__top_down = top_down
         self.__bottom_up = bottom_up
@@ -165,7 +184,7 @@ class __Simplification:
 
 #BOTTOM UP SIMPLIFICATIONS
 
-class approximation(__Simplification):
+class approximation(Simplification):
     def __init__(self):
         super().__init__(False, True)
         
@@ -176,156 +195,249 @@ class approximation(__Simplification):
         #tolerance fissata in base alle capacità della macchina nella precisione numerica
         return op.Leaf(int(node.get_name())) if np.abs(node.get_name() - int(node.get_name())) <= 1e-6 else node
 
-class constant(__Simplification):
+class constant(Simplification):
     def __init__(self):
-        super().__init__(False, True)
+        super().__init__(True, True)
         
     def __call__(self, node):
         
-        try: value = eval(node.get_string_calculation_function()['body'])
-        except: raise ex.SimplificationError()
-        
-        if(not np.isfinite(value) and isinstance(node, op.div)): value = 0
-        
+        try: value = eval(str(node.get_string_calculation_function()['body']))
+        except: raise  ex.SimplificationError
+            
         result = op.Leaf(value)
         result.set_memory("forward", value)
         return result
 
-class add_chain(__Simplification):
-    def __init__(self):
-        super().__init__(False, True)
-        
-    def __call__(self, node):
-        
-        result_chain = prepare_chain(node, op.add)
-        functions = result_chain["functions"]
-        constants = result_chain["constants"]
-        del result_chain
-        
-        #Take all distinct functions, considering that it is not possible to do with string (for commutative property of + and *, it is necessary __eq__)
-        new_functions = []
-        
-        distinct_functions = []
-        for x in functions:
-            if(x["f"] not in distinct_functions): distinct_functions.append(x["f"])
-          
-        #Consider only the survival functions  
-        for f in distinct_functions:
-            
-            coeff = sum([x["coeff"] for x in functions if x["f"] == f] + [0])
-            if(coeff != 0): new_functions.append({"f": f, "coeff": coeff})
-        
-        del distinct_functions
-        
-        #Calculate the nodes to concatenate
-        results = []
-        
-        for x in new_functions:
-            
-            if(x["coeff"] == 1): m = x["f"].copy_sub_tree()
-            
-            #elif(x["coeff"] == -1):
-            #    m = op.neg()
-            #    m.new_connection(x["f"].copy_sub_tree(), 0)
-            
-            else:
-                m = op.mul()
-                m.new_connection(op.Leaf(x["coeff"]), 0)
-                m.new_connection(x["f"].copy_sub_tree(), 1)
-            
-            results.append(m)
-        
-        #Calculate the constant
-        const = 0
-        for c in constants: const += c
-        del constants
-        
-        if(const != 0): results.append(op.Leaf(const))
-        
-        return release_chain(results, op.add)
 
-class mul_chain(__Simplification):
+#Cleaning from:
+#
+# constant (1 in mul, 0 in add)
+# destroy al mul chain if constant = 0
+# cleaning add and mul chain if there is only 1 child
+
+class cleaning(Simplification):
+    
+    def __init__(self):
+        super().__init__(True, True)
+        
+    def __call__(self, node):
+        
+        result = node.copy_sub_tree()
+        
+        if(isinstance(result, op.ChainOperationNode)):
+            
+            c = result.get_childrens()[0]
+            
+            if(c.is_constant() and ((isinstance(result, op.add) and c.get_name() == 0) or
+                                    (isinstance(result, op.mul) and c.get_name() == 1))): result.free_connection(c)
+                        
+        return result
+    
+            
+        
+
+
+class add_chain(Simplification):
     def __init__(self):
         super().__init__(False, True)
         
     def __call__(self, node):
         
-        results = []
-        
-        result_chain = prepare_chain(node, op.mul)
-        
-        #Take the natural constants + all coefficients (all will be multiplied)
-        constants = result_chain["constants"] + [x["coeff"] for x in result_chain["functions"]]
-        functions = [x for x in result_chain["functions"]]
-        del result_chain
-        
-        c = 1
-        for x in constants: c *= x
-        
-        #If product of all constants is 0, everything is 0, and return immediatly 0
-        if(c == 0): return op.Leaf(0)
-        elif(c != 1): results.append(op.Leaf(c))
-        
-        #Consider which operation is numerator and which is denominator
-        for x in functions:
-            x["div"] = isinstance(x["f"], op.div)
-            if(x["div"]): x["f"] = x["f"].get_childrens()[0]
+        #Prepare
+        constant, functions = chain_simplification(node, lambda a, b: a + b, 0)
+
+        #Add the identical function, adding the coefficients
+        for i in range(len(functions)):
             
-        #Simplify and delete equal numerator and denominator
+            if(isinstance(functions[i], op.mul)):
+                
+                #Separate the constant from mul chain
+                c = functions[i].get_childrens()[0]
+                
+                nucleus = op.mul()
+                
+                for r in functions[i].get_childrens()[1:]:
+                        
+                    functions[i].free_connection(r)
+                    nucleus.new_connection(r)
+                
+                #Save the configuration from mul chain
+                functions[i] = {"f": nucleus, "c": c.get_name()}
+            
+            #Save the configuration from a not mul chain
+            else: functions[i] = {"f": functions[i], "c": 1}
+        
+        
+        #Sum the configurations
+        dict_accumulation = accumulation_coefficients(functions)
+
+        #Create the result
+        result = op.add()
+        
+        result.new_connection(op.Leaf(constant))
+
+        for x in dict_accumulation: 
+            
+            element = x["f"].copy_sub_tree()
+            
+            part = op.mul()
+            part.new_connection(op.Leaf(x["c"]))
+            
+            if(isinstance(element, op.mul)):
+                for x in element.get_childrens(): part.new_connection(x)
+
+            else: part.new_connection(element)
+                            
+            result.new_connection(part)
+
+        return result
+            
+            
+
+class mul_chain(Simplification):
+    def __init__(self):
+        super().__init__(False, True)
+        
+    def __call__(self, node):
+        
+        #Prepare
+        constant, functions = chain_simplification(node, lambda a, b: a * b, 1)
+        
         new_functions = []
         
-        #Take all distinct functions, considering that it is not possible to do with string (for commutative property of + and *, it is necessary __eq__)
-        distinct_functions = []
-        for x in functions:
-            if(x["f"] not in distinct_functions): distinct_functions.append(x["f"])
-          
-        #Consider only the survival functions  
-        for f in distinct_functions:
-            coeff = sum([-1 if x["div"] else 1 for x in functions if x["f"] == f] + [0])
-            if(coeff != 0): new_functions.append({"f": f, "mul_coeff": coeff})
-        
-        del distinct_functions
-        
-        for x in new_functions:
+        for i in range(len(functions)):
             
-            standard = x["mul_coeff"] > 0
-            
-            for _ in range(abs(x["mul_coeff"])):
+            if(isinstance(functions[i], op.div)):
                 
-                if(standard): m = x["f"].copy_sub_tree()
+                child_div = functions[i].get_childrens()[0]
                 
-                else:
-                    m = op.div()
-                    m.new_connection(x["f"].copy_sub_tree(), 0)
+                if(isinstance(child_div, op.mul)):
                     
-                results.append(m)
+                    c = child_div.get_childrens()[0].get_name()
+
+                    #If c is a constant = 0, we are in a 1/0 situation, and the semplification is not possible (and launch an error)
+                    if(c == 0): raise ZeroDivisionError("During the simplification, it was not possible to do the simplification (1/0 found)")
+                    
+                    constant *= 1/c
+                    
+                    #Save all configurations from mul chain under a div
+                    for r in child_div.get_childrens()[1:]: new_functions.append({"f": r, "c": -1})
+                    
+                else:
+                    
+                    #Save configuration from a div
+                    new_functions.append({"f": child_div, "c": -1})
+                
+            #Save a configuration
+            else: new_functions.append({"f": functions[i], "c": 1})
+
+
+        #Sum the configurations
+        dict_accumulation = accumulation_coefficients(new_functions)
         
-        return release_chain(results, op.mul)
+        if(0 == constant): return op.Leaf(0)
+
+        numerator = [x for x in dict_accumulation if x["c"] > 0]
+        denominator = [x for x in dict_accumulation if x["c"] < 0]
+        
+        total_num = []
+        total_den = []
+        
+        for x in numerator:
+            for _ in range(x["c"]): total_num.append(x["f"].copy_sub_tree())
+            
+        for x in denominator:
+            for _ in range(-x["c"]): total_den.append(x["f"].copy_sub_tree())
+            
+        
+        result_child = {"c": op.Leaf(constant), "num": None, "den": None}
+    
+    
+    
+        if(len(total_num) > 0):
+ 
+            child = op.mul()
+            for x in total_num: child.new_connection(x)
+                
+            result_child["num"] = child
+            
+            
+            
+        if(len(total_den) > 0):
+        
+            if(len(total_den) == 1): child = total_den[0]
+            else: 
+                child = op.mul()
+                child.new_connection(op.Leaf(1))
+                for x in total_den: child.new_connection(x)
+                
+            div_child = op.div()
+            div_child.new_connection(child)
+                
+            result_child["den"] = div_child
+    
+    
+        #If there is only constant, get only constant itself
+        if(result_child["num"] == None and result_child["den"] == None): result = result_child["c"]        
+        
+        #If num exists, create a new mul node, inglobal c, all num childrens and den (if exists)
+        elif(result_child["num"] != None):
+            
+            result = op.mul()
+            
+            #Inglobal c in result
+            result.new_connection(result_child["c"])
+            
+            #Inglobal num in result
+            for x in result_child["num"].get_childrens(): result.new_connection(x)
+            
+            #Inglobal den in num, if den exists
+            if(result_child["den"] != None): result.new_connection(result_child["den"])
+
+
+
+        #In this case, num not exists, and den exists   
+        else:
+            
+            #Create a mul and concatenate c and den
+            result = op.mul()
+            result.new_connection(result_child["c"])
+            result.new_connection(result_child["den"])
+   
+        return result
+
+
+            
+
+                
+                
+        
+        
 
 #TOP DOWN SIMPLIFICATIONS
 
-class neg_null(__Simplification):
+class neg_null(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
     def __call__(self, node):
         return double_oper_null(node, op.neg)
     
-class div_null(__Simplification):
+class div_null(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
     def __call__(self, node):
         return double_oper_null(node, op.div)
     
-class abs_null(__Simplification):
+class abs_null(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
     def __call__(self, node):
         return double_oper_null(node, op.abs)
     
-class exp_ln_null(__Simplification):
+class exp_ln_null(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
@@ -336,7 +448,7 @@ class exp_ln_null(__Simplification):
         if(isinstance(child, op.ln)): return child.get_childrens()[0]
         else: raise ex.SimplificationError
         
-class ln_exp_null(__Simplification):
+class ln_exp_null(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
@@ -347,7 +459,7 @@ class ln_exp_null(__Simplification):
         if(isinstance(child, op.exp)): return child.get_childrens()[0]
         else: raise ex.SimplificationError
 
-class relax_neg(__Simplification):
+class relax_neg(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
@@ -356,26 +468,26 @@ class relax_neg(__Simplification):
         child = node.get_childrens()[0]
         
         result = op.mul()
-        result.new_connection(op.Leaf(-1), 0)
-        result.new_connection(child.copy_sub_tree(), 1)
+        result.new_connection(op.Leaf(-1))
+        result.new_connection(child.copy_sub_tree())
         
         return result
 
-class div_scission(__Simplification):
+class div_scission(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
     def __call__(self, node):
         return scission_oper1_on_oper2(node, op.div, [op.mul, op.neg])
 
-class abs_scission(__Simplification):
+class abs_scission(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
     def __call__(self, node):
         return scission_oper1_on_oper2(node, op.abs, [op.mul, op.div])
 
-class abs_destroy_neg(__Simplification):
+class abs_destroy_neg(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
@@ -386,11 +498,11 @@ class abs_destroy_neg(__Simplification):
         if(not isinstance(child, op.neg)): raise ex.SimplificationError
         
         result = op.abs()
-        result.new_connection(child.get_childrens()[0].copy_sub_tree(), 0)
+        result.new_connection(child.get_childrens()[0].copy_sub_tree())
         
         return result
 
-class abs_double_mul_null(__Simplification):
+class abs_double_mul_null(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
@@ -406,9 +518,31 @@ class abs_double_mul_null(__Simplification):
         
         raise ex.SimplificationError
 
-class mul_distributivity_on_add(__Simplification):
+class mul_distributivity_on_add(Simplification):
     def __init__(self):
         super().__init__(True, False)
         
     def __call__(self, node):
-        return distributivity_oper1_on_oper2(node, op.mul, op.add)
+        
+        elements = [x.get_childrens() if isinstance(x, op.add) else [x] for x in node.get_childrens()]
+        
+        combinations = itertools.product(*elements)
+        
+        sub_mul_chains = []
+        
+        for i in combinations:
+            
+            sub_mul = op.mul()
+            sub_mul.new_connection(op.Leaf(1))
+            for x in i: sub_mul.new_connection(x.copy_sub_tree())
+                
+            sub_mul_chains.append(sub_mul)
+            
+        if(len(sub_mul_chains) == 1): return sub_mul_chains[0]
+        
+        else:
+            
+            result = op.add()
+            result.new_connection(op.Leaf(0))
+            for x in sub_mul_chains: result.new_connection(x)
+            return result
