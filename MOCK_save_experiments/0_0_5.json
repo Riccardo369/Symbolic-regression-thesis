@@ -1,0 +1,26 @@
+{
+    "results": {
+        "tree": [
+            "0.0",
+            "mul(1.0, ln(X))",
+            "mul(1.0, ln(X))"
+        ],
+        "timestamp": [
+            1783697707.4087589,
+            1783697707.4418256,
+            1783697707.4496741
+        ],
+        "MDL": [
+            0,
+            0,
+            0
+        ]
+    },
+    "ranges_iterations": [],
+    "history_dicts": {
+        "extension": {
+            "0.0": 1
+        }
+    },
+    "real function": "np.log(X)"
+}

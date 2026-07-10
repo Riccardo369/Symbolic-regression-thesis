@@ -1,0 +1,26 @@
+{
+    "results": {
+        "tree": [
+            "0.0",
+            "mul(1.0, div(X))",
+            "mul(1.0, div(X))"
+        ],
+        "timestamp": [
+            1783697707.2344098,
+            1783697707.2812188,
+            1783697707.2892182
+        ],
+        "MDL": [
+            0,
+            0,
+            0
+        ]
+    },
+    "ranges_iterations": [],
+    "history_dicts": {
+        "extension": {
+            "0.0": 1
+        }
+    },
+    "real function": "1/X"
+}

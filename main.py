@@ -55,21 +55,94 @@ def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
             
         if(n.is_constant()): continue
             
-        total_analysis = utils.total_analysis(forward, backward, ["monoton", "symmetry", "sinusoidal", "vertical_asymptote"])
+        total_analysis = utils.total_analysis(forward, backward, ["linear", "monoton", "symmetry", "sinusoidal", "vertical_asymptote"])
         
         for ou in unary_operations:
             
             oper = ou()
+            oper.new_connection(op.Leaf(0))
             
             if(not oper.check_input_domain(0, forward)): continue
             
-            combinations.append({"type": "add_operation", "node": n, "new operation": ou, "score": ou.calculate_statistical_score(total_analysis)})
+        combinations.append({"type": "add_operation", "node": n, "new operation": ou, "score": ou.calculate_statistical_score(total_analysis)})
         
     combinations = sorted(combinations, key = lambda x: -x["score"])
     
     combinations = [x for x in combinations if not (x["type"] == "change_base" and str(x["node"]) == str(x["new_feature"]))]
 
     return combinations
+
+
+
+
+
+
+def standard_package_extensions(nodes, unary_operations, TR_inputs_dict):
+
+    def get_constant(memory):
+        
+        if(isinstance(memory, np.ndarray)):
+            mask = np.isfinite(memory)
+            #if(np.sum(mask) == 0): raise ValueError()
+            memory = memory[mask]
+
+        return np.mean(memory[np.isfinite(memory)]) if isinstance(memory, np.ndarray) else memory
+    
+    combinations = []
+    
+    #n nodes
+    for n in nodes:
+        
+        backward = n.get_memory("backward")
+        
+        leafs = []
+        
+        #Decide which leaf must be analyze
+        if(isinstance(n, op.Leaf)):
+            
+            leafs = [op.Leaf(x) for x in TR_inputs_dict.keys()]
+            for l in leafs: l.set_memory("forward", TR_inputs_dict[l.get_name()])
+            
+            leafs = sorted(leafs, key = lambda x: -ind.chatterjee_correlation(TR_inputs_dict[x.get_name()], backward))
+                
+        else:
+            
+            copy_node = n.copy_sub_tree()
+            copy_node.set_memory("forward", n.get_memory("forward"))    
+            leafs = [copy_node]
+        
+        
+        #Start analysis
+        
+        #Calculate score for constant  
+        combinations.append({"node": n, "new node": op.Leaf(get_constant(n.get_memory("backward"))), "score": 1 / (1 + np.var(backward))})        
+        
+        if(not n.is_constant()): continue
+            
+
+        for l in leafs:
+        
+            total_analysis = utils.total_analysis(l.get_memory("forward"), backward, ["linear", "monoton", "symmetry", "sinusoidal", "vertical_asymptote"])
+                
+            #Calculate score for each operation
+            for ou in unary_operations:
+                    
+                oper = ou()
+                oper.new_connection(l.copy_sub_tree())
+                    
+                if(not oper.check_input_domain(0, l.get_memory("forward"))): continue
+                    
+                combinations.append({"node": n, "new node": oper, "score": ou.calculate_statistical_score(total_analysis)})
+                
+            combinations.append({"node": n, "new node": l, "score": total_analysis["linear"]})
+
+        
+    combinations = [x for x in combinations if(str(x["node"]) != str(x["new node"]) and np.isfinite(x["score"]))]
+    
+    combinations =  sorted(combinations, key = lambda x: -x["score"])
+              
+    return combinations
+
 
 
 
@@ -95,13 +168,14 @@ def sorted_by_chatterjee(n):
 
 
 
-choice_nodes = [lambda n, uo, TR_inputs: default_package_extensions(n, uo, TR_inputs),
-                lambda n, uo, TR_inputs: default_package_extensions(only_leafs(n), uo, TR_inputs),
-                lambda n, uo, TR_inputs: sorted_by_chatterjee(default_package_extensions(n, uo, TR_inputs)),
-                lambda n, uo, TR_inputs: sorted_by_chatterjee(default_package_extensions(only_leafs(n), uo, TR_inputs))]
+choice_nodes = [lambda n, uo, TR_inputs: standard_package_extensions(n, uo, TR_inputs),
+                #lambda n, uo, TR_inputs: default_package_extensions(only_leafs(n), uo, TR_inputs),
+                #lambda n, uo, TR_inputs: sorted_by_chatterjee(default_package_extensions(n, uo, TR_inputs)),
+                #lambda n, uo, TR_inputs: sorted_by_chatterjee(default_package_extensions(only_leafs(n), uo, TR_inputs))
+                ]
 
 regularization_MDL = [lambda model: 0,
-                      lambda model: er.MDL(TR_output, model.get_root().get_memory("forward"), model)
+                      #lambda model: er.MDL(TR_output, model.get_root().get_memory("forward"), model)
                       ]
 
 
@@ -126,17 +200,19 @@ for a in range(len(choice_nodes)):
     
     for b in range(len(regularization_MDL)):
         
-        for c in range(len(art_formulas))[3:8]:
+        for i, c in enumerate(list(art_formulas.keys())[0:15]):
+            
+            print("*"*100)
             
             #if(os.path.exists(f"MOCK_save_experiments/{a}_{b}_{c}.json")): continue
             
-            ideal_function = art_formulas[c]
+            ideal_function = c
 
-            X = np.array([x for x in range(-1000, 1000, 1)], dtype = np.float64) / 10
+            X = art_formulas[c]
             Y = eval(ideal_function)
             
-            if(type(Y) in [int, float]): Y = np.array([Y]*len(X))
-
+            if(type(Y) in [int, float]): Y = np.array([Y]*len(X), dtype = np.float64)
+            
             mask = np.isfinite(Y)
             X = X[mask]
             Y = Y[mask]
@@ -144,9 +220,11 @@ for a in range(len(choice_nodes)):
             TR_inputs = {"X": X}
             TR_output = Y
 
-            counter = Counter(10)
+            counter = Counter(50)
 
             tree = SymbolicRegression.string_to_tree("0")
+            
+            print("DATASET: ", ideal_function)
 
             metric_results = tree.learn(TR_inputs,
                                         TR_output,
@@ -159,8 +237,9 @@ for a in range(len(choice_nodes)):
                                         stop_criteria = lambda ls: stop_criteria_function(ls, counter, TR_output),
                                         
                                         metric_functions = {"tree": lambda model: str(model),
-                                                            "MAE": lambda model: er.MAE(model.get_root().get_memory("forward"), TR_output),
-                                                            #"timestamp": lambda model: time.time(),
+                                                            #"MAE": lambda model: er.MAE(model.get_root().get_memory("forward"), TR_output),
+                                                            #"Diff": lambda model: model.get_root().get_memory("forward") - TR_output,
+                                                            "timestamp": lambda model: time.time(),
                                                             "MDL": regularization_MDL[b]
                                                             }
                                         )
@@ -169,10 +248,9 @@ for a in range(len(choice_nodes)):
             print(f"REAL FORMULA:     {ideal_function}")
             print(f"INFERRED FORMULA: {metric_results['results']['tree'][-1]}")
             
-            #json.dump(metric_results, open(f"MOCK_save_experiments/{a}_{b}_{c}.json", "w", encoding="utf-8"), indent=4, ensure_ascii=False)
+            json.dump(metric_results | {"real function": ideal_function}, open(f"MOCK_save_experiments/{a}_{b}_{i}.json", "w", encoding="utf-8"), indent=4, ensure_ascii=False)
             
-            break
+            #break
             
         raise ValueError("BASE VERSION ARE COMPLETED")
-
 

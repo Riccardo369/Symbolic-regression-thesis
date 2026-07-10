@@ -8,6 +8,32 @@ import Indicators as In
 import Exceptions as ex
 import utils
 
+def plot(X, Y1, Y2):
+    
+    if(type(Y1) in [int, float]): Y1 = np.array([Y1]*len(X)) 
+    if(type(Y2) in [int, float]): Y2 = np.array([Y2]*len(X)) 
+    
+    plt.plot(X, Y1, color = "red", label = "Y1")
+    plt.plot(X, Y2, color = "blue", label = "Y2")
+    plt.legend()
+    plt.show()
+
+
+
+def view(node, level = 0):
+    
+    f, b = node.get_memory("forward"), node.get_memory("backward")
+    
+    forward = f"mean {np.mean(f)}, var {np.var(f)}" if isinstance(f, np.ndarray) else f
+    backward = "" # f"mean {np.mean(b)}, var {np.var(b)}" if isinstance(b, np.ndarray) else b
+    
+    print("-"*level, node, "=", f"forward: {forward}, backward: {backward}")
+    
+    for c in node.get_childrens(): view(c, level + 1)
+
+
+
+
 class SymbolicRegressionLearning:
     
     def __init__(self):
@@ -28,7 +54,7 @@ class SymbolicRegressionLearning:
         for key in self._metric_results:
             result = self._metric_functions[key](self._model)
             self._metric_results[key].append(result)   
-            print(key, ":", result)
+            #print(key, ":", result)
         
     def _body_learning(self, TR_inputs_dict, TR_output, stop_criteria):
         return NotImplemented
@@ -64,7 +90,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         for oper in unary_operations:
             if(not issubclass(oper, op.OperationNode)): raise ValueError(f"The operation {oper} is not a OperationNode type")
-            if(oper().get_channels() != 1): raise TypeError(f"{oper} has no 1 channel, it is not acceptable an unary operation like that")
+            if(oper().get_max_channels() != 1): raise TypeError(f"{oper} has no 1 channel, it is not acceptable an unary operation like that")
         
         self._unary_operations = list(unary_operations)
         
@@ -128,35 +154,48 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         def recursion(node):
             
-            if(node.is_constant()): return
-            
             for c in node.get_childrens(): recursion(c)
             
-            model.replace_subtree(node, AnalysisRamification.__add_linear_extension(node, 1, 0))
+            if(node.is_constant()): return 
+            
+            substitution = None
+            
+            father = node.get_father()
+            
+            if(isinstance(father, op.mul) or isinstance(father, op.add)):
+                
+                if(isinstance(father, op.mul)):
+                    
+                    substitution = op.add()
+                    substitution.new_connection(op.Leaf(0))
+                    
+                if(isinstance(father, op.add)):
+                    
+                    substitution = op.mul()
+                    substitution.new_connection(op.Leaf(1))
+                    
+                substitution.new_connection(node.copy_sub_tree())
+                
+            else: substitution = AnalysisRamification.__add_linear_extension(node, 1, 0)
+                
+            model.replace_subtree(node, substitution)
             
         recursion(model.get_root())
+        
+        
 
     #Get (if possible) the extension (with delta metric) of this combination
     def __analyze_extension(self, TR_inputs_dict, TR_output, config):
-                
+          
+        
         old_node = config["node"]
-        
-        if(config["type"] == "change_base"): oper_node = op.Leaf(config["new_feature"])
-        
-        elif(config["type"] == "add_operation"):
-            
-            oper_node = config["new operation"]()
-            oper_node.new_connection(old_node.copy_sub_tree())
-            
-        else: raise ValueError(f"Config type must be 'change_base' or ' add_operation', not {config['type']}")
-        
-        if(oper_node.is_constant()):
-            config["new node"] = oper_node
-            return True
-        
-        
+        oper_node = config["new node"]
+
         choices = [oper_node]
         
+        if(oper_node.is_constant()): return True
+
+
         oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict)
         
         analysis = utils.total_analysis(oper_node.get_memory("forward"), old_node.get_memory("backward"), ["linear", "general"])
@@ -168,20 +207,20 @@ class AnalysisRamification(SymbolicRegressionLearning):
             q = linear_ext["q"] if np.isfinite(linear_ext["q"]) else 0
             
             choices.insert(0, AnalysisRamification.__add_linear_extension(oper_node, m, q))
-
+            
         for try_node in choices:
-        
+            
             #Try the substition
             self._model.replace_subtree(old_node, try_node)
-                
+  
             #Check the structural domain
             valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
 
             #Do the substition
             self._model.replace_subtree(try_node, old_node)
-            
-            config["new node"] = try_node
 
+            config["new node"] = try_node
+            
             #Check structure domain
             if(valid_domain): return True
         
@@ -196,23 +235,25 @@ class AnalysisRamification(SymbolicRegressionLearning):
         choices = []
         
         AnalysisRamification.linear_extend_model(self._model)
-        
+
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
         
         choices = self.__get_package_importance_nodes(self._model.get_root().get_all_subtree_nodes(), self._unary_operations, TR_inputs_dict)
         
-        print("All remaining choices to test")
-        for x in choices[i:]: print(x)
+        #print("All remaining choices to test")
+        #for x in choices[i:]: print(x)
         
         #Package the choices by importance
         for choice in choices[i:]:
 
             #Analyze the extension
-            result = self.__analyze_extension(TR_inputs_dict, TR_output, choice)
+            acceptable = self.__analyze_extension(TR_inputs_dict, TR_output, choice)
 
-            if(not result): continue  
+            if(not acceptable):
+                i += 1
+                continue
                         
-            print("Extension choosed", choices[i])
+            #print("Extension choosed", choice)
 
             #Do the extension
             self._model.replace_subtree(choice["node"], choice["new node"])
@@ -255,14 +296,34 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         print(f"Start training")
         
-        while(not stop_criteria(self) and self.__extension_step(TR_inputs_dict, TR_output)):
+        linear_pattern = False
+        
+        #The search stop if one of this requirements are true:
+        #- there is no any step to choose
+        #- stop_criteria require to stop
+        #- the model give a perfect linear pattern with output (more stronger that chatterjee indicator)
+        while((not linear_pattern) and (not stop_criteria(self)) and self.__extension_step(TR_inputs_dict, TR_output)):
                 
             print(f"Extension phase, iteration {i+1} done {'-'*50}")
-                
+   
             self._model.simplify_model()
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
             self.checkpoint_metrics()
+            analysis = utils.total_analysis(self._model.get_root().get_memory("forward"), TR_output, ["linear"])
+            linear_pattern = np.abs(1 - np.abs(analysis["linear"])) <= 1e-6
 
             i += 1
             
+        if((type(self._model.get_root()) not in [int, float])):
+            
+            #Final linear extension (on root) correction
+            le = utils.linear_extension(self._model.get_root().get_memory("forward"), TR_output)    
+            self._model.replace_subtree(self._model.get_root(), AnalysisRamification.__add_linear_extension(self._model.get_root(), le["m"], le["q"]))
+            self._model.simplify_model()
+            
+        self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
+        
+        self.checkpoint_metrics()
+            
         print("Training done!")
+

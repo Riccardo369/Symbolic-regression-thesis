@@ -1,0 +1,26 @@
+{
+    "results": {
+        "tree": [
+            "0.0",
+            "exp(X)",
+            "mul(1.0, exp(X))"
+        ],
+        "timestamp": [
+            1783697707.3478587,
+            1783697707.391655,
+            1783697707.4047575
+        ],
+        "MDL": [
+            0,
+            0,
+            0
+        ]
+    },
+    "ranges_iterations": [],
+    "history_dicts": {
+        "extension": {
+            "0.0": 1
+        }
+    },
+    "real function": "np.exp(X)"
+}

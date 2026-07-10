@@ -1,0 +1,26 @@
+{
+    "results": {
+        "tree": [
+            "0.0",
+            "mul(1.0, abs(X))",
+            "mul(1.0, abs(X))"
+        ],
+        "timestamp": [
+            1783697707.294238,
+            1783697707.3303883,
+            1783697707.3398466
+        ],
+        "MDL": [
+            0,
+            0,
+            0
+        ]
+    },
+    "ranges_iterations": [],
+    "history_dicts": {
+        "extension": {
+            "0.0": 1
+        }
+    },
+    "real function": "np.abs(X)"
+}

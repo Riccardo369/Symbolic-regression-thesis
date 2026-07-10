@@ -2,9 +2,29 @@ import numpy as np
 import lark
 import Operations as op
 import matplotlib.pyplot as plt
+import sympy as sp
 
 import Exceptions as ex
 import Simplifications as si
+
+
+
+def id_view(node, level = 0):
+    print(f"{'-'*level} {id(node)}")
+    for i in node.get_childrens(): id_view(i, level+1)
+    
+
+def check_father(node, father = None):
+    
+    if((node.get_father() != None and father == None) or (node.get_father() == None and father != None)): raise ValueError(f"Father of {node} is {node.get_father()}, must be {father}")
+    
+    if(id(node.get_father()) != id(father) and father != None): raise ValueError(f"Id father of {node} is {id(node.get_father())}, must be {id(father)}")
+    
+    for c in node.get_childrens(): check_father(c, node)
+    
+    
+
+
 
 class SymbolicRegression:
     
@@ -35,19 +55,70 @@ class SymbolicRegression:
     
     def replace_subtree(self, tree1, tree2):
         
+        check_father(self.get_root())
+        
+        
+        father = tree1.get_father()
+        
+        
+        
+        
+        #print("replace sub tree")
+        
+        #print("Model", self)
+        #print("Father of refence", father, "in model", self.__root.is_node_present_in_sub_tree(father) if father != None else False)
+        #print("father tree 1", tree1.get_father())
+        #print("father tree 2", tree2.get_father())
+        
+        #print("MODEL ID TREE")
+        #id_view(self.get_root())
+        #print("TREE 1 ID")
+        #id_view(tree1)
+        #print("TREE 2 ID")
+        #id_view(tree2)
+
         if(not self.__root.is_node_present_in_sub_tree(tree1)): raise ValueError(f"Sub tree 1 {tree1} must be in this tree {self}, its not")
         if(self.__root.is_node_present_in_sub_tree(tree2)): raise ValueError(f"Sub tree 2 {tree2} cannot be in this tree {self}, it is")
         
-        father = tree1.get_father()
+        if(tree2.get_father() != None): raise ValueError(f"tree 2 {tree2} must has no father, has {tree2.get_father()}")
+        
+        #print("tree1", tree1)
+        #print("tree2", tree2)
+        
+        #print("tree1 father", tree1.get_father())
+        #print("tree2 father", tree2.get_father())
                 
         #The leaf is the root
-        if(father == None): self.set_root(tree2)
+        if(father == None):
+ 
+            self.set_root(tree2)
                     
         else:
-            
-            father.free_connection(tree1)
-            
+   
+            father.free_connection(tree1) 
             father.new_connection(tree2)
+        
+        
+        
+        #print("After replacement")
+        
+        #print("Model", self)
+        #print("Father of refence", father, "in model", self.__root.is_node_present_in_sub_tree(father) if father != None else False)
+        #print("father tree 1", tree1.get_father())
+        #print("father tree 2", tree2.get_father())
+        
+        #print("MODEL ID TREE")
+        #id_view(self.get_root())
+        #print("TREE 1 ID")
+        #id_view(tree1)
+        #print("TREE 2 ID")
+        #id_view(tree2)
+        
+        #print("finish replace sub tree")
+        
+        #check_father(self.get_root())
+        
+        
 
     def __str__(self):
         return str(self.__root)
@@ -169,36 +240,69 @@ class SymbolicRegression:
     
     def simplify_model(self):
         
+        try:
+        
+            f = si.to_sympy(self.get_root().copy_sub_tree())
+            f = sp.expand(f, force = True)
+            f = sp.factor(f)
+            f = sp.powsimp(f, force=True)
+            f = si.from_sympy(f)
+            
+            if((len(self.get_root().get_all_subtree_nodes()) >= len(f.get_all_subtree_nodes())) or True): 
+                self.replace_subtree(self.get_root(), f)
+            
+        except: pass
+        
+        return self
+    
+    def simplify_model1(self):
+        
+        return self
+        
+        print("Simplify model call")
+        
         #Convert the function in canonic form: main add chain that hold more sub mul chains, apply
         def canonic_form(node):
             
             #TOP DOWN
+
+
+            #Apply decorporation for each operation (if it is possible)
+            for decorporation in node.get_decorporation_simplification():
+                
+                try:
+                
+                    new_node = decorporation(node)
+                    self.replace_subtree(node, new_node)
+                    node = new_node
+                    break
+                    
+                except ex.SimplificationError: pass
             
-            #Constant calculation
-            try:
-                
-                new_node = si.constant()(node)
-                self.replace_subtree(node, new_node)
-                node = new_node
-                
-            except ex.SimplificationError: pass
-               
+            
+            
             #Apply the distributivity mul on add property
             if(isinstance(node, op.mul)):
                 
-                new_node = si.mul_distributivity_on_add()(node)
+                new_node = si.mul_distributivity_on_add(node)
                 self.replace_subtree(node, new_node)
                 node = new_node
+              
+            
+            #Apply scission if is possible
+            for scission in node.get_scissions_simplification():
                 
+                try:
                 
-            #Apply singular simplification (in base of operations)
-            #...
-                
-            #Apply decorporation for each operation (if it is possible)
-            #...
-                
+                    new_node = scission(node)
+                    self.replace_subtree(node, new_node)
+                    node = new_node
+                    break
+                    
+                except ex.SimplificationError: pass 
                 
             
+
 
             # ------------------------------------------------------
             # ------------------------------------------------------
@@ -212,9 +316,33 @@ class SymbolicRegression:
             # ------------------------------------------------------
             # ------------------------------------------------------
             
-            
-           
+
             #BOTTOM UP
+            
+            #Apply vertical simplification (in base of operations)
+            for vertical_application in node.get_vertical_application_simplification():
+                
+                try:
+                
+                    new_node = vertical_application(node)
+                    self.replace_subtree(node, new_node)
+                    node = new_node
+                    break
+                    
+                except ex.SimplificationError: pass
+                
+            
+            #Apply constant calculation
+            try:
+                
+                new_node = si.constant(node)
+                self.replace_subtree(node, new_node)
+                node = new_node
+                
+            except ex.SimplificationError: pass
+            
+            
+
             
             #Apply flat of chain
             if(isinstance(node, op.mul) or isinstance(node, op.add)):
@@ -224,17 +352,15 @@ class SymbolicRegression:
                self.replace_subtree(node, new_node)
                node = new_node
                
-            
-            
+
+
 
         
         #Apply all simplification (that change in base of node type / operation)
         def simplification(node):
             
-            #TOP DOWN
             
-            #Accorporate operations and repeat the formula from beginning for each accorporation
-            
+            #TOP DOWN    
             
             # ------------------------------------------------------
             # ------------------------------------------------------
@@ -245,47 +371,51 @@ class SymbolicRegression:
             
             #BOTTOM UP
             
-            
             # ------------------------------------------------------
             # ------------------------------------------------------
             # ------------------------------------------------------
             
-            #Simplify chains
+            
             if(isinstance(node, op.add) or isinstance(node, op.mul)):
                 
-                new_node = si.add_chain()(node) if isinstance(node, op.add) else si.mul_chain()(node)
+                #Simplify chains
+                new_node = si.add_chain(node) if isinstance(node, op.add) else si.mul_chain(node)
                 self.replace_subtree(node, new_node)
                 node = new_node
                 
-        
+                
+                #Apply accorporation operations and repeat the formula from beginning for each accorporation
+                #new_node = si.total_accorporation(node)
+                #self.replace_subtree(node, new_node)
+                #node = new_node
+                
+             
+            
+            
         def cleaning(node):
             
             for c in node.get_childrens(): cleaning(c)
             
-            new_node = si.cleaning()(node)
+            new_node = si.cleaning(node)
             self.replace_subtree(node, new_node)
             node = new_node 
 
         
-        print("ORIGINAL FORM", self.__root)
+        #print("ORIGINAL FORM", self.__root)
         
         canonic_form(self.__root)
         
-        print("CANONIC FORM ", self.__root)
+        #print("CANONIC FORM ", self.__root)
         
         simplification(self.__root)
         
-        print("FINAL FORM   ", self.__root)
+        #print("FINAL FORM   ", self.__root)
         
         cleaning(self.__root)
         
-        print("CLEANED FORM ", self.__root)
+        #print("CLEANED FORM ", self.__root)
 
         return self
-        
-        
-        
-        
 
 
     #Learn phase   

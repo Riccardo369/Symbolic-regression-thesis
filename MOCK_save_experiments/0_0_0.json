@@ -1,0 +1,26 @@
+{
+    "results": {
+        "tree": [
+            "0.0",
+            "3.0",
+            "nan"
+        ],
+        "timestamp": [
+            1783697707.0583146,
+            1783697707.071339,
+            1783697707.1919537
+        ],
+        "MDL": [
+            0,
+            0,
+            0
+        ]
+    },
+    "ranges_iterations": [],
+    "history_dicts": {
+        "extension": {
+            "0.0": 1
+        }
+    },
+    "real function": "3"
+}

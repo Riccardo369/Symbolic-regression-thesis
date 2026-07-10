@@ -1,43 +1,41 @@
+import numpy as np
+
 opers = ["1/", "np.abs", "np.exp", "np.log", "np.sin", "np.arcsin"]
 
-compose_first_level = []
+compose_first_level = dict()
 
 for a in opers:
     
     for b in opers:
         
-        compose_first_level.append(f"{a}({b}(X))")
+        compose_first_level[f"{a}({b}(X))"] = np.linspace(-100, 100, 1000, dtype = np.float64)
         
 #op.div, op.abs, op.exp, op.ln, op.sin, op.arcsin
 
-artificial_formulas = ["3",
-                       "X",
-                       "1/X",
-                       "np.abs(X)",
-                       "np.exp(X)",
-                       "np.log(X)",
-                       "np.sin(X)",
-                       "np.arcsin(X)",
+artificial_formulas = {"3": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "X": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "1/X": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "np.abs(X)": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "np.exp(X)": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "np.log(X)": np.linspace(0, 100, 1000, dtype = np.float64),
+                       "np.sin(X)": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "np.arcsin(X)": np.linspace(-1, 1, 100, dtype = np.float64),
                        
-                       "4 * X + 5",
-                       "3* (1/X) + 8",
-                       "5 * np.abs(X) + 4",
-                       "3 * np.exp(X) + 6",
-                       "8 * np.log(X) + 12",
-                       "2 * np.sin(X) + 34",
-                       "0.4 * np.arcsin(X) + 23",
-                       
-                       #Tutte quelle composte ad un livello senza costanti di scala e traslazione
+                       "(4 * X) + 5": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "(3 * (1/X)) + 8": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "(5 * np.abs(X)) + 4": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "(3 * np.exp(X)) + 6": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "(8 * np.log(X)) + 12": np.linspace(0, 100, 1000, dtype = np.float64),
+                       "(2 * np.sin(X)) + 34": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       "(0.4 * np.arcsin(X)) + 23": np.linspace(-1, 1, 100, dtype = np.float64)} | compose_first_level | {
                         
-                       ] + compose_first_level + [
-                            
-                       #Lascia questi per dopo
                        
-                       #"X**2 + 2*X",
-                       #"2*(X**2) + 5*X + 6",
-                       #"X**2 + np.cos(X)",
-                       #"X**2 * np.cos(X)",
-                       #"X**2 * np.cos(X**2)",
-                       #"2**X + np.cos(X)"
-                       ]
+                       #"X**2 + 2*X": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       #"2*(X**2) + 5*X + 6": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       #"X**2 + np.cos(X)": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       #"X**2 * np.cos(X)": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       #"X**2 * np.cos(X**2)": np.linspace(-100, 100, 1000, dtype = np.float64),
+                       #"2**X + np.cos(X)": np.linspace(-100, 100, 1000, dtype = np.float64)
+                       }
+
 
