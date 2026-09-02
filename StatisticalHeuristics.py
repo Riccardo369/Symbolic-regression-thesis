@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import permutations
 import json
-from scipy.signal import hilbert
+from scipy.stats import skew
 
 import InformationSOTA.artificial_formulas as af
 #import Domains as dm
@@ -10,7 +10,6 @@ import utils
 import Operations as op
 import Indicators as ind
 from Model import SymbolicRegression
-
 
 
 
@@ -50,6 +49,10 @@ def calculation_pendency(X, Y):
 
 
 
+#NON è ROBUSTO AL RUMORE / OUTLIERS, DA RISOLVERE
+def linear_correlation(X, Y):
+    return ind.pearson_correlation(X, Y)
+
 
 
 
@@ -62,7 +65,10 @@ def sinusoidal_coefficient(Y):
 
     return (total_change / (total_change + 1))
 
-def arcsinusoidal_coefficient(X, Y):
+
+
+
+def arcsinusoidal_coefficient1(X, Y):
 
     y_min, y_max = np.min(Y), np.max(Y)
     if y_max == y_min: return 0.0
@@ -73,7 +79,7 @@ def arcsinusoidal_coefficient(X, Y):
     
     mask = np.isfinite(Z) & np.isfinite(X)
 
-    score = np.abs(ind.pearson_correlation(X[mask], Z[mask]))
+    score = np.abs(ind.linear_correlation(X[mask], Z[mask]))
     
     return score
 
@@ -105,99 +111,6 @@ def is_arcsin(X, Y):
     return ind.spearman_correlation(X, Y) >= 0
 
 
-def constant_score(Y):
-    return 1 / (1 + np.std(Y))
-
-def linear_score(X, Y):
-    return np.abs(ind.pearson_correlation(X, Y))
-
-def sin_score(X, Y):
-    return sinusoidal_coefficient(X, Y) + (int(is_sin(X, Y)) * epsilon_classification)
-
-def cos_score(X, Y):
-    return sinusoidal_coefficient(X, Y) + ((1 - int(is_sin(X, Y))) * epsilon_classification)
-
-def arcsin_score(X, Y):
-    return arcsinusoidal_coefficient(X, Y) + (int(is_arcsin(X, Y)) * epsilon_classification)
-
-def arccos_score(X, Y):
-    return arcsinusoidal_coefficient(X, Y) + ((1 - int(is_arcsin(X, Y))) * epsilon_classification)
-      
-def exp_score(X, Y):
-    
-    pendency_X, pendency_Y = calculation_pendency(X, Y)       
-    pendency_Y = power_pendency(pendency_Y)
-
-    #PRINT MATCHING
-    ln_pendency_Y = np.log(pendency_Y)
-    
-    mask = np.isfinite(pendency_X)
-    
-    return np.abs(ind.pearson_correlation(pendency_X[mask], ln_pendency_Y[mask]))
-
-def ln_score(X, Y):
-    
-    pendency_X, pendency_Y = calculation_pendency(X, Y)
-    
-    inv_P = invert(pendency_Y)
-    
-    # 3. Maschera i valori finiti
-    mask = np.isfinite(inv_P) & np.isfinite(pendency_X)
-        
-    # 4. Pearson tra X e 1/Y' deve essere ~1.0 per il logaritmo
-    return np.abs(ind.pearson_correlation(pendency_X[mask], inv_P[mask]))
-
-def div_score(X, Y):
-    
-    pendency_X, pendency_Y = calculation_pendency(X, Y)
-    
-    pendency_Y = invert(np.sqrt(np.abs(pendency_Y)))
-    
-    lin_ext = utils.linear_extension(pendency_X, pendency_Y)
-    
-    print_matching = lin_ext["m"]*pendency_X + lin_ext["q"]
-    
-    mask = np.isfinite(print_matching)
-    
-    print_matching = print_matching[mask]
-    pendency_X = pendency_X[mask]
-    pendency_Y = pendency_Y[mask]
-    
-    K = X - invert(Y)
-    k = np.mean(K)
-    
-    left = pendency_X < k
-    right = pendency_X > k
-    
-    if(np.sum(left) + np.sum(right) < 2): return 0
-    
-    left_coeff = np.abs(ind.pearson_correlation(print_matching[left], pendency_Y[left])) if np.sum(left) >= 2 else 1
-    right_coeff = np.abs(ind.pearson_correlation(print_matching[right], pendency_Y[right])) if np.sum(right) >= 2 else 1
-    
-    return left_coeff * right_coeff
-  
-def sqrt_score(X, Y):
-    return np.abs(ind.pearson_correlation(X, Y**2))
-
-
-
-
-
-#f(a, b, c, d, x) = c * ln(a * x + b) + d
-
-#Df / da = cx / (ax + b)
-#Df / db = c  / (ax + b)
-#Df / dc = ln(ax + b) 
-#Df / dd = 1
-
-
-#Da / dx = 0 * 1/x + a/b = a/b = 0
-
-#a/b = 0
-#a = b*0
-#a = 0
-
-#
 
 
 
@@ -213,57 +126,74 @@ def all_heuristic_statisticals(X, Y, X_name = None):
     
     result = dict()
     
-    #CONSTANT / LINEAR
+    #CONSTANT / LINEAR    X
     result["constant"] = 1 / (1 + np.std(Y))
-    result["linear"] =  np.abs(ind.pearson_correlation(X, Y))
+    result["linear"] =  np.abs(linear_correlation(X, Y))
     
-    #SIN / COS
+    #SIN / COS     X
     sin_coeff = sinusoidal_coefficient(Y)
     
     result["sin"] = sin_coeff + (int(is_sin(X, Y)) * epsilon_classification)
     result["cos"] = sin_coeff + ((1 - int(is_sin(X, Y))) * epsilon_classification)
-    
-    #ARCSIN / ARCCOS
-    arcsin_coeff = arcsinusoidal_coefficient(X, Y)
-    
-    result["arcsin"] = arcsin_coeff + (int(is_arcsin(X, Y)) * epsilon_classification)
-    result["arccos"] = arcsin_coeff + ((1 - int(is_arcsin(X, Y))) * epsilon_classification)
-    
-    #EXP
-    pendency_X, pendency_Y = calculation_pendency(X, Y)
-    mask = np.isfinite(pendency_X)
 
-    ln_pendency_Y = np.log(power_pendency(pendency_Y))
-    result["exp"] = np.abs(ind.pearson_correlation(pendency_X[mask], ln_pendency_Y[mask]))
+    dY = np.gradient(Y, X)
     
+    
+
+    #EXP
+    # L'esponenziale accelera: consideriamo il valore assoluto della pendenza
+    abs_dY = np.abs(dY)
+    abs_dY = np.clip(abs_dY, 1e-20, None) # Evita log(0)
+    ln_dY = np.log(abs_dY)
+
+    mask_exp = np.isfinite(ln_dY)
+    
+    # Spearman cattura la crescita logaritmica della pendenza anche se distorta da composte
+    result["exp"] = np.abs(ind.spearman_correlation(X[mask_exp], ln_dY[mask_exp]))
+
     #LN
-    inv_P = invert(pendency_Y)
-    mask = np.isfinite(inv_P) & mask     
-    result["ln"] = np.abs(ind.pearson_correlation(pendency_X[mask], inv_P[mask]))
+    # Il logaritmo decelera: l'inverso della pendenza ha una relazione monotona con X
+    inv_dY = invert(dY)
+    mask_ln = np.isfinite(inv_dY)
+
+    result["ln"] = np.abs(ind.spearman_correlation(X[mask_ln], inv_dY[mask_ln]))
     
     #SQRT
-    result["sqrt"] = np.abs(ind.pearson_correlation(X, Y**2))
+    mask_pos = dY > 0 # La radice reale ha pendenza positiva
+ 
+    # Spearman tra X e dY sarà FORTEMENTE NEGATIVO (pendenza che scende)
+    corr_sqrt = ind.spearman_correlation(X[mask_pos], dY[mask_pos])
+        
+    # Se la pendenza scende fortemente con X, è un ottimo candidato SQRT
+    result["sqrt"] = np.abs(corr_sqrt) if corr_sqrt < 0 else 0.0
     
     #DIV
-    pendency_Y = invert(np.sqrt(np.abs(pendency_Y)))
-    mask = np.isfinite(pendency_Y)
+    abs_dY = np.abs(dY)
+    mask = np.isfinite(abs_dY)
+
+    if np.sum(mask) >= 3:
+        # Calcolo dell'asimmetria della pendenza
+        s = np.abs(skew(abs_dY[mask]))
         
-    K = X - invert(Y)
-    k = np.mean(K)
-        
-    left = pendency_X < k
-    right = pendency_X > k
-        
-    if(np.sum(left) + np.sum(right) < 2): result["div"] = 0
+        # Mappatura naturale in [0, 1) priva di costanti arbitrarie
+        result["div"] = s / (1.0 + s)
+    else:
+        result["div"] = 0.0
     
-    else: 
     
-        left_coeff = np.abs(ind.pearson_correlation(pendency_X[left], pendency_Y[left])) if np.sum(left) >= 2 else 1
-        right_coeff = np.abs(ind.pearson_correlation(pendency_X[right], pendency_Y[right])) if np.sum(right) >= 2 else 1
-            
-        result["div"] = left_coeff * right_coeff
-        
-        
+    #ARCSIN / ARCCOS: PER QUESTO, C'è SUI LIMITI DELLA FUNZIONE, UN ACCRESCIMENTO CHE FINISCE VERSO L' ALTO / BASSO, COME SE CI FOSSE UN MURO SU CUI SBATTI IL MUSO PER VERTICALE    
+    Y_norm = rescaling(Y, np.min(Y), np.max(Y), 0, 1)              # Normalizziamo in [0, 1]
+    dist_from_center = np.abs(Y_norm - 0.5)                        # Massima agli estremi, minima al centro
+    
+    # Nelle funzioni arcsin/arccos, la pendenza cresce man mano che ci si allontana dal centro
+    arcsin_score = ind.spearman_correlation(dist_from_center, np.abs(dY))
+    arcsin_score = max(0.0, arcsin_score) if not np.isnan(arcsin_score) else 0.0
+    
+    is_arcsin_val = int(is_arcsin(X, Y))
+    
+    result["arcsin"] = arcsin_score + ((is_arcsin_val) * epsilon_classification)
+    result["arccos"] = arcsin_score + ((1 - is_arcsin_val) * epsilon_classification)
+    
     #Prepare result
     result = [{"variable": X_name, "operation": k, "value": result[k]} for k in result.keys()]
     
@@ -276,11 +206,32 @@ def all_heuristic_statisticals(X, Y, X_name = None):
 def function_base_score(X, Y, f):
     Y1 = f(X)
     mask = np.isfinite(Y1)
-    return np.abs(ind.pearson_correlation(Y[mask], Y1[mask]))
+    return np.abs(ind.linear_correlation(Y[mask], Y1[mask]))
 
     
     
     
+  
+#X_original = np.linspace(-10, 1, 100)
+#
+#for Y_string in ["np.sin(np.exp(X))", "np.sin(np.log(X))"]: #["np.arcsin(np.exp(X))", "np.exp(np.arcsin(X))", "np.log(X)+np.arcsin(X)", "np.exp(np.arcsin(X))"]:
+#    
+#    X = X_original.copy()
+#
+#    Y = eval(Y_string)
+#
+#    mask = np.isfinite(Y)
+#    
+#    X = X[mask]
+#    Y = Y[mask]
+#    
+#    
+#
+#    plt.plot(X, Y, color = "black", label = Y_string)
+#    plt.plot(X, monoton_reconstruction(Y), color = "red", label = "Y reconstruction")
+#    plt.legend()
+#    plt.show()
+
 
 
 

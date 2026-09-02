@@ -1,6 +1,8 @@
 import numpy as np
 import json
-import matplotlib.pyplot as plt
+
+import os
+from dotenv import load_dotenv
 
 import Indicators as ind
 import Errors as er
@@ -32,8 +34,12 @@ approaches = [{"typology": "pseudo_inverse", "sin": nif.pseudo_inverse_input_sin
 #Apply f(g(x)), reverse f with various technique (giving X like input and y like output), and calculate pearson / MAE between g(x) and reversed f
 result = []
 
-#Numero di esperimenti (numero di seed diversi) = 20. In questo caso si possono usare gli stessi seed, perchè il dominio è in R in tutti i casi (facciamo da -10 a 10)
-for seed in [84, 192, 317, 429, 501, 683, 715, 842, 906, 958]:
+load_dotenv()
+seeds_str = os.getenv("SEEDS_LIST")
+seeds_list = [int(seed.strip()) for seed in seeds_str.split(",") if seed.strip()]
+
+#Numero di esperimenti (numero di seed diversi) = 10. In questo caso si possono usare gli stessi seed, perchè il dominio è in R in tutti i casi (facciamo da -10 a 10)
+for seed in seeds_list:
     
     generator = np.random.default_rng(seed)
       

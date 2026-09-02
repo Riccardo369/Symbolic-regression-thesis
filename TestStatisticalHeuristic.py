@@ -1,9 +1,12 @@
 import numpy as np
 import json
 from itertools import permutations
+import os
+from dotenv import load_dotenv
+
+
 
 import StatisticalHeuristics as sh
-import Indicators as ind
 from Model import SymbolicRegression
 import Operations as op
 
@@ -22,16 +25,6 @@ domain = {
 
 
 
-coefficients = {
-    "sin": sh.sin_score,
-    "cos": sh.cos_score,
-    "arcsin": sh.arcsin_score,
-    "arccos": sh.arccos_score,
-    "exp": sh.exp_score,
-    "ln": sh.ln_score,
-    "div": sh.div_score,
-    "sqrt": sh.sqrt_score,
-    }
 
 
 
@@ -46,10 +39,15 @@ n = [100, 1000, 10000]
 
 
 
-def internal_test(X_distributions, Y_tree, variable_operation_couple, noise = 0):
+def internal_test(X_distributions, Y_tree, variable_operation_couple, noise, seed, n):
+    
+    def X_generation(X_distributions, generator, n):
+        return {k: generator.uniform(X_distributions[k]["domain"][0], X_distributions[k]["domain"][1], n) for k in X_distributions.keys()}
 
+    generator = np.random.default_rng(seed)
+    
     #Calculate inputs values
-    X = {k: eval(X_distributions[k]) for k in X_distributions.keys()}
+    X = X_generation(X_distributions, generator, n)
 
     #Calculate result
     Y = Y_tree.get_root().forward_calculation_memory_sub_tree(X).get_memory("forward")
@@ -66,7 +64,7 @@ def internal_test(X_distributions, Y_tree, variable_operation_couple, noise = 0)
     while(diff > 0):
             
         #Add new X random points
-        additional_X = {k: eval(X_distributions[k]) for k in X_distributions.keys()}
+        additional_X = X_generation(X_distributions, generator, n)
         additional_Y = Y_tree.get_root().forward_calculation_memory_sub_tree(additional_X).get_memory("forward")
             
         #Apply mask
@@ -180,9 +178,9 @@ def extract_valid_domain(tree, var):
 
 #Dentro il metodo test fai la funzione una sola volta, con tutto l' albero parsato e l' analisi con associazione variabile - operazione
 #Come stringa di Y_function ci passi la stringa valida per il modello SymbolicRegression
-def test(Y_string_tree, result, n, noise, max_tests = 1):
+def test(Y_string_tree, result, n, noise, seeds):
     
-    print(f"Statistical heuristics: tests {max_tests}, expression = {Y_string_tree}, with {n} points, noise = {noise}")
+    print(f"Statistical heuristics: tests {len(seeds)}, expression = {Y_string_tree}, with {n} points, noise = {noise}")
     
     #Create tree
     tree = SymbolicRegression.string_to_tree(Y_string_tree)
@@ -209,12 +207,12 @@ def test(Y_string_tree, result, n, noise, max_tests = 1):
     for var in variables:
         
         domain = extract_valid_domain(tree, var)
-        Inputs_string[var] = f"np.random.uniform({domain[0]}, {domain[1]}, {n}).astype(np.float64)"
+        Inputs_string[var] = {'domain': (domain[0], domain[1])}
 
 
     #Create label
-    X_labels = [f"{k}: " + Inputs_string[k] for k in Inputs_string.keys()]
-    label = ", ".join(X_labels) +  f", Y = {Y_string_tree}" + f" [noise = {noise}]"
+    X_labels = [f"{k}: " + f'{str(Inputs_string[var]["domain"])}' for k in Inputs_string.keys()]
+    label = ", ".join(X_labels) +  f", Y = {Y_string_tree}" + f" [n = {n}] [noise = {noise}]"
     
     
     if(label not in result.keys()): actual_tests = 0
@@ -223,35 +221,34 @@ def test(Y_string_tree, result, n, noise, max_tests = 1):
     if(label not in result.keys()): result[label] = []
     
     #Repeat test
-    for _ in range(max(max_tests - actual_tests, 0)):
+    for i in range(max(len(seeds) - actual_tests, 0)):
         
-        result[label].append(internal_test(Inputs_string, tree, variable_operation_couples, noise))
+        result[label].append(internal_test(Inputs_string, tree, variable_operation_couples, noise, seeds[i], n))
             
     return result
 
 
 forbidden_concatenation = [" - ".join(x) for x in [("ln", "exp"),
-                                                ("exp", "ln"),
-                                                ("sin", "arcsin"),
-                                                ("cos", "arccos")]]
+                                                   ("exp", "ln"),
+                                                   ("sin", "arcsin"),
+                                                   ("cos", "arccos")]]
 
 
 
 
-
-def depth_test(i, result, n, noise, max_tests):
+def depth_test(i, result, n, noise, seeds):
     
-    for c in list(permutations(coefficients.keys(), i)):
+    for c in list(permutations(domain.keys(), i)):
         
         if(" - ".join(c) in forbidden_concatenation): continue
         
         Y_string = "(".join([x for x in c]) + "(X" + (")"*i)
         
-        result = test(Y_string, result, n, noise, max_tests)
+        result = test(Y_string, result, n, noise, seeds)
         
         
-def fast_test(Y_string, result, n, noise, max_tests):
-    result = test(Y_string, result, n, noise, max_tests)
+def fast_test(Y_string, result, n, noise, seeds):
+    result = test(Y_string, result, n, noise, seeds)
 
 
 
@@ -259,23 +256,26 @@ def fast_test(Y_string, result, n, noise, max_tests):
 
 result = {}
 
-k = 20
+
+load_dotenv()
+seeds_str = os.getenv("SEEDS_LIST")
+seeds = [int(seed.strip()) for seed in seeds_str.split(",") if seed.strip()]
 
 for noise in [0, 0.5, 1]:
 
     for n in [100, 1000, 10000]:
         
-        depth_test(1, result, n, noise, k)
-        depth_test(2, result, n, noise, k)
+        depth_test(1, result, n, noise, seeds)
+        depth_test(2, result, n, noise, seeds)
         
-        fast_test("add(exp(X1), sqrt(X2))", result, n, noise, k)
-        fast_test("add(sin(X1), exp(X2))", result, n, noise, k)
-        fast_test("mul(X1, sin(X2))", result, n, noise, k)
-        fast_test("sin(mul(X1, X2))", result, n, noise, k)
-        fast_test("add(exp(X1), sqrt(X2), arcsin(X3))", result, n, noise, k)
-        fast_test("add(sin(X1), mul(exp(X1), cos(X1)))", result, n, noise, k)
-        fast_test("mul(X1, sin(add(X2, X3)))", result, n, noise, k)
-        fast_test("add(sin(mul(X1, X2)), X3)", result, n, noise, k)
+        fast_test("add(exp(X1), sqrt(X2))", result, n, noise, seeds)
+        fast_test("add(sin(X1), exp(X2))", result, n, noise, seeds)
+        fast_test("mul(X1, sin(X2))", result, n, noise, seeds)
+        fast_test("sin(mul(X1, X2))", result, n, noise, seeds)
+        fast_test("add(exp(X1), sqrt(X2), arcsin(X3))", result, n, noise, seeds)
+        fast_test("add(sin(X1), mul(exp(X1), cos(X1)))", result, n, noise, seeds)
+        fast_test("mul(X1, sin(add(X2, X3)))", result, n, noise, seeds)
+        fast_test("add(sin(mul(X1, X2)), X3)", result, n, noise, seeds)
     
 
 

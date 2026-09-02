@@ -1,0 +1,612 @@
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arcsin(X) [noise = 0]: mean = 0.7, var = 0.20999999999999996, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arccos(X) [noise = 0]: mean = 0.65, var = 0.22749999999999998, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = ln(X) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(X) [noise = 0]: mean = 0.3, var = 0.30999999999999994, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sqrt(X) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = sin(arccos(X)) [noise = 0]: mean = 3.15, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sin(ln(X)) [noise = 0]: mean = 3.05, var = 0.4474999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(div(X)) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sin(sqrt(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = cos(arcsin(X)) [noise = 0]: mean = 3.15, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = cos(ln(X)) [noise = 0]: mean = 1.85, var = 0.9275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(div(X)) [noise = 0]: mean = 2.15, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = cos(sqrt(X)) [noise = 0]: mean = 4.35, var = 0.22749999999999998, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(cos(X)) [noise = 0]: mean = 0.05, var = 0.04749999999999999, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arcsin(arccos(X)) [noise = 0]: mean = 0.9, var = 0.09000000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arcsin(ln(X)) [noise = 0]: mean = 3.75, var = 0.1875, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(div(X)) [noise = 0]: mean = 0.15, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arcsin(sqrt(X)) [noise = 0]: mean = 0.55, var = 0.2475, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(sin(X)) [noise = 0]: mean = 0.05, var = 0.04749999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arccos(arcsin(X)) [noise = 0]: mean = 0.55, var = 0.34750000000000003, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arccos(ln(X)) [noise = 0]: mean = 3.65, var = 0.2275000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(div(X)) [noise = 0]: mean = 0.25, var = 0.1875, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arccos(sqrt(X)) [noise = 0]: mean = 0.8, var = 0.16000000000000003, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = exp(arcsin(X)) [noise = 0]: mean = 0.5, var = 0.35, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = exp(arccos(X)) [noise = 0]: mean = 0.5, var = 0.35, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(div(X)) [noise = 0]: mean = 0.2, var = 0.16000000000000003, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = exp(sqrt(X)) [noise = 0]: mean = 0.85, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = ln(sin(X)) [noise = 0]: mean = 0.15, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = ln(cos(X)) [noise = 0]: mean = 0.25, var = 0.1875, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = ln(arcsin(X)) [noise = 0]: mean = 2.85, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = ln(arccos(X)) [noise = 0]: mean = 3.1, var = 0.38999999999999996, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = ln(div(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = ln(sqrt(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = div(arcsin(X)) [noise = 0]: mean = 0.15, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = div(arccos(X)) [noise = 0]: mean = 2.0, var = 0.1, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = div(ln(X)) [noise = 0]: mean = 0.75, var = 0.3875, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = div(sqrt(X)) [noise = 0]: mean = 2.25, var = 0.3875, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = sqrt(arcsin(X)) [noise = 0]: mean = 2.55, var = 0.34750000000000003, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = sqrt(arccos(X)) [noise = 0]: mean = 4.85, var = 1.0275000000000003, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sqrt(ln(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(div(X)) [noise = 0]: mean = 2.05, var = 0.047499999999999994, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(exp(X1), sqrt(X2)) [noise = 0]: mean = 5.8, var = 0.56, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(sin(X1), exp(X2)) [noise = 0]: mean = 0.1, var = 0.18999999999999995, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = mul(X1, sin(X2)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(mul(X1, X2)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 100).astype(np.float64), X3: np.random.uniform(-1, 1, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(exp(X1), sqrt(X2), arcsin(X3)) [noise = 0]: mean = 8.8, var = 0.45999999999999996, valid tests = 20 / 20
+X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(sin(X1), mul(exp(X1), cos(X1))) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X3: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = mul(X1, sin(add(X2, X3))) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X3: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(sin(mul(X1, X2)), X3) [noise = 0]: mean = 1.6, var = 0.8399999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arcsin(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arccos(X) [noise = 0]: mean = 0.05, var = 0.04749999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = ln(X) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(X) [noise = 0]: mean = 0.1, var = 0.09000000000000001, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sqrt(X) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = sin(arccos(X)) [noise = 0]: mean = 3.05, var = 0.047499999999999994, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sin(ln(X)) [noise = 0]: mean = 2.5, var = 0.25, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(div(X)) [noise = 0]: mean = 1.8, var = 0.36000000000000004, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sin(sqrt(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = cos(arcsin(X)) [noise = 0]: mean = 3.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = cos(ln(X)) [noise = 0]: mean = 2.45, var = 0.34750000000000003, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(div(X)) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = cos(sqrt(X)) [noise = 0]: mean = 4.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(sin(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(cos(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arcsin(arccos(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arcsin(ln(X)) [noise = 0]: mean = 4.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(div(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arcsin(sqrt(X)) [noise = 0]: mean = 0.05, var = 0.04749999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(sin(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(cos(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arccos(arcsin(X)) [noise = 0]: mean = 0.05, var = 0.047499999999999994, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arccos(ln(X)) [noise = 0]: mean = 4.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(div(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arccos(sqrt(X)) [noise = 0]: mean = 0.1, var = 0.09000000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = exp(arcsin(X)) [noise = 0]: mean = 1.15, var = 0.3275, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = exp(arccos(X)) [noise = 0]: mean = 0.8, var = 0.45999999999999996, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(div(X)) [noise = 0]: mean = 0.45, var = 0.5475000000000001, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = exp(sqrt(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = ln(sin(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = ln(cos(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = ln(arcsin(X)) [noise = 0]: mean = 3.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = ln(arccos(X)) [noise = 0]: mean = 3.05, var = 0.0475, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = ln(div(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = ln(sqrt(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = div(arcsin(X)) [noise = 0]: mean = 0.15, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = div(arccos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = div(ln(X)) [noise = 0]: mean = 0.8, var = 0.26, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = div(sqrt(X)) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(sin(X)) [noise = 0]: mean = 0.4, var = 0.24000000000000005, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(cos(X)) [noise = 0]: mean = 0.4, var = 0.24000000000000005, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = sqrt(arcsin(X)) [noise = 0]: mean = 3.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = sqrt(arccos(X)) [noise = 0]: mean = 6.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sqrt(ln(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(div(X)) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(exp(X1), sqrt(X2)) [noise = 0]: mean = 6.45, var = 0.2475000000000001, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(sin(X1), exp(X2)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = mul(X1, sin(X2)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(mul(X1, X2)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 1000).astype(np.float64), X3: np.random.uniform(-1, 1, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(exp(X1), sqrt(X2), arcsin(X3)) [noise = 0]: mean = 9.85, var = 0.1275, valid tests = 20 / 20
+X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(sin(X1), mul(exp(X1), cos(X1))) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X3: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = mul(X1, sin(add(X2, X3))) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X3: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(sin(mul(X1, X2)), X3) [noise = 0]: mean = 0.8, var = 0.9600000000000002, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arcsin(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arccos(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(X) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = ln(X) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(X) [noise = 0]: mean = 0.05, var = 0.04749999999999999, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sqrt(X) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = sin(arccos(X)) [noise = 0]: mean = 3.05, var = 0.0475, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sin(ln(X)) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(div(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sin(sqrt(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = cos(arcsin(X)) [noise = 0]: mean = 3.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = cos(ln(X)) [noise = 0]: mean = 2.2, var = 0.15999999999999998, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(div(X)) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = cos(sqrt(X)) [noise = 0]: mean = 4.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(sin(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(cos(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arcsin(arccos(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arcsin(ln(X)) [noise = 0]: mean = 4.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(div(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arcsin(sqrt(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(sin(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(cos(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arccos(arcsin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arccos(ln(X)) [noise = 0]: mean = 4.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(div(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arccos(sqrt(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = exp(arcsin(X)) [noise = 0]: mean = 1.9, var = 0.09, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = exp(arccos(X)) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(div(X)) [noise = 0]: mean = 1.7, var = 0.8099999999999999, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = exp(sqrt(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = ln(sin(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = ln(cos(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = ln(arcsin(X)) [noise = 0]: mean = 3.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = ln(arccos(X)) [noise = 0]: mean = 3.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = ln(div(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = ln(sqrt(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(sin(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(cos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = div(arcsin(X)) [noise = 0]: mean = 0.05, var = 0.04749999999999999, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = div(arccos(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = div(ln(X)) [noise = 0]: mean = 1.0, var = 0.3, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = div(sqrt(X)) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(sin(X)) [noise = 0]: mean = 0.95, var = 0.04750000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(cos(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = sqrt(arcsin(X)) [noise = 0]: mean = 3.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = sqrt(arccos(X)) [noise = 0]: mean = 6.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(exp(X)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sqrt(ln(X)) [noise = 0]: mean = 1.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(div(X)) [noise = 0]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(exp(X1), sqrt(X2)) [noise = 0]: mean = 7.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(sin(X1), exp(X2)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = mul(X1, sin(X2)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(mul(X1, X2)) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 10000).astype(np.float64), X3: np.random.uniform(-1, 1, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(exp(X1), sqrt(X2), arcsin(X3)) [noise = 0]: mean = 10.0, var = 0.0, valid tests = 20 / 20
+X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(sin(X1), mul(exp(X1), cos(X1))) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X3: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = mul(X1, sin(add(X2, X3))) [noise = 0]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X3: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(sin(mul(X1, X2)), X3) [noise = 0]: mean = 0.7, var = 0.9099999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(X) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(X) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arcsin(X) [noise = 0.5]: mean = 6.7, var = 1.01, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arccos(X) [noise = 0.5]: mean = 6.35, var = 1.0274999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(X) [noise = 0.5]: mean = 5.05, var = 0.7474999999999998, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = ln(X) [noise = 0.5]: mean = 7.2, var = 1.06, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(X) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sqrt(X) [noise = 0.5]: mean = 7.5, var = 2.85, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = sin(arccos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(exp(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sin(ln(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(div(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sin(sqrt(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = cos(arcsin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(exp(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = cos(ln(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(div(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = cos(sqrt(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arcsin(arccos(X)) [noise = 0.5]: mean = 6.95, var = 0.8475000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(exp(X)) [noise = 0.5]: mean = 5.75, var = 0.5875, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arcsin(ln(X)) [noise = 0.5]: mean = 6.1, var = 0.6900000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(div(X)) [noise = 0.5]: mean = 2.1, var = 0.09, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arcsin(sqrt(X)) [noise = 0.5]: mean = 6.1, var = 0.79, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arccos(arcsin(X)) [noise = 0.5]: mean = 6.5, var = 0.85, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(exp(X)) [noise = 0.5]: mean = 5.6, var = 0.24, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arccos(ln(X)) [noise = 0.5]: mean = 5.9, var = 0.79, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(div(X)) [noise = 0.5]: mean = 2.15, var = 0.1275, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arccos(sqrt(X)) [noise = 0.5]: mean = 6.05, var = 0.7474999999999998, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = exp(arcsin(X)) [noise = 0.5]: mean = 5.85, var = 0.42750000000000005, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = exp(arccos(X)) [noise = 0.5]: mean = 5.65, var = 1.1275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = exp(sqrt(X)) [noise = 0.5]: mean = 5.4, var = 1.64, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = ln(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = ln(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = ln(arcsin(X)) [noise = 0.5]: mean = 6.0, var = 0.8, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = ln(arccos(X)) [noise = 0.5]: mean = 5.65, var = 0.4275000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = ln(div(X)) [noise = 0.5]: mean = 2.35, var = 0.22750000000000004, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = ln(sqrt(X)) [noise = 0.5]: mean = 5.4, var = 0.33999999999999997, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = div(arcsin(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = div(arccos(X)) [noise = 0.5]: mean = 2.1, var = 0.09, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(exp(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = div(ln(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = div(sqrt(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = sqrt(arcsin(X)) [noise = 0.5]: mean = 5.6, var = 0.54, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = sqrt(arccos(X)) [noise = 0.5]: mean = 6.05, var = 0.7474999999999998, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(exp(X)) [noise = 0.5]: mean = 4.55, var = 0.5475000000000001, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sqrt(ln(X)) [noise = 0.5]: mean = 5.75, var = 1.2875, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(exp(X1), sqrt(X2)) [noise = 0.5]: mean = 8.4, var = 2.84, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(sin(X1), exp(X2)) [noise = 0.5]: mean = 0.8, var = 0.9600000000000002, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = mul(X1, sin(X2)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(mul(X1, X2)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 100).astype(np.float64), X3: np.random.uniform(-1, 1, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(exp(X1), sqrt(X2), arcsin(X3)) [noise = 0.5]: mean = 12.3, var = 2.5100000000000007, valid tests = 20 / 20
+X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(sin(X1), mul(exp(X1), cos(X1))) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X3: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = mul(X1, sin(add(X2, X3))) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X3: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(sin(mul(X1, X2)), X3) [noise = 0.5]: mean = 0.8, var = 0.9600000000000002, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(X) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(X) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arcsin(X) [noise = 0.5]: mean = 6.65, var = 1.4274999999999998, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arccos(X) [noise = 0.5]: mean = 6.55, var = 1.0474999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(X) [noise = 0.5]: mean = 5.1, var = 1.3900000000000001, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = ln(X) [noise = 0.5]: mean = 6.65, var = 2.1275000000000004, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(X) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sqrt(X) [noise = 0.5]: mean = 7.85, var = 1.9275000000000002, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = sin(arccos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(exp(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sin(ln(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(div(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sin(sqrt(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = cos(arcsin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(exp(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = cos(ln(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(div(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = cos(sqrt(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arcsin(arccos(X)) [noise = 0.5]: mean = 6.25, var = 1.0875, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(exp(X)) [noise = 0.5]: mean = 5.8, var = 0.45999999999999996, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arcsin(ln(X)) [noise = 0.5]: mean = 5.65, var = 0.5275000000000002, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arcsin(sqrt(X)) [noise = 0.5]: mean = 6.05, var = 0.8474999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arccos(arcsin(X)) [noise = 0.5]: mean = 6.4, var = 1.44, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(exp(X)) [noise = 0.5]: mean = 5.55, var = 0.2475000000000001, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arccos(ln(X)) [noise = 0.5]: mean = 5.7, var = 0.41, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arccos(sqrt(X)) [noise = 0.5]: mean = 5.85, var = 0.7275000000000003, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = exp(arcsin(X)) [noise = 0.5]: mean = 5.7, var = 0.51, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = exp(arccos(X)) [noise = 0.5]: mean = 5.65, var = 0.3275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(div(X)) [noise = 0.5]: mean = 2.35, var = 1.1275, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = exp(sqrt(X)) [noise = 0.5]: mean = 5.4, var = 0.6399999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = ln(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = ln(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = ln(arcsin(X)) [noise = 0.5]: mean = 5.9, var = 0.49000000000000005, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = ln(arccos(X)) [noise = 0.5]: mean = 5.55, var = 0.2475000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = ln(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = ln(sqrt(X)) [noise = 0.5]: mean = 5.55, var = 0.9475000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = div(arcsin(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = div(arccos(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(exp(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = div(ln(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = div(sqrt(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = sqrt(arcsin(X)) [noise = 0.5]: mean = 6.1, var = 0.79, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = sqrt(arccos(X)) [noise = 0.5]: mean = 5.75, var = 0.7875, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(exp(X)) [noise = 0.5]: mean = 5.2, var = 1.26, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sqrt(ln(X)) [noise = 0.5]: mean = 5.95, var = 0.9475000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(exp(X1), sqrt(X2)) [noise = 0.5]: mean = 8.2, var = 2.7599999999999993, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(sin(X1), exp(X2)) [noise = 0.5]: mean = 0.8, var = 0.9600000000000002, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = mul(X1, sin(X2)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(mul(X1, X2)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 1000).astype(np.float64), X3: np.random.uniform(-1, 1, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(exp(X1), sqrt(X2), arcsin(X3)) [noise = 0.5]: mean = 12.15, var = 5.2275, valid tests = 20 / 20
+X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(sin(X1), mul(exp(X1), cos(X1))) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X3: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = mul(X1, sin(add(X2, X3))) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X3: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(sin(mul(X1, X2)), X3) [noise = 0.5]: mean = 0.6, var = 0.8399999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(X) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(X) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arcsin(X) [noise = 0.5]: mean = 5.55, var = 0.7475000000000002, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arccos(X) [noise = 0.5]: mean = 5.65, var = 1.0274999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(X) [noise = 0.5]: mean = 5.1, var = 1.4900000000000002, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = ln(X) [noise = 0.5]: mean = 6.7, var = 1.11, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(X) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sqrt(X) [noise = 0.5]: mean = 8.0, var = 2.5, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = sin(arccos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(exp(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sin(ln(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(div(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sin(sqrt(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = cos(arcsin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(exp(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = cos(ln(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(div(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = cos(sqrt(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arcsin(arccos(X)) [noise = 0.5]: mean = 5.55, var = 0.44750000000000006, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(exp(X)) [noise = 0.5]: mean = 5.65, var = 0.3275, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arcsin(ln(X)) [noise = 0.5]: mean = 5.45, var = 0.5475000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arcsin(sqrt(X)) [noise = 0.5]: mean = 5.35, var = 0.5275000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arccos(arcsin(X)) [noise = 0.5]: mean = 5.9, var = 1.0900000000000003, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(exp(X)) [noise = 0.5]: mean = 5.65, var = 0.5275000000000001, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arccos(ln(X)) [noise = 0.5]: mean = 5.4, var = 0.43999999999999995, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arccos(sqrt(X)) [noise = 0.5]: mean = 5.5, var = 0.65, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = exp(arcsin(X)) [noise = 0.5]: mean = 5.55, var = 0.44750000000000006, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = exp(arccos(X)) [noise = 0.5]: mean = 5.45, var = 0.44750000000000006, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(div(X)) [noise = 0.5]: mean = 3.95, var = 2.0475000000000003, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = exp(sqrt(X)) [noise = 0.5]: mean = 6.35, var = 1.3274999999999997, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = ln(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = ln(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = ln(arcsin(X)) [noise = 0.5]: mean = 5.85, var = 0.7275000000000003, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = ln(arccos(X)) [noise = 0.5]: mean = 5.65, var = 0.4275000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = ln(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = ln(sqrt(X)) [noise = 0.5]: mean = 6.05, var = 1.5474999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = div(arcsin(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = div(arccos(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(exp(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = div(ln(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = div(sqrt(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(sin(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(cos(X)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = sqrt(arcsin(X)) [noise = 0.5]: mean = 5.35, var = 0.32749999999999996, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = sqrt(arccos(X)) [noise = 0.5]: mean = 5.55, var = 0.7475, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(exp(X)) [noise = 0.5]: mean = 5.85, var = 1.2275, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sqrt(ln(X)) [noise = 0.5]: mean = 6.35, var = 1.8275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(div(X)) [noise = 0.5]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(exp(X1), sqrt(X2)) [noise = 0.5]: mean = 8.1, var = 1.6900000000000002, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(sin(X1), exp(X2)) [noise = 0.5]: mean = 1.2, var = 0.9600000000000002, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = mul(X1, sin(X2)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(mul(X1, X2)) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 10000).astype(np.float64), X3: np.random.uniform(-1, 1, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(exp(X1), sqrt(X2), arcsin(X3)) [noise = 0.5]: mean = 12.2, var = 3.7599999999999993, valid tests = 20 / 20
+X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(sin(X1), mul(exp(X1), cos(X1))) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X3: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = mul(X1, sin(add(X2, X3))) [noise = 0.5]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X3: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(sin(mul(X1, X2)), X3) [noise = 0.5]: mean = 0.4, var = 0.6400000000000002, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(X) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(X) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arcsin(X) [noise = 1]: mean = 6.4, var = 1.3399999999999999, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arccos(X) [noise = 1]: mean = 6.8, var = 1.26, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(X) [noise = 1]: mean = 4.85, var = 0.9275000000000002, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = ln(X) [noise = 1]: mean = 6.75, var = 1.3875, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(X) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sqrt(X) [noise = 1]: mean = 7.4, var = 2.54, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = sin(arccos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(exp(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sin(ln(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(div(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sin(sqrt(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = cos(arcsin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(exp(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = cos(ln(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = cos(div(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = cos(sqrt(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arcsin(arccos(X)) [noise = 1]: mean = 6.4, var = 1.64, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(exp(X)) [noise = 1]: mean = 5.6, var = 0.54, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arcsin(ln(X)) [noise = 1]: mean = 6.0, var = 0.5, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arcsin(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arcsin(sqrt(X)) [noise = 1]: mean = 6.2, var = 0.6599999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = arccos(arcsin(X)) [noise = 1]: mean = 6.65, var = 1.2274999999999996, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(exp(X)) [noise = 1]: mean = 5.75, var = 0.3875, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arccos(ln(X)) [noise = 1]: mean = 5.8, var = 0.46000000000000013, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = arccos(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = arccos(sqrt(X)) [noise = 1]: mean = 5.6, var = 0.64, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = exp(arcsin(X)) [noise = 1]: mean = 5.55, var = 0.44750000000000006, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = exp(arccos(X)) [noise = 1]: mean = 5.05, var = 0.6474999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = exp(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = exp(sqrt(X)) [noise = 1]: mean = 5.15, var = 2.2275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = ln(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = ln(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = ln(arcsin(X)) [noise = 1]: mean = 5.65, var = 0.5275000000000002, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = ln(arccos(X)) [noise = 1]: mean = 5.8, var = 0.56, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = ln(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = ln(sqrt(X)) [noise = 1]: mean = 5.45, var = 0.6475000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = div(arcsin(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = div(arccos(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = div(exp(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = div(ln(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = div(sqrt(X)) [noise = 1]: mean = 2.05, var = 0.047499999999999994, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = sqrt(arcsin(X)) [noise = 1]: mean = 5.85, var = 0.6275000000000002, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 100).astype(np.float64), Y = sqrt(arccos(X)) [noise = 1]: mean = 5.7, var = 0.71, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(exp(X)) [noise = 1]: mean = 4.75, var = 1.4875, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 100).astype(np.float64), Y = sqrt(ln(X)) [noise = 1]: mean = 5.5, var = 0.65, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sqrt(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(exp(X1), sqrt(X2)) [noise = 1]: mean = 8.75, var = 4.1875, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(sin(X1), exp(X2)) [noise = 1]: mean = 0.9, var = 0.99, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = mul(X1, sin(X2)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = sin(mul(X1, X2)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 100).astype(np.float64), X3: np.random.uniform(-1, 1, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(exp(X1), sqrt(X2), arcsin(X3)) [noise = 1]: mean = 11.8, var = 3.0599999999999996, valid tests = 20 / 20
+X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(sin(X1), mul(exp(X1), cos(X1))) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X3: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = mul(X1, sin(add(X2, X3))) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 100).astype(np.float64), X3: np.random.uniform(-10, 10, 100).astype(np.float64), X1: np.random.uniform(-10, 10, 100).astype(np.float64), Y = add(sin(mul(X1, X2)), X3) [noise = 1]: mean = 0.5, var = 0.75, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(X) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(X) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arcsin(X) [noise = 1]: mean = 5.65, var = 0.8274999999999999, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arccos(X) [noise = 1]: mean = 5.6, var = 0.64, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(X) [noise = 1]: mean = 5.45, var = 1.0474999999999999, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = ln(X) [noise = 1]: mean = 6.55, var = 1.3475, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(X) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sqrt(X) [noise = 1]: mean = 7.2, var = 3.2600000000000002, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = sin(arccos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(exp(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sin(ln(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(div(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sin(sqrt(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = cos(arcsin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(exp(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = cos(ln(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = cos(div(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = cos(sqrt(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arcsin(arccos(X)) [noise = 1]: mean = 5.75, var = 1.0875, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(exp(X)) [noise = 1]: mean = 5.4, var = 0.33999999999999997, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arcsin(ln(X)) [noise = 1]: mean = 5.35, var = 0.32749999999999996, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arcsin(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arcsin(sqrt(X)) [noise = 1]: mean = 5.45, var = 0.44750000000000006, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = arccos(arcsin(X)) [noise = 1]: mean = 6.3, var = 1.4100000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(exp(X)) [noise = 1]: mean = 5.5, var = 0.45, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arccos(ln(X)) [noise = 1]: mean = 5.25, var = 0.1875, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = arccos(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = arccos(sqrt(X)) [noise = 1]: mean = 5.45, var = 0.5475000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = exp(arcsin(X)) [noise = 1]: mean = 5.55, var = 0.44750000000000006, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = exp(arccos(X)) [noise = 1]: mean = 5.4, var = 0.33999999999999997, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = exp(div(X)) [noise = 1]: mean = 2.2, var = 0.46000000000000013, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = exp(sqrt(X)) [noise = 1]: mean = 6.15, var = 2.0274999999999994, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = ln(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = ln(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = ln(arcsin(X)) [noise = 1]: mean = 5.95, var = 0.6474999999999999, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = ln(arccos(X)) [noise = 1]: mean = 5.9, var = 0.39, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = ln(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = ln(sqrt(X)) [noise = 1]: mean = 5.85, var = 1.2275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = div(arcsin(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = div(arccos(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = div(exp(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = div(ln(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = div(sqrt(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = sqrt(arcsin(X)) [noise = 1]: mean = 5.3, var = 0.30999999999999994, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 1000).astype(np.float64), Y = sqrt(arccos(X)) [noise = 1]: mean = 5.5, var = 0.65, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(exp(X)) [noise = 1]: mean = 4.8, var = 1.4600000000000002, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 1000).astype(np.float64), Y = sqrt(ln(X)) [noise = 1]: mean = 6.4, var = 1.5399999999999998, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sqrt(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(exp(X1), sqrt(X2)) [noise = 1]: mean = 8.95, var = 5.647500000000001, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(sin(X1), exp(X2)) [noise = 1]: mean = 0.9, var = 0.99, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = mul(X1, sin(X2)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = sin(mul(X1, X2)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 1000).astype(np.float64), X3: np.random.uniform(-1, 1, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(exp(X1), sqrt(X2), arcsin(X3)) [noise = 1]: mean = 11.5, var = 2.55, valid tests = 20 / 20
+X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(sin(X1), mul(exp(X1), cos(X1))) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X3: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = mul(X1, sin(add(X2, X3))) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 1000).astype(np.float64), X3: np.random.uniform(-10, 10, 1000).astype(np.float64), X1: np.random.uniform(-10, 10, 1000).astype(np.float64), Y = add(sin(mul(X1, X2)), X3) [noise = 1]: mean = 0.7, var = 0.9100000000000001, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(X) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(X) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arcsin(X) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arccos(X) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(X) [noise = 1]: mean = 5.2, var = 1.26, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = ln(X) [noise = 1]: mean = 6.05, var = 1.2475, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(X) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sqrt(X) [noise = 1]: mean = 8.4, var = 0.74, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = sin(arccos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(exp(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sin(ln(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(div(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sin(sqrt(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = cos(arcsin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(exp(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = cos(ln(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = cos(div(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = cos(sqrt(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arcsin(arccos(X)) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(exp(X)) [noise = 1]: mean = 5.3, var = 0.21000000000000002, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arcsin(ln(X)) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arcsin(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arcsin(sqrt(X)) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = arccos(arcsin(X)) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(exp(X)) [noise = 1]: mean = 5.5, var = 0.35, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arccos(ln(X)) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = arccos(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = arccos(sqrt(X)) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = exp(arcsin(X)) [noise = 1]: mean = 5.1, var = 0.09, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = exp(arccos(X)) [noise = 1]: mean = 5.15, var = 0.22749999999999998, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = exp(div(X)) [noise = 1]: mean = 3.7, var = 1.8099999999999998, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = exp(sqrt(X)) [noise = 1]: mean = 7.1, var = 0.38999999999999996, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = ln(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = ln(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = ln(arcsin(X)) [noise = 1]: mean = 5.55, var = 0.5475000000000001, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = ln(arccos(X)) [noise = 1]: mean = 5.7, var = 0.51, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = ln(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = ln(sqrt(X)) [noise = 1]: mean = 6.15, var = 1.8275, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = div(arcsin(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = div(arccos(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = div(exp(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = div(ln(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = div(sqrt(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(sin(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(cos(X)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = sqrt(arcsin(X)) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-1, 1, 10000).astype(np.float64), Y = sqrt(arccos(X)) [noise = 1]: mean = 5.0, var = 0.0, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(exp(X)) [noise = 1]: mean = 5.7, var = 1.3100000000000003, valid tests = 20 / 20
+X: np.random.uniform(0, 10, 10000).astype(np.float64), Y = sqrt(ln(X)) [noise = 1]: mean = 7.3, var = 0.8099999999999999, valid tests = 20 / 20
+X: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sqrt(div(X)) [noise = 1]: mean = 2.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(exp(X1), sqrt(X2)) [noise = 1]: mean = 8.35, var = 3.4275000000000007, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(sin(X1), exp(X2)) [noise = 1]: mean = 1.1, var = 0.9899999999999999, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = mul(X1, sin(X2)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = sin(mul(X1, X2)) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(0, 10, 10000).astype(np.float64), X3: np.random.uniform(-1, 1, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(exp(X1), sqrt(X2), arcsin(X3)) [noise = 1]: mean = 11.45, var = 2.3475, valid tests = 20 / 20
+X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(sin(X1), mul(exp(X1), cos(X1))) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X3: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = mul(X1, sin(add(X2, X3))) [noise = 1]: mean = 0.0, var = 0.0, valid tests = 20 / 20
+X2: np.random.uniform(-10, 10, 10000).astype(np.float64), X3: np.random.uniform(-10, 10, 10000).astype(np.float64), X1: np.random.uniform(-10, 10, 10000).astype(np.float64), Y = add(sin(mul(X1, X2)), X3) [noise = 1]: mean = 0.4, var = 0.6400000000000001, valid tests = 20 / 20
