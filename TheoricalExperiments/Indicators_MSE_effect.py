@@ -32,18 +32,7 @@ import Errors as er
 import Operations as op
 
 
-#Si tiene solo le confidence dei nodi perchè ...
-def total_confidence(node):
-    
-    def f(node):
-    
-        result = []
-        for c in node.get_childrens(): result += f(c)
-        return result + [node.calculation_hat_confidence()] if isinstance(node, op.Leaf) else result
-    
-    result = f(node)
-    
-    return np.mean(result)
+
 
 
 def polynomial_experiment():
@@ -85,26 +74,9 @@ def polynomial_experiment():
             "spearman": ind.spearman_correlation(Y_calculated, Y),
             "kendall": ind.kendall_correlation(Y_calculated, Y),
             "chatterjee": ind.chatterjee_correlation(Y_calculated, Y),
-            "total_confidence": abs(total_confidence(model.get_root())),
             "MAE": er.MAE(Y_calculated, Y)})
-        
-    #USARE LA TECNICA DI PRENDERE IL MAGGIORE NON FUNZIONA
-    #USARE LA TECNICA DI PRENDERE L' ULTIMO DEGREE CHE SI ALZA NON FUNZIONA
-    def strategy(confidences, errors):
-        
-        timeline = [{"confidence": c, "error": e} for c, e in zip(confidences, errors)]
-        
-        r = 0
-        
-        for i in range(len(timeline)):
-            
-            if(i == 0): continue
-            
-            if(timeline[i]["confidence"] > timeline[i-1]["confidence"]): r = i
-            
-        return r+1
 
-    print(f"Real degree: {len(coeffs)}, Inferred degree: {strategy([x['total_confidence'] for x in results], [x['MAE'] for x in results])}")
+    
     
     #print([x["MAE"] for x in results])
 
@@ -112,10 +84,8 @@ def polynomial_experiment():
       
     for i in results:
         i["MAE"] = i["MAE"] / max_MAE
-        #i["total_confidence"] = i["total_confidence"] / max_confidence
 
 
-    plt.plot([x["degree"] for x in results], [x["total_confidence"] for x in results], color = "orange", label = "Total confidence")
     plt.plot([x["degree"] for x in results], [x["MAE"] for x in results], color = "black", label = "Scaled MAE")
     plt.plot([x["degree"] for x in results], [x["pearson"] for x in results], color = "red", label = "Pearson")
     plt.plot([x["degree"] for x in results], [x["spearman"] for x in results], color = "blue", label = "Spearman")
@@ -134,7 +104,7 @@ polynomial_experiment()
 # 
 # CHATERJEE: PARTISSE BASSO, DALL' INIZIO FINO AL BEST FITTING, SI ALZASSE, SUPERATO IL BEST FITTING SI RIABBASSASSE
 # MAE: SI ABBASSE SEMPRE
-# Total confidence: niente
+
 
 #COSA HO OTTENUTO (polynomial):
 
@@ -142,15 +112,8 @@ polynomial_experiment()
 # CERTO PUNTO INIZIA AD OSCILLARE). COME MAI? OD è IL POLINOMIALE CHE è UNA FORMA CHE NON PERMETTE QUESTA LOGICA PERCHè è TROPPO SEMPLICE?
 # MAE: CIò CHE MI ASPETTAVO
 # PEARSON E SPEARMAN NON MI DICONO NIENTE DI INTERESSANTE
-# Total confidence: FA SU E GIù, MA QUANDO SI ENTRA IN OVERFITTING, VA SEMPRE GIù. DA CAPIRE MEGLIO QUESTO COMPORTAMENTO, MA SEMBRA INTERESSANTE
 
-# La total confidence, come chaterjee, hanno lo stesso valore su 2 funzioni se quest' ultime passano nello stesso insieme di punti con gli stessi valori. Allora perchè
-# cambia la total confidence e si abbassa quando siamo in overfitting?
-
-#In overfitting, tutti gli indicatori, MAE e total confidence non si muovono, perchè possono vedere solo i valori output, ed essendo in overfitting i valori quasi uguali, 
+#In overfitting, tutti gli indicatori e la MAE non si muovono, perchè possono vedere solo i valori output, ed essendo in overfitting i valori quasi uguali, 
 # i valori degl indicatori non cambiano. Ciò che cambia è il loro atteggiamento in underfitting, quello si.
 
-
-# CAPIRE PERCHé LA TOTAL CONFIDENCE DIMININUISCE QUANDO SIAMO IN OVERFITTING, GUARDANDO SOLO I DATI, SE NON C'è NESSUN ERRORE E PIù FUNZIONI PASSANO PER LA STESSA 
-# FUNZIONE, NON CAPISCO PERCHè DIMINUISCE ALLORA
 

@@ -12,67 +12,6 @@ import Indicators as ind
 import InformationSOTA.artificial_formulas as af
 import utils
 
-#Foreach node:
-
-#Nodo interno singolo: ou
-#Nodo a catena: f * ou
-#foglia: 2 + ou
-
-# Nodo interno: aggiungo tutte le varie possibili operazioni sopra
-# Foglia: aggiungo tutte le feature + costante, non ci metto la combinazione di operazione unaria + feature per osservare il comportamento del modello senza provare a 
-# scavalcare con dei pattern già complessi (perchè sennò bisognava provare anche con pattern complessi di 2 livello, 3 livello etc.), e da lì poi l' esplosione,
-# quindi per vedere se il modello riesce a catturare le relazioni strutturali giuste senza fare i salti
-
-
-def default_package_extensions(nodes, unary_operations, TR_inputs_dict):
-
-    def get_constant(memory):
-        
-        if(isinstance(memory, np.ndarray)):
-            mask = memory[np.isfinite(memory)]
-            if(len(mask) == 0): raise ValueError("It is not possible to do the mean with empty list")
-
-        return np.mean(memory[np.isfinite(memory)]) if isinstance(memory, np.ndarray) else memory
-    
-    combinations = []
-    
-    #n nodes
-    for n in nodes:
-        
-        forward = n.get_memory("forward")
-        backward = n.get_memory("backward")
-        
-        if(isinstance(n, op.Leaf)):
-            
-            choice_feature = sorted([{"f": x, "score": np.abs(ind.chatterjee_correlation(TR_inputs_dict[x], backward))} for x in TR_inputs_dict.keys()], key = lambda x: -x["score"])
-            
-            combinations.append({"type": "change_base", "node": n, "new_feature": choice_feature[0]["f"], "score": choice_feature[0]["score"]})
-           
-            combinations.append({"type": "change_base", 
-                                 "node": n, 
-                                 "new_feature": get_constant(n.get_memory("backward")),
-                                 "score": 1 / (1 + np.var(backward))})
-            
-        if(n.is_constant()): continue
-            
-        total_analysis = utils.total_analysis(forward, backward, ["linear", "monoton", "symmetry", "sinusoidal", "vertical_asymptote"])
-        
-        for ou in unary_operations:
-            
-            oper = ou()
-            oper.new_connection(op.Leaf(0))
-            
-            if(not oper.check_input_domain(0, forward)): continue
-            
-        combinations.append({"type": "add_operation", "node": n, "new operation": ou, "score": ou.calculate_statistical_score(total_analysis)})
-        
-    combinations = sorted(combinations, key = lambda x: -x["score"])
-    
-    combinations = [x for x in combinations if not (x["type"] == "change_base" and str(x["node"]) == str(x["new_feature"]))]
-
-    return combinations
-
-
 
 
 
@@ -83,7 +22,6 @@ def standard_package_extensions(nodes, unary_operations, TR_inputs_dict):
         
         if(isinstance(memory, np.ndarray)):
             mask = np.isfinite(memory)
-            #if(np.sum(mask) == 0): raise ValueError()
             memory = memory[mask]
 
         return np.mean(memory[np.isfinite(memory)]) if isinstance(memory, np.ndarray) else memory
@@ -93,11 +31,12 @@ def standard_package_extensions(nodes, unary_operations, TR_inputs_dict):
     #n nodes
     for n in nodes:
         
+        #Take backward of the context
         backward = n.get_memory("backward")
         
+        #Decide which leaf must be analyze (if we are in a leaf, analyze all features, otherwise, analyze the node itself)
         leafs = []
         
-        #Decide which leaf must be analyze
         if(isinstance(n, op.Leaf)):
             
             leafs = [op.Leaf(x) for x in TR_inputs_dict.keys()]
@@ -108,37 +47,98 @@ def standard_package_extensions(nodes, unary_operations, TR_inputs_dict):
         else:
             
             copy_node = n.copy_sub_tree()
-            copy_node.set_memory("forward", n.get_memory("forward"))    
+            copy_node.forward_calculation_memory_sub_tree(TR_inputs).backward_calculation_memory_sub_tree(n.get_memory("backward"))
             leafs = [copy_node]
         
         
         #Start analysis
         
         #Calculate score for constant  
-        combinations.append({"node": n, "new node": op.Leaf(get_constant(n.get_memory("backward"))), "score": 1 / (1 + np.var(backward))})        
+        combinations.append({"node": n, "new node": op.Leaf(get_constant(n.get_memory("backward"))), "score": 1 / (1 + np.var(backward))})
         
-        if(not n.is_constant()): continue
-            
+        #If node is a constant, has no any sense to continue
+        if(n.is_constant()): continue
 
         for l in leafs:
-        
-            total_analysis = utils.total_analysis(l.get_memory("forward"), backward, ["linear", "monoton", "symmetry", "sinusoidal", "vertical_asymptote"])
+
+            #If leaf is a chain
+            if(isinstance(l, op.ChainOperationNode)):
                 
-            #Calculate score for each operation
-            for ou in unary_operations:
-                    
-                oper = ou()
-                oper.new_connection(l.copy_sub_tree())
-                    
-                if(not oper.check_input_domain(0, l.get_memory("forward"))): continue
-                    
-                combinations.append({"node": n, "new node": oper, "score": ou.calculate_statistical_score(total_analysis)})
+                #FOCI algorithm (for get the index of most important childrens)
+                len_vector = len(list(TR_inputs_dict.values())[0])
+                matrix_features = np.array([x.get_memory("forward") if not x.is_constant() else np.array([x.get_memory("forward")]*len_vector) for x in l.get_childrens()]).T
+                important_childrens = ind.most_important_features(matrix_features, backward)
+
+                #Create the new node (with the 2 sub_set_divided)
+                new_chain = type(l)()
+                sub_set_chain = type(l)()
+                residual_chain = type(l)()
+                new_chain.new_connection(sub_set_chain)
+                new_chain.new_connection(residual_chain)
                 
-            combinations.append({"node": n, "new node": l, "score": total_analysis["linear"]})
+                #Divide the childrens
+                for i, c in enumerate(l.get_childrens()):
+                    
+                    if(i in important_childrens): sub_set_chain.new_connection(c.copy_sub_tree())
+                    else:                        residual_chain.new_connection(c.copy_sub_tree())
+                    
+                #Calculate forward and backward of sub_set_chain
+                new_chain.forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(l.get_memory("backward"))
+                
+                #Free sub_set from new_chain
+                new_chain.free_connection(sub_set_chain)
+                
+                #Analyze the sub set
+                total_analysis = utils.total_analysis(sub_set_chain.get_memory("forward"), sub_set_chain.get_memory("backward"), ["linear", "monoton", "symmetry", "sinusoidal", "vertical_asymptote"])
+                    
+            
+                #Calculate score for each operation that will be up the chain
+                for ou in unary_operations:
+                        
+                    oper = ou()
+                    r = op.Leaf(1) 
+                    oper.new_connection(r)   
+                
+                    if(not oper.check_input_domain(0, sub_set_chain.get_memory("forward"))): continue
+                    
+                    oper.free_connection(r)
+                    
+                    #Hook up all, new_chain (last child) - oper - sub_set_chain
+                    oper.new_connection(sub_set_chain)
+                    new_chain.new_connection(oper)
+                        
+                    combinations.append({"node": n, "new node": new_chain.copy_sub_tree(), "score": ou.calculate_statistical_score(total_analysis)})
+                    
+                    #Unhook all, new_chain (last child) - oper - sub_set_chain
+                    new_chain.free_connection(oper)
+                    oper.free_connection(sub_set_chain)
+         
+                
+                #In this way, all childrens that are not important for the chain, will be deleted, also because the linear are refee only to sub_set_chain
+                combinations.append({"node": n, "new node": sub_set_chain.copy_sub_tree(), "score": np.abs(total_analysis["linear"])})
+                            
+
+            #If node si a single node 
+            else:
+                        
+                total_analysis = utils.total_analysis(l.get_memory("forward"), backward, ["linear", "monoton", "symmetry", "sinusoidal", "vertical_asymptote"])
+                    
+                #Calculate score for each operation
+                for ou in unary_operations:
+                        
+                    oper = ou()
+                    oper.new_connection(l.copy_sub_tree())
+                    
+                    if(not oper.check_input_domain(0, l.get_memory("forward"))): continue
+                    
+                    combinations.append({"node": n, "new node": oper, "score": ou.calculate_statistical_score(total_analysis)})
+                    
+                combinations.append({"node": n, "new node": l, "score": np.abs(total_analysis["linear"])})
 
         
+        
     combinations = [x for x in combinations if(str(x["node"]) != str(x["new node"]) and np.isfinite(x["score"]))]
-    
+
     combinations =  sorted(combinations, key = lambda x: -x["score"])
               
     return combinations
@@ -194,13 +194,34 @@ def stop_criteria_function(strategy_learning, counter, TR_output):
 
 
 
+#-----------------------------------------------------------------------------------------------------------------------
+
+
+X = np.linspace(-100, 100, 1000, dtype = np.float64)
+Y = np.sin(X)
+
+TR_inputs = {"X": X, "S": np.linspace(-100, 100, 1000, dtype = np.float64)*10}
+TR_output = Y
+
+m = SymbolicRegression.string_to_tree("X")
+
+m.get_root().forward_calculation_memory_sub_tree(TR_inputs).backward_calculation_memory_sub_tree(TR_output)
+
+standard_package_extensions(m.get_root().get_all_subtree_nodes(), [op.div, op.abs, op.exp, op.sqrt, op.sin], TR_inputs)
+
+raise ValueError("TOTAL STOP")
+
+
+#-----------------------------------------------------------------------------------------------------------------------
+
+
 art_formulas = af.artificial_formulas
 
 for a in range(len(choice_nodes)):
     
     for b in range(len(regularization_MDL)):
         
-        for i, c in enumerate(list(art_formulas.keys())[0:15]):
+        for i, c in enumerate(list(art_formulas.keys())[0:13]):
             
             print("*"*100)
             
@@ -228,7 +249,7 @@ for a in range(len(choice_nodes)):
 
             metric_results = tree.learn(TR_inputs,
                                         TR_output,
-                                        ls.AnalysisRamification([op.div, op.abs, op.exp, op.ln, op.sin, op.arcsin],
+                                        ls.AnalysisRamification([op.div, op.abs, op.exp, op.sqrt, op.sin],
                                                                 
                                                                 choice_nodes[a]
                                                                 
@@ -248,7 +269,7 @@ for a in range(len(choice_nodes)):
             print(f"REAL FORMULA:     {ideal_function}")
             print(f"INFERRED FORMULA: {metric_results['results']['tree'][-1]}")
             
-            json.dump(metric_results | {"real function": ideal_function}, open(f"MOCK_save_experiments/{a}_{b}_{i}.json", "w", encoding="utf-8"), indent=4, ensure_ascii=False)
+            #json.dump(metric_results | {"real function": ideal_function}, open(f"MOCK_save_experiments/{a}_{b}_{i}.json", "w", encoding="utf-8"), indent=4, ensure_ascii=False)
             
             #break
             

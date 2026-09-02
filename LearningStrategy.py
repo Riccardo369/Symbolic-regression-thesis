@@ -149,13 +149,18 @@ class AnalysisRamification(SymbolicRegressionLearning):
         Q.new_connection(op.Leaf(q))
         
         return Q
-           
+       
+    #If a node is a multiplication chain, add a addition number with 0 (non ha senso aggiungere anche un altra multiplication)
+    #If a node is a addition chain, add a multiplication number with 1 (non ha senso aggiungere anche un altra addition)
+    #If a node is not a constant, and not a chain (* or +), apply multiplication and addition adding
     def linear_extend_model(model):
         
         def recursion(node):
             
+            #Go down
             for c in node.get_childrens(): recursion(c)
             
+            #If node is a constant do nothing
             if(node.is_constant()): return 
             
             substitution = None

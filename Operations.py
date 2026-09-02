@@ -5,9 +5,8 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 
-import Domains as dm
+#import Domains as dm
 import Exceptions as ex
-import Simplifications as si
 import Indicators as ind
 import Errors as er
 import utils
@@ -212,16 +211,6 @@ class OperationNode:
     
     #NODE METHODS (valid only for the node, not for the all sub tree). For correct functions, the require memory must be calculated already
 
-    #Get the list of simplification considering the position where is the node in global tree (considering also the father etc.)
-    def get_scissions_simplification(self, operations = []):
-        return operations
-    
-    def get_vertical_application_simplification(self, operations = []):
-        return operations
-
-    def get_decorporation_simplification(self, operations = []):
-        return operations
-
     #Get the string function of all subtree
     def get_string_calculation_function(self):
         
@@ -242,25 +231,10 @@ class OperationNode:
         body = recursion(self, leaf_labels)
     
         return {"leaf_labels": leaf_labels, "body": body}
-    
-    def get_derative_subtree(self, x):
-        
-        def recursion(node, x):
-
-            extraction = [recursion(c, x) for c in node.get_childrens()]
-            str_derative = [x for x in extraction]
-            return node.get_string_derative_structure(str_derative, x)
-        
-        return recursion(self, x)
  
     #Get the operation in string form 
     def get_string_calculation_structure(self, x):
         return NotImplemented
-
-    #Get the derative operation in string form (for x feature)
-    def get_string_derative_structure(self, sub_strings, x):
-        if(len(sub_strings) != self.get_channels()): raise ValueError(f"sub_strings len {len(sub_strings)} must be equals to childrens number {self.get_channels()}")
-        return NotImplemented 
 
     #Calculate forward value. REQUIRE forwards from childrens
     def forward_calculation(self):
@@ -268,13 +242,6 @@ class OperationNode:
 
     #Calculate backward value. REQUIRE backward from father and forward from childrens
     def backward_calculation(self):
-        return NotImplemented
-
-    #Calculate the confidence of this node (considering the childrens). REQUIRE backward from father and forward from childrens
-    def calculation_hat_confidence(self, x, y):
-        return NotImplemented
-
-    def calculate_statistical_score(total_analysis):
         return NotImplemented
 
     #Copy all sub tree
@@ -349,7 +316,9 @@ class ChainOperationNode(OperationNode):
         super().__init__(float("inf"))
         
     def accept_number_childrens(self, k):
-        return k > 1 and k < self.get_max_channels()
+        return k > 0 and k < self.get_max_channels()
+   
+   
         
 
 class Leaf(OperationNode):
@@ -368,27 +337,8 @@ class Leaf(OperationNode):
     
     def backward_calculation(self):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
-    
-    def calculation_hat_confidence(self, x, y):
-        if(self.is_constant()): result = 1 / (np.var(y) + 1)
-        else: result = ind.chatterjee_correlation(x, y)
-        return result if np.isfinite(result) else 0
 
-    def calculate_statistical_score(total_analysis):
-        raise ValueError("IT is not possible to calculate statistical score of a leaf")
 
-    def get_string_derative_structure(self, sub_strings, x):
-        super().get_string_derative_structure(sub_strings, x)
-        return "1" if x == self._name else "0"
-    
-    def get_scissions_simplification(self):
-        return super().get_scissions_simplification([si.approximation])
-    
-    def get_scissions_simplification(self):
-        return super().get_scissions_simplification([])
-    
-    def get_vertical_application_simplification(self):
-        return super().get_scissions_simplification([si.approximation])
 
 class add(ChainOperationNode):
     
@@ -408,19 +358,9 @@ class add(ChainOperationNode):
         inputs = [x.get_memory("forward") for x in self.get_childrens()]
         output = self.get_memory("backward") 
         return [output - i for i in inputs]
-    
-    def calculation_hat_confidence(self, x, y):
-        raise TypeError("add is a associative and commutative operation, it not make any sense")
-    
-    def calculate_statistical_score(total_analysis):
-        raise ValueError("IT is not possible to calculate statistical score of an add node")
-    
+
     def get_string_calculation_structure(self, x):
         return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
-    
-    def get_string_derative_structure(self, sub_strings, x):  
-        super().get_string_derative_structure(sub_strings, x)
-        return f"add({', '.join(sub_strings)})"
 
 class mul(ChainOperationNode):
     
@@ -457,34 +397,11 @@ class mul(ChainOperationNode):
         
         return result
 
-    def calculation_hat_confidence(self, x, y):
-        raise TypeError("mul is a associative and commutative operation, it not make any sense")
-    
-    def calculate_statistical_score(total_analysis):
-        raise ValueError("IT is not possible to calculate statistical score of an mul node")
- 
     def get_string_calculation_structure(self, x): 
         return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        
-        parts = []
-        
-        for i in range(self.get_channels()):
-            
-            new_part = []
-            
-            for j in range(self.get_channels()):
-                
-                if(i != j):   new_part.append(str_function[j])
-                elif(i == j): new_part.append(sub_strings[j])
-                
-            parts.append(f"mul({', '.join(new_part)})")
-        
-        return f"add({', '.join(parts)})"
+
+
+
 
 class div(UnaryOperationNode):
     
@@ -517,41 +434,9 @@ class div(UnaryOperationNode):
             output[mask] = input[mask] if isinstance(input, np.ndarray) else input
             
         return [output]
-    
-    def calculation_hat_confidence(self, x, y):
-    
-        In, Out = ind.prepare(x, y)
-    
-        mask_left = In < 0
-        mask_right = In > 0
-        
-        result_left = -ind.spearman_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
-        result_right = ind.spearman_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
-        
-        result = np.abs(result_left * result_right)
-        return result
-    
-    def calculate_statistical_score(total_analysis):
-        return -total_analysis["symmetry"] * np.abs(total_analysis["vertical_asymptote"])
-   
+
     def get_string_calculation_structure(self, x):
         return f"1 / {x[0]}"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-    
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(-1, (div(mul({str_function[0]}, {str_function[0]}))))"
-
-    def get_scissions_simplification(self):
-        return super().get_scissions_simplification([si.div_null,
-                                                   si.div_scission])
-        
-    def get_scissions_simplification(self):
-        return super().get_scissions_simplification([si.div_scission])
-    
-    def get_vertical_application_simplification(self):
-        return super().get_scissions_simplification([si.div_null])
 
 class sin(UnaryOperationNode):
     
@@ -569,24 +454,11 @@ class sin(UnaryOperationNode):
     def backward_calculation(self):
         real_output = self.get_memory("backward")
         return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
-    
-    def calculation_hat_confidence(self, x, y):
-        result = ind.chatterjee_correlation(x, y) * (1 - np.abs(ind.chatterjee_correlation(x, y)))
-        return result
-    
-    def calculate_statistical_score(total_analysis):
-        return np.abs(total_analysis["sinusoidal"])
 
     def get_string_calculation_structure(self, x):
         return f"np.sin({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(cos({str_function[0]}), {sub_strings[0]})"
-
-class arcsin(UnaryOperationNode):
+      
+class cos(UnaryOperationNode):
     
     def __init__(self):
         super().__init__()
@@ -594,85 +466,78 @@ class arcsin(UnaryOperationNode):
     def check_output_domain(self, output):
         if(not (self._check_type_name(output) and type(output) != str)): return False
         if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
-        else: return np.all(np.abs(output) <= (np.pi/2) + self._tol)
-        
-    def check_input_domain(self, i, input):
-        super().check_input_domain(i, input)
-        if(not (self._check_type_name(input) and type(input) != str)): return False
-        if(type(input) in [float, int]): return np.abs(input) <= 1 + self._tol
-        else: return np.all(np.abs(input) <= 1 + self._tol)
+        else: return np.all(np.abs(output) <= 1 + self._tol)
     
     def forward_calculation(self):
-        return np.arcsin(self.get_childrens()[0].get_memory("forward"))
+        return np.cos(self.get_childrens()[0].get_memory("forward"))
     
     def backward_calculation(self):
-        return [np.sin(self.get_memory("backward"))]
+        real_output = self.get_memory("backward")
+        return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
 
-    def calculation_hat_confidence(self, x, y):
-        result = ind.spearman_correlation(x, y)
-        return result
-
-    def calculate_statistical_score(total_analysis):
-        return np.abs(total_analysis["monoton"]) * -total_analysis["symmetry"]
-    
     def get_string_calculation_structure(self, x):
-        return f"np.arcsin({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"div({sub_strings[0]}, cos(arcsin({str_function[0]})))"
+        return f"np.cos({x[0]})"
 
-#Il cos non è altro che: cos(x) = sin(x + pi*1.5)
-
-class abs(UnaryOperationNode):
+class arcsin(UnaryOperationNode):
     
     def __init__(self):
         super().__init__()
+
+    def check_input_domain(self, i, input):
+        
+        super().check_input_domain(i, input)
+        if(not (self._check_type_name(input) and type(input) != str)): return False
+        
+        input = np.abs(input)
+
+        #Domain argument
+        if(i == 0 and type(input) in [float, int]): return 0 <= input and input <= 1
+        elif(i == 0): return np.all(0 <= input & input <= 1)
         
     def check_output_domain(self, output):
-        return np.all(output >= 0)
-    
+        output = np.abs(output)
+        return np.all(0 <= output & output <= np.pi/2)
+ 
     def forward_calculation(self):
-        return np.abs(self.get_childrens()[0].get_memory("forward"))
-    
-    def backward_calculation(self):
-        return [dm.get_ideal_input_abs(self.get_memory("forward"), self.get_memory("backward"))]
-
-    def calculation_hat_confidence(self, x, y):
-    
-        In, Out = ind.prepare(x, y)
-    
-        mask_left = In <= 0
-        mask_right = In >= 0
-        
-        result_left = ind.pearson_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
-        result_right = -ind.pearson_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
-        
-        result = np.abs(result_left * result_right)
+        result = np.arcsin(self.get_childrens()[0].get_memory("forward"))
         return result
     
-    def calculate_statistical_score(total_analysis):
-        return total_analysis["symmetry"]
+    def backward_calculation(self):
+        result = np.sin(self.get_memory("backward"))
+        return [result]
 
     def get_string_calculation_structure(self, x):
-        return f"np.abs({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul({sub_strings[0]}, div({str_function[0]}, abs({str_function[0]})))"
-    
-    def get_scissions_simplification(self):
-        return super().get_scissions_simplification([si.abs_scission])
+        return f"np.arcsin({x[0]})"
 
-    def get_vertical_application_simplification(self):
-        return super().get_scissions_simplification([si.abs_null])
+class arccos(UnaryOperationNode):
     
-    def get_decorporation_simplification(self):
-        return super().get_scissions_simplification([si.decorporation_abs])
+    def __init__(self):
+        super().__init__()
+
+    def check_input_domain(self, i, input):
+        
+        super().check_input_domain(i, input)
+        if(not (self._check_type_name(input) and type(input) != str)): return False
+        
+        input = np.abs(input)
+
+        #Domain argument
+        if(i == 0 and type(input) in [float, int]): return 0 <= input and input <= 1
+        elif(i == 0): return np.all(0 <= input & input <= 1)
+        
+    def check_output_domain(self, output):
+        return np.all(0 <= output & output <= np.pi)
+ 
+    def forward_calculation(self):
+        result = np.arccos(self.get_childrens()[0].get_memory("forward"))
+        return result
+    
+    def backward_calculation(self):
+        result = np.cos(self.get_memory("backward"))
+        return [result]
+   
+    def get_string_calculation_structure(self, x):
+        return f"np.arccos({x[0]})"
 
 class exp(UnaryOperationNode):
     
@@ -692,28 +557,10 @@ class exp(UnaryOperationNode):
         with np.errstate(over='ignore'):
             result = np.log(self.get_memory("backward"))
         return [result]
-    
-    def calculation_hat_confidence(self, x, y):
-        result = ind.spearman_correlation(x, y)
-        return result
-    
-    def calculate_statistical_score(total_analysis):
-        return np.abs(total_analysis["monoton"]) * (1 - np.abs(total_analysis["vertical_asymptote"]))
-    
+
     def get_string_calculation_structure(self, x):
         return f"np.exp({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(exp({str_function[0]}), {sub_strings[0]})"
-    
-    def get_vertical_application_simplification(self):
-        return super().get_scissions_simplification([si.exp_ln_null])
-    
-    def get_decorporation_simplification(self):
-        return super().get_scissions_simplification([si.decorporation_exp])
-
+   
 class ln(UnaryOperationNode):
     
     def __init__(self):
@@ -727,7 +574,7 @@ class ln(UnaryOperationNode):
         #Domain argument
         if(i == 0 and type(input) in [float, int]): return input > 0
         elif(i == 0): return np.all(input > 0)
- 
+
     def forward_calculation(self):
         with np.errstate(over='ignore'):
             result = np.log(self.get_childrens()[0].get_memory("forward"))
@@ -738,32 +585,40 @@ class ln(UnaryOperationNode):
             result = np.exp(self.get_memory("backward"))
 
         return [result]
-    
-    def calculation_hat_confidence(self, x, y):
-    
-        In, Out = ind.prepare(x, y)
-    
-        mask_right = In > 0
-        
-        result = ind.spearman_correlation(In[mask_right], Out[mask_right])
-    
-        return result if np.sum(mask_right) > 1 else 0
-    
-    def calculate_statistical_score(total_analysis):
-        return np.abs(total_analysis["monoton"]) * np.abs(total_analysis["vertical_asymptote"])
-   
+
     def get_string_calculation_structure(self, x):
         return f"np.log({x[0]})"
+
+class sqrt(UnaryOperationNode):
     
-    def get_string_derative_structure(self, sub_strings, x):
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(div({str_function[0]}), {sub_strings[0]})"
+    def __init__(self):
+        super().__init__()
 
-    def get_vertical_application_simplification(self):
-        return super().get_scissions_simplification([si.ln_exp_null])
+    def check_input_domain(self, i, input):
+        
+        super().check_input_domain(i, input)
+        if(not (self._check_type_name(input) and type(input) != str)): return False
 
-    def get_decorporation_simplification(self):
-        return super().get_scissions_simplification([si.decorporation_ln])
+        #Domain argument
+        if(i == 0 and type(input) in [float, int]): return input >= 0
+        elif(i == 0): return np.all(input >= 0)
+        
+    def check_output_domain(self, output):
+        return np.all(output >= 0)
+ 
+    def forward_calculation(self):
+        with np.errstate(over='ignore'):
+            result = np.sqrt(self.get_childrens()[0].get_memory("forward"))
+        return result
+    
+    def backward_calculation(self):
+        with np.errstate(over='ignore'):
+            result = self.get_memory("backward")**2
+
+        return [result]
+   
+    def get_string_calculation_structure(self, x):
+        return f"np.sqrt({x[0]})"
 
 
+#div, sin, cos, arcsin, arccos, exp, ln, sqrt

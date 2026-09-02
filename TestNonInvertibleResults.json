@@ -1,0 +1,1802 @@
+[
+    {
+        "seed": 84,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 0.9786109521651342,
+        "mae_cos": 1.0454576037847805,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9737513976289348,
+        "pearson_cos": 0.9730570867439198
+    },
+    {
+        "seed": 84,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9154834989602919,
+        "mae_cos": 1.2178638760166896,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9806775273118489,
+        "pearson_cos": 0.9709754991554239
+    },
+    {
+        "seed": 84,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.122355411548209,
+        "mae_cos": 0.8802933776984935,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.967850945253381,
+        "pearson_cos": 0.9792815683450471
+    },
+    {
+        "seed": 84,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.7315896857776484,
+        "mae_cos": 1.3827295549881564,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9868091084958313,
+        "pearson_cos": 0.9586040265334593
+    },
+    {
+        "seed": 84,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 0.6540919022146422,
+        "mae_cos": 1.7763568394002505e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9786563215041318,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 84,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.330803366429691,
+        "mae_cos": 0.3195558441455089,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9977865936268678,
+        "pearson_cos": 0.9978253035622631
+    },
+    {
+        "seed": 84,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0627405451175431,
+        "mae_cos": 1.1074367802700953,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9777910098622262,
+        "pearson_cos": 0.9754463796931174
+    },
+    {
+        "seed": 84,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9056453740513918,
+        "mae_cos": 1.2890025478145668,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9838816680008144,
+        "pearson_cos": 0.9671699373925342
+    },
+    {
+        "seed": 84,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1296167135946171,
+        "mae_cos": 1.0012431289430157,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9728807683479858,
+        "pearson_cos": 0.978547243616969
+    },
+    {
+        "seed": 84,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.6981201203941845,
+        "mae_cos": 1.5159297528567326,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9900068824210281,
+        "pearson_cos": 0.9553387840431181
+    },
+    {
+        "seed": 84,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7703857665281437,
+        "mae_cos": 9.103828801926283e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9779413211854805,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 84,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.29680856766258623,
+        "mae_cos": 0.29508169235184917,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9983544459813278,
+        "pearson_cos": 0.998339036651159
+    },
+    {
+        "seed": 84,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0351911760814416,
+        "mae_cos": 1.098624651194439,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9779727397195672,
+        "pearson_cos": 0.9747667557424138
+    },
+    {
+        "seed": 84,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9308528531120633,
+        "mae_cos": 1.2516665066980337,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9829726214754766,
+        "pearson_cos": 0.9672224563417156
+    },
+    {
+        "seed": 84,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1536018710887812,
+        "mae_cos": 1.0123034863376272,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9721193852200628,
+        "pearson_cos": 0.9778368489763432
+    },
+    {
+        "seed": 84,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.7043185520918139,
+        "mae_cos": 1.4690532684313629,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9897329388478817,
+        "pearson_cos": 0.9561854338571377
+    },
+    {
+        "seed": 84,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7630647905750311,
+        "mae_cos": 1.4099832412739488e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9776070945873951,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 84,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.30096041269754875,
+        "mae_cos": 0.29604290807520345,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982920980166234,
+        "pearson_cos": 0.9983081771483322
+    },
+    {
+        "seed": 192,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 0.9945224226233926,
+        "mae_cos": 1.2086105530883897,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9799713328257964,
+        "pearson_cos": 0.9737788529728266
+    },
+    {
+        "seed": 192,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.8287420828706444,
+        "mae_cos": 1.295656158393266,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9853712536295008,
+        "pearson_cos": 0.9659249896399484
+    },
+    {
+        "seed": 192,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1354569536115817,
+        "mae_cos": 0.9740829880865128,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9738180712400665,
+        "pearson_cos": 0.9821320680494606
+    },
+    {
+        "seed": 192,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.6371078057988776,
+        "mae_cos": 1.4678997595518186,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9915157780410885,
+        "pearson_cos": 0.9575695675027565
+    },
+    {
+        "seed": 192,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 0.6463810330933353,
+        "mae_cos": 7.993605777301127e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9831026150382591,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 192,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.2889133047179596,
+        "mae_cos": 0.26673470061074317,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9984506630210098,
+        "pearson_cos": 0.9985761816293273
+    },
+    {
+        "seed": 192,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0677962675565633,
+        "mae_cos": 1.0805795450323985,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.976901709129362,
+        "pearson_cos": 0.9765029981892707
+    },
+    {
+        "seed": 192,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9303296172601049,
+        "mae_cos": 1.2655898646035229,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9827832675331891,
+        "pearson_cos": 0.9677462289905867
+    },
+    {
+        "seed": 192,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1626495715718244,
+        "mae_cos": 1.0197803259137763,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9722456464009434,
+        "pearson_cos": 0.9781856790126344
+    },
+    {
+        "seed": 192,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.7098574785943685,
+        "mae_cos": 1.4733110621220853,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.989661609684354,
+        "pearson_cos": 0.9575455662447754
+    },
+    {
+        "seed": 192,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7600302225238397,
+        "mae_cos": 1.7985612998927537e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9778063343524759,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 192,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.30428836575006724,
+        "mae_cos": 0.3005037059817041,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.99828552001855,
+        "pearson_cos": 0.9982984178923051
+    },
+    {
+        "seed": 192,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0310297643631912,
+        "mae_cos": 1.106515324523669,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9784209771613748,
+        "pearson_cos": 0.9745445531940811
+    },
+    {
+        "seed": 192,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9205606717401699,
+        "mae_cos": 1.2621389200634718,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9832572130708775,
+        "pearson_cos": 0.9669195601803658
+    },
+    {
+        "seed": 192,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1380729362506712,
+        "mae_cos": 1.0093255503466592,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.972677762591135,
+        "pearson_cos": 0.9777706181794101
+    },
+    {
+        "seed": 192,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.6947519595172691,
+        "mae_cos": 1.4924210626721632,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9899364783630162,
+        "pearson_cos": 0.955178018845178
+    },
+    {
+        "seed": 192,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7548655722380694,
+        "mae_cos": 1.7723600365116e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9778063091763936,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 192,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.3015079741355819,
+        "mae_cos": 0.29555048748412943,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982961184393,
+        "pearson_cos": 0.9983187458363838
+    },
+    {
+        "seed": 317,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0278253025640518,
+        "mae_cos": 1.1094464867409992,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9752556317535802,
+        "pearson_cos": 0.9717075080820453
+    },
+    {
+        "seed": 317,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9373873475874429,
+        "mae_cos": 1.1718312695258735,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9798941995362134,
+        "pearson_cos": 0.9703604707219265
+    },
+    {
+        "seed": 317,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.2591703003097854,
+        "mae_cos": 1.076981457800454,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9640864186926672,
+        "pearson_cos": 0.9726790485686219
+    },
+    {
+        "seed": 317,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.628446167393824,
+        "mae_cos": 1.4710737801151046,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9907949198773605,
+        "pearson_cos": 0.949835440889697
+    },
+    {
+        "seed": 317,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7182385815477701,
+        "mae_cos": 2.6645352591003756e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9747501439949809,
+        "pearson_cos": 0.9999999999999999
+    },
+    {
+        "seed": 317,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.3372590088998742,
+        "mae_cos": 0.312466781029695,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9977399812388115,
+        "pearson_cos": 0.997959920922465
+    },
+    {
+        "seed": 317,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.065262968019438,
+        "mae_cos": 1.1090600305978184,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9776744687261683,
+        "pearson_cos": 0.9744206648140645
+    },
+    {
+        "seed": 317,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9269673745139846,
+        "mae_cos": 1.268780742549819,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9830551503111784,
+        "pearson_cos": 0.967266148978574
+    },
+    {
+        "seed": 317,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1665418734840631,
+        "mae_cos": 0.9710256829600215,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.971955647819628,
+        "pearson_cos": 0.9791771281657228
+    },
+    {
+        "seed": 317,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.7042060050711445,
+        "mae_cos": 1.4981562153383843,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9898390338684623,
+        "pearson_cos": 0.9551656352191485
+    },
+    {
+        "seed": 317,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7552503241865124,
+        "mae_cos": 6.430411758628906e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9784519546498369,
+        "pearson_cos": 0.9999999999999999
+    },
+    {
+        "seed": 317,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.29812009983968885,
+        "mae_cos": 0.2940707653770787,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9983084971299048,
+        "pearson_cos": 0.9983207001619885
+    },
+    {
+        "seed": 317,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.040589367631216,
+        "mae_cos": 1.1029603123258394,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.977778715207879,
+        "pearson_cos": 0.9749761364996207
+    },
+    {
+        "seed": 317,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9270877947006527,
+        "mae_cos": 1.2524612045387271,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9826651981989669,
+        "pearson_cos": 0.9672942275102789
+    },
+    {
+        "seed": 317,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.162023607373892,
+        "mae_cos": 1.003629863062736,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9714813443660084,
+        "pearson_cos": 0.9780624702926088
+    },
+    {
+        "seed": 317,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.7066896231368021,
+        "mae_cos": 1.4796373586373188,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9896233932313494,
+        "pearson_cos": 0.9560866057244539
+    },
+    {
+        "seed": 317,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7528637891628384,
+        "mae_cos": 9.401368572525826e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9778915682238789,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 317,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.3007244105099739,
+        "mae_cos": 0.2951818775267574,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982954534824027,
+        "pearson_cos": 0.9983181057402524
+    },
+    {
+        "seed": 429,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0321306083656152,
+        "mae_cos": 1.1369659327303612,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9804897930989395,
+        "pearson_cos": 0.9738396237147592
+    },
+    {
+        "seed": 429,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.8839243760327625,
+        "mae_cos": 1.346639826068554,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9837747201023679,
+        "pearson_cos": 0.9646138672996731
+    },
+    {
+        "seed": 429,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.3390448000431894,
+        "mae_cos": 0.9860055343763281,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9651429146328117,
+        "pearson_cos": 0.9807765005224693
+    },
+    {
+        "seed": 429,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.7337887090437663,
+        "mae_cos": 1.4992078454380475,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9892395997123594,
+        "pearson_cos": 0.9566949579364372
+    },
+    {
+        "seed": 429,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 0.8392783540315976,
+        "mae_cos": 1.7763568394002505e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9757951487150512,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 429,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.34168814251250007,
+        "mae_cos": 0.31649181578251623,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9981421029357052,
+        "pearson_cos": 0.9982907092359367
+    },
+    {
+        "seed": 429,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0424796503414806,
+        "mae_cos": 1.1131969321947923,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9792750195873805,
+        "pearson_cos": 0.9753964900603649
+    },
+    {
+        "seed": 429,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9224372531745066,
+        "mae_cos": 1.305137069523471,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9833822575529355,
+        "pearson_cos": 0.9662858671399707
+    },
+    {
+        "seed": 429,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1119515878084152,
+        "mae_cos": 1.0154346715503346,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.975640764955741,
+        "pearson_cos": 0.9781256207313926
+    },
+    {
+        "seed": 429,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.694870174847939,
+        "mae_cos": 1.5248279167383734,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9904650422260128,
+        "pearson_cos": 0.955218891575019
+    },
+    {
+        "seed": 429,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.74080827983951,
+        "mae_cos": 7.37188088351104e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9794470437439867,
+        "pearson_cos": 0.9999999999999998
+    },
+    {
+        "seed": 429,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.29903184601022403,
+        "mae_cos": 0.2925557036914795,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9983858657839542,
+        "pearson_cos": 0.998412475778706
+    },
+    {
+        "seed": 429,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0385428658261984,
+        "mae_cos": 1.1004926502801935,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9781146930531964,
+        "pearson_cos": 0.9742640239661814
+    },
+    {
+        "seed": 429,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9438733883857265,
+        "mae_cos": 1.2450242641617937,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9823830660972628,
+        "pearson_cos": 0.9669721488790393
+    },
+    {
+        "seed": 429,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1510374448844118,
+        "mae_cos": 1.022299699905185,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9721013957417268,
+        "pearson_cos": 0.9769564785586135
+    },
+    {
+        "seed": 429,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.7067257536827661,
+        "mae_cos": 1.4891009810219704,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9895344055268686,
+        "pearson_cos": 0.9546524324039803
+    },
+    {
+        "seed": 429,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7610828705540429,
+        "mae_cos": 1.127986593019159e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9774497142564605,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 429,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.297349515432572,
+        "mae_cos": 0.2930607732092719,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9983143918746186,
+        "pearson_cos": 0.9983179578296554
+    },
+    {
+        "seed": 501,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0720109762253418,
+        "mae_cos": 0.9725452542265108,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.979510019548693,
+        "pearson_cos": 0.9811790361967607
+    },
+    {
+        "seed": 501,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9161661998274561,
+        "mae_cos": 1.2695743535216928,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9848490259381253,
+        "pearson_cos": 0.969039414954561
+    },
+    {
+        "seed": 501,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1347680432872038,
+        "mae_cos": 1.051270755478442,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.975862787348582,
+        "pearson_cos": 0.9776436509053188
+    },
+    {
+        "seed": 501,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.7048550833942795,
+        "mae_cos": 1.4874825126471396,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9908308222631627,
+        "pearson_cos": 0.9588093493758267
+    },
+    {
+        "seed": 501,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7059806944060337,
+        "mae_cos": 2.2204460492503132e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.980962713601276,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 501,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.29480941042567516,
+        "mae_cos": 0.29716705998421516,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9985286089290464,
+        "pearson_cos": 0.9984608847821482
+    },
+    {
+        "seed": 501,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.075374571401643,
+        "mae_cos": 1.0722405540532467,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9764400746768662,
+        "pearson_cos": 0.9747703825784437
+    },
+    {
+        "seed": 501,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9318069230976721,
+        "mae_cos": 1.261175734305637,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9826982897455994,
+        "pearson_cos": 0.9661348259934861
+    },
+    {
+        "seed": 501,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.144591676637669,
+        "mae_cos": 1.0263180576146995,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9719160813885852,
+        "pearson_cos": 0.9762109329750823
+    },
+    {
+        "seed": 501,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.7171413037538519,
+        "mae_cos": 1.4919485600097933,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9892043859963993,
+        "pearson_cos": 0.9543354358583565
+    },
+    {
+        "seed": 501,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.8008097752376512,
+        "mae_cos": 6.572520305780926e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9759605537837046,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 501,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.30720746041821045,
+        "mae_cos": 0.30695504487368175,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9981938805203963,
+        "pearson_cos": 0.9981653331045469
+    },
+    {
+        "seed": 501,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0344283888326675,
+        "mae_cos": 1.1037301267290682,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9782262822337877,
+        "pearson_cos": 0.974611663357418
+    },
+    {
+        "seed": 501,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9321666557565788,
+        "mae_cos": 1.253741279603619,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9830256580522756,
+        "pearson_cos": 0.9669952299294371
+    },
+    {
+        "seed": 501,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1621779554029934,
+        "mae_cos": 1.0078599944058166,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9718116200663729,
+        "pearson_cos": 0.9778017913750882
+    },
+    {
+        "seed": 501,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.6981843523215284,
+        "mae_cos": 1.485479962506971,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.989932438022754,
+        "pearson_cos": 0.9555011365616319
+    },
+    {
+        "seed": 501,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7393011045536391,
+        "mae_cos": 1.7572610033766978e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9785970438194016,
+        "pearson_cos": 0.9999999999999998
+    },
+    {
+        "seed": 501,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.299072449712849,
+        "mae_cos": 0.2939094890498788,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9983103137637223,
+        "pearson_cos": 0.9983292862206244
+    },
+    {
+        "seed": 683,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 0.9926807655535552,
+        "mae_cos": 1.104389985640917,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9798403871573715,
+        "pearson_cos": 0.9782798984733303
+    },
+    {
+        "seed": 683,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9834635227824882,
+        "mae_cos": 1.3348070749521403,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9827109038432834,
+        "pearson_cos": 0.9632065135295225
+    },
+    {
+        "seed": 683,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1600592180472966,
+        "mae_cos": 1.024793808406779,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9722969572207172,
+        "pearson_cos": 0.9779937828355575
+    },
+    {
+        "seed": 683,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.6666617888153097,
+        "mae_cos": 1.6043520736084944,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9911831448165974,
+        "pearson_cos": 0.9531784550715321
+    },
+    {
+        "seed": 683,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 0.6755536580099927,
+        "mae_cos": 3.1086244689504386e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9829826772088994,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 683,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.3048549119581638,
+        "mae_cos": 0.28664139171263614,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982922194738418,
+        "pearson_cos": 0.9984697433862125
+    },
+    {
+        "seed": 683,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0561575414429734,
+        "mae_cos": 1.088591675093954,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9763364686191256,
+        "pearson_cos": 0.9751094197942448
+    },
+    {
+        "seed": 683,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9353839663863698,
+        "mae_cos": 1.2253116860879145,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.982313157656897,
+        "pearson_cos": 0.9674645616320083
+    },
+    {
+        "seed": 683,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1634242480497696,
+        "mae_cos": 0.9940921289318772,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9705285942406177,
+        "pearson_cos": 0.9784780988359143
+    },
+    {
+        "seed": 683,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.718949616771728,
+        "mae_cos": 1.451775464510435,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9892341325715017,
+        "pearson_cos": 0.9569634680543254
+    },
+    {
+        "seed": 683,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7544570654618008,
+        "mae_cos": 8.215650382226158e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9774348466870776,
+        "pearson_cos": 0.9999999999999998
+    },
+    {
+        "seed": 683,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.29603803634466125,
+        "mae_cos": 0.2930128235564974,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982959386186776,
+        "pearson_cos": 0.9983022476427909
+    },
+    {
+        "seed": 683,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0353859691708112,
+        "mae_cos": 1.10023686807301,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9784534299180481,
+        "pearson_cos": 0.9747964471033677
+    },
+    {
+        "seed": 683,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.926939442105558,
+        "mae_cos": 1.277390149360858,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9832134146201924,
+        "pearson_cos": 0.9664427862020549
+    },
+    {
+        "seed": 683,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1472506182200328,
+        "mae_cos": 1.0176261464236447,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9723181551651363,
+        "pearson_cos": 0.9776069539823176
+    },
+    {
+        "seed": 683,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.6911707208614944,
+        "mae_cos": 1.4900603459409616,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9899970839873956,
+        "pearson_cos": 0.9551383390281138
+    },
+    {
+        "seed": 683,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7707546144863245,
+        "mae_cos": 2.1622703627599549e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9775098555405574,
+        "pearson_cos": 0.9999999999999998
+    },
+    {
+        "seed": 683,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.29950428843291427,
+        "mae_cos": 0.2949897794352564,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9983136130921337,
+        "pearson_cos": 0.9983229572243881
+    },
+    {
+        "seed": 715,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.1491534200897429,
+        "mae_cos": 1.0697700952812084,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9734549731656889,
+        "pearson_cos": 0.9738152171971072
+    },
+    {
+        "seed": 715,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 1.0330785141066317,
+        "mae_cos": 1.218633422800113,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9783751185239823,
+        "pearson_cos": 0.9692861802216878
+    },
+    {
+        "seed": 715,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.3573232023403963,
+        "mae_cos": 0.9579630926775454,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9634988500274986,
+        "pearson_cos": 0.9794023143252154
+    },
+    {
+        "seed": 715,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.8199854506680885,
+        "mae_cos": 1.4988816859365763,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9863060870196244,
+        "pearson_cos": 0.9558760403588314
+    },
+    {
+        "seed": 715,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 1.0020538178907992,
+        "mae_cos": 6.217248937900877e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9667286889060878,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 715,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.30265847055022077,
+        "mae_cos": 0.3136541992011257,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982880408158298,
+        "pearson_cos": 0.9981418289259051
+    },
+    {
+        "seed": 715,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0434488819097223,
+        "mae_cos": 1.0779323013845588,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9772585886482936,
+        "pearson_cos": 0.9768085571547988
+    },
+    {
+        "seed": 715,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9358469509433344,
+        "mae_cos": 1.2433264583235164,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9823728345690712,
+        "pearson_cos": 0.9676636275856896
+    },
+    {
+        "seed": 715,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1845718232979159,
+        "mae_cos": 1.012868329408441,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9705122828629187,
+        "pearson_cos": 0.977849833487745
+    },
+    {
+        "seed": 715,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.7218935670826814,
+        "mae_cos": 1.4568174130327771,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9890945627325786,
+        "pearson_cos": 0.9580396254391559
+    },
+    {
+        "seed": 715,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.8014469037626418,
+        "mae_cos": 9.370282327836321e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9763081720933662,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 715,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.3015995612592676,
+        "mae_cos": 0.30168688757599693,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982570643313184,
+        "pearson_cos": 0.9982416778303701
+    },
+    {
+        "seed": 715,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0468447166474735,
+        "mae_cos": 1.102467460343979,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9774555533336986,
+        "pearson_cos": 0.9745146848391104
+    },
+    {
+        "seed": 715,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9347901051727642,
+        "mae_cos": 1.2527325675419025,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9826642873096274,
+        "pearson_cos": 0.9670747570669496
+    },
+    {
+        "seed": 715,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1670754032202701,
+        "mae_cos": 1.0063490674579945,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9712338198608965,
+        "pearson_cos": 0.9778883927857109
+    },
+    {
+        "seed": 715,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.7033723546333044,
+        "mae_cos": 1.4959537725325074,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9895713024389985,
+        "pearson_cos": 0.9547455178987743
+    },
+    {
+        "seed": 715,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7466573851896444,
+        "mae_cos": 9.992007221626409e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9778370740880912,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 715,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.2987367730940492,
+        "mae_cos": 0.293628446045746,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9983034597233872,
+        "pearson_cos": 0.9983208632495039
+    },
+    {
+        "seed": 842,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.1729634177583983,
+        "mae_cos": 1.0161093598621607,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9725218852372058,
+        "pearson_cos": 0.9755765142287659
+    },
+    {
+        "seed": 842,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9034960738155421,
+        "mae_cos": 1.1678626776119254,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9822420472865876,
+        "pearson_cos": 0.9702738984308961
+    },
+    {
+        "seed": 842,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.154768394800392,
+        "mae_cos": 0.9146635606908805,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9720436580767996,
+        "pearson_cos": 0.9799217540474083
+    },
+    {
+        "seed": 842,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.737622934064873,
+        "mae_cos": 1.4959261362426148,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9886975641209816,
+        "pearson_cos": 0.9517116904402211
+    },
+    {
+        "seed": 842,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 0.6035188344927094,
+        "mae_cos": 1.554312234475219e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9837818099746845,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 842,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.2866969438676932,
+        "mae_cos": 0.2874715230230936,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9983316555438783,
+        "pearson_cos": 0.9982854444525178
+    },
+    {
+        "seed": 842,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.039364900192345,
+        "mae_cos": 1.1236555216976793,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9787831370539841,
+        "pearson_cos": 0.97371728164635
+    },
+    {
+        "seed": 842,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.91064617627046,
+        "mae_cos": 1.2779121232753397,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.983675504951277,
+        "pearson_cos": 0.9656828760854455
+    },
+    {
+        "seed": 842,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1618633154790357,
+        "mae_cos": 1.0241095257862791,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9719041540440022,
+        "pearson_cos": 0.9770568808146608
+    },
+    {
+        "seed": 842,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.6842895880546099,
+        "mae_cos": 1.428500518820381,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9900459332444256,
+        "pearson_cos": 0.956629691940337
+    },
+    {
+        "seed": 842,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7321471400002545,
+        "mae_cos": 9.725553695716371e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9791141671277837,
+        "pearson_cos": 0.9999999999999999
+    },
+    {
+        "seed": 842,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.30245613548815065,
+        "mae_cos": 0.29712216675424136,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982976177938074,
+        "pearson_cos": 0.9983154154585797
+    },
+    {
+        "seed": 842,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0383075923846457,
+        "mae_cos": 1.1043559846882194,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9782432916683903,
+        "pearson_cos": 0.9745318371444397
+    },
+    {
+        "seed": 842,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9343244688897706,
+        "mae_cos": 1.2687606160168214,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9827399352392054,
+        "pearson_cos": 0.9665552650306979
+    },
+    {
+        "seed": 842,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1473332496610427,
+        "mae_cos": 1.0132822292411188,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9722324292428415,
+        "pearson_cos": 0.9775557267427637
+    },
+    {
+        "seed": 842,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.6944367986910874,
+        "mae_cos": 1.5005694000531973,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.989913012494953,
+        "pearson_cos": 0.9545847014992218
+    },
+    {
+        "seed": 842,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7497596670094261,
+        "mae_cos": 1.2656542480726783e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9780777060371963,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 842,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.30244870272962404,
+        "mae_cos": 0.29571550301668814,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982838013507589,
+        "pearson_cos": 0.9983105169739019
+    },
+    {
+        "seed": 906,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0973884238985865,
+        "mae_cos": 1.0590777121986688,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9748156226105875,
+        "pearson_cos": 0.9747510933903223
+    },
+    {
+        "seed": 906,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9958751518938455,
+        "mae_cos": 1.3430481976379318,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9794567055856629,
+        "pearson_cos": 0.9628786820887291
+    },
+    {
+        "seed": 906,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.313371428913118,
+        "mae_cos": 0.9720928962016718,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9617134967117531,
+        "pearson_cos": 0.9771978662795835
+    },
+    {
+        "seed": 906,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.7243690508936059,
+        "mae_cos": 1.5204107681518395,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9883723315839857,
+        "pearson_cos": 0.9501866574890392
+    },
+    {
+        "seed": 906,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 0.8814065186772632,
+        "mae_cos": 1.021405182655144e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9726828465341834,
+        "pearson_cos": 0.9999999999999998
+    },
+    {
+        "seed": 906,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.3264119085993085,
+        "mae_cos": 0.3188092067194078,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9979522688506244,
+        "pearson_cos": 0.9980302699205155
+    },
+    {
+        "seed": 906,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.024043438392325,
+        "mae_cos": 1.0979254654571877,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9804282851558699,
+        "pearson_cos": 0.9771875683907372
+    },
+    {
+        "seed": 906,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9467473318813429,
+        "mae_cos": 1.2835516498945847,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.983310975367592,
+        "pearson_cos": 0.966921910511594
+    },
+    {
+        "seed": 906,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1231586474879405,
+        "mae_cos": 1.034527936489436,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9746227901407079,
+        "pearson_cos": 0.9780411024053409
+    },
+    {
+        "seed": 906,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.702682929647879,
+        "mae_cos": 1.4456068358009952,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9905203525759099,
+        "pearson_cos": 0.9584938628250885
+    },
+    {
+        "seed": 906,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7639951095130768,
+        "mae_cos": 2.793321129956894e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9789498829351879,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 906,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.2954618121492306,
+        "mae_cos": 0.2928203324989377,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9984143540095066,
+        "pearson_cos": 0.9984079485276682
+    },
+    {
+        "seed": 906,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.045242170927774,
+        "mae_cos": 1.105415894668858,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9777684755672361,
+        "pearson_cos": 0.9744225759421098
+    },
+    {
+        "seed": 906,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9229574283903749,
+        "mae_cos": 1.2636158139921143,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9831721072962765,
+        "pearson_cos": 0.9667619158970424
+    },
+    {
+        "seed": 906,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1557058864589596,
+        "mae_cos": 1.0144099249694907,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9722936005083316,
+        "pearson_cos": 0.9775716153299714
+    },
+    {
+        "seed": 906,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.6940610759531196,
+        "mae_cos": 1.492200436360722,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9899740192751862,
+        "pearson_cos": 0.9550100510581647
+    },
+    {
+        "seed": 906,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7450798184467126,
+        "mae_cos": 2.7138291613937325e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9781149447444722,
+        "pearson_cos": 0.9999999999999999
+    },
+    {
+        "seed": 906,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.30016037018617076,
+        "mae_cos": 0.2939459903427238,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9983034466120488,
+        "pearson_cos": 0.998322177231439
+    },
+    {
+        "seed": 958,
+        "n_samples": 100,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.1145243692657314,
+        "mae_cos": 1.0722141890348589,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9796741234051681,
+        "pearson_cos": 0.9752023262301902
+    },
+    {
+        "seed": 958,
+        "n_samples": 100,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9889417321081062,
+        "mae_cos": 1.2484771688285445,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.983228435460543,
+        "pearson_cos": 0.9677469849815997
+    },
+    {
+        "seed": 958,
+        "n_samples": 100,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1239550118174693,
+        "mae_cos": 0.9510089833363932,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9772304079171101,
+        "pearson_cos": 0.979813636001999
+    },
+    {
+        "seed": 958,
+        "n_samples": 100,
+        "function": "1/X",
+        "mae_sin": 0.7248603174217143,
+        "mae_cos": 1.4962593054414284,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9908280248714624,
+        "pearson_cos": 0.9546664655150369
+    },
+    {
+        "seed": 958,
+        "n_samples": 100,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7230212250191201,
+        "mae_cos": 8.881784197001253e-17,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9768989167992564,
+        "pearson_cos": 0.9999999999999999
+    },
+    {
+        "seed": 958,
+        "n_samples": 100,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.2919327978592528,
+        "mae_cos": 0.2993384191682909,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9984614179696658,
+        "pearson_cos": 0.9983557888701946
+    },
+    {
+        "seed": 958,
+        "n_samples": 1000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0628994518275794,
+        "mae_cos": 1.106728447115878,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9786796235806847,
+        "pearson_cos": 0.9759562646746684
+    },
+    {
+        "seed": 958,
+        "n_samples": 1000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9262842182604377,
+        "mae_cos": 1.2922259647552548,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9832719975524278,
+        "pearson_cos": 0.9665827803685578
+    },
+    {
+        "seed": 958,
+        "n_samples": 1000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.1472378168816473,
+        "mae_cos": 0.9946480442362177,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9732638761355972,
+        "pearson_cos": 0.9793158390690622
+    },
+    {
+        "seed": 958,
+        "n_samples": 1000,
+        "function": "1/X",
+        "mae_sin": 0.7194346721586249,
+        "mae_cos": 1.482919090051944,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9896614423701556,
+        "pearson_cos": 0.9571749438648882
+    },
+    {
+        "seed": 958,
+        "n_samples": 1000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7486001037340323,
+        "mae_cos": 1.0613732115416496e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9790508324130741,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 958,
+        "n_samples": 1000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.2977259018059998,
+        "mae_cos": 0.2961086507253948,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.99838320890558,
+        "pearson_cos": 0.9983749813601387
+    },
+    {
+        "seed": 958,
+        "n_samples": 10000,
+        "function": "(2*X) + (np.pi/4)",
+        "mae_sin": 1.0521027413967363,
+        "mae_cos": 1.0902713851830326,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9773687293889239,
+        "pearson_cos": 0.9751315801280301
+    },
+    {
+        "seed": 958,
+        "n_samples": 10000,
+        "function": "np.exp(0.5*X)",
+        "mae_sin": 0.9256872531634946,
+        "mae_cos": 1.2593155697995448,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9832202990706478,
+        "pearson_cos": 0.9669771516492606
+    },
+    {
+        "seed": 958,
+        "n_samples": 10000,
+        "function": "(X**3) - (3*X)",
+        "mae_sin": 1.158266980326648,
+        "mae_cos": 1.0030847122023292,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.971889555721962,
+        "pearson_cos": 0.9779311301136608
+    },
+    {
+        "seed": 958,
+        "n_samples": 10000,
+        "function": "1/X",
+        "mae_sin": 0.7113341055793546,
+        "mae_cos": 1.490668166321121,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.989590674255239,
+        "pearson_cos": 0.955252340990119
+    },
+    {
+        "seed": 958,
+        "n_samples": 10000,
+        "function": "np.abs(X)",
+        "mae_sin": 0.7552039205698237,
+        "mae_cos": 1.687983086640088e-16,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9779623399055498,
+        "pearson_cos": 1.0
+    },
+    {
+        "seed": 958,
+        "n_samples": 10000,
+        "function": "X + (0.5*np.sin(3*X))",
+        "mae_sin": 0.29933031828506046,
+        "mae_cos": 0.29617644449739566,
+        "typology": "pseudo_inverse",
+        "pearson_sin": 0.9982974111361508,
+        "pearson_cos": 0.9982978556533717
+    }
+]

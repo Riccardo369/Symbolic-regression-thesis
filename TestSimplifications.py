@@ -14,7 +14,8 @@ import utils
 
 
 
-tests = ["mul(X, 2, add(X, w), add(2, 3))",
+tests = ["add(X)",
+         "mul(X, 2, add(X, w), add(2, 3))",
          "mul(mul(X, 2), 3, Q, S)",
          "mul(mul(X, 2), 3, add(Q, S), A)",
          "mul(mul(X, 2), 3, mul(mul(A, B), B), B)",

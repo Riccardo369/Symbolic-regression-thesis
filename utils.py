@@ -30,6 +30,9 @@ def linear_extension(X, Y):
     
     q = mean_Y - (m*mean_X)
     
+    if(~np.isfinite(m)): m = 1
+    if(~np.isfinite(q)): q = 0
+    
     return {"m": m, "q": q}
 
 
