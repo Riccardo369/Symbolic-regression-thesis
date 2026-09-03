@@ -174,10 +174,6 @@ choice_nodes = [lambda n, uo, TR_inputs: standard_package_extensions(n, uo, TR_i
                 #lambda n, uo, TR_inputs: sorted_by_chatterjee(default_package_extensions(only_leafs(n), uo, TR_inputs))
                 ]
 
-regularization_MDL = [lambda model: 0,
-                      #lambda model: er.MDL(TR_output, model.get_root().get_memory("forward"), model)
-                      ]
-
 
 
 def stop_criteria_function(strategy_learning, counter, TR_output):
@@ -197,19 +193,22 @@ def stop_criteria_function(strategy_learning, counter, TR_output):
 #-----------------------------------------------------------------------------------------------------------------------
 
 
-X = np.linspace(-100, 100, 1000, dtype = np.float64)
-Y = np.sin(X)
+X = {"X": np.linspace(-1, 1, 5, dtype = np.float64)}
+Y = np.arcsin(np.sin(3 * X["X"] * 3))
 
-TR_inputs = {"X": X, "S": np.linspace(-100, 100, 1000, dtype = np.float64)*10}
-TR_output = Y
+#TR_inputs = {"X": X, "S": np.linspace(-100, 100, 1000, dtype = np.float64)*10}
+#TR_output = Y
 
-m = SymbolicRegression.string_to_tree("X")
+m = SymbolicRegression.string_to_tree("arcsin(sin(mul(3, X, 3)))")
 
-m.get_root().forward_calculation_memory_sub_tree(TR_inputs).backward_calculation_memory_sub_tree(TR_output)
+m.get_root().forward_calculation_memory_sub_tree(X).backward_calculation_memory_sub_tree(Y)
 
-standard_package_extensions(m.get_root().get_all_subtree_nodes(), [op.div, op.abs, op.exp, op.sqrt, op.sin], TR_inputs)
+m.view(lambda x: f"{x.get_memory('forward')} / {x.get_memory('backward')}")
+
+#standard_package_extensions(m.get_root().get_all_subtree_nodes(), [op.div, op.exp, op.sqrt, op.sin, op.cos], TR_inputs)
 
 raise ValueError("TOTAL STOP")
+
 
 
 #-----------------------------------------------------------------------------------------------------------------------

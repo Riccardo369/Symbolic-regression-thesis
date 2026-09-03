@@ -5,17 +5,17 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 
-#import Domains as dm
 import Exceptions as ex
 import Indicators as ind
 import Errors as er
 import utils
+import NonInvertibleFunctions as nif
 
 class OperationNode:
 
     _tol = 1e-40
     
-    def __init__(self, max_channels, name = None):
+    def __init__(self, max_channels, name = None, invertible = True):
         
         if(type(max_channels) not in [int] and max_channels != float("inf")): raise ValueError(f"Max channels must be a int number, cannot be {max_channels}")
         
@@ -27,6 +27,8 @@ class OperationNode:
         
         #Set parameters
         self.set_name(name)
+        
+        self._is_invertible = invertible
         
         self._childrens = []
         
@@ -109,6 +111,9 @@ class OperationNode:
 
         return recursion(self)
     
+    def is_invertible(self):
+        return self._is_invertible
+    
     def get_max_channels(self):
         return self._max_channels
            
@@ -160,8 +165,8 @@ class OperationNode:
         def recursion(node):
             for child in node.get_childrens(): recursion(child)
             if(type(node) == Leaf): node.set_memory("forward", inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name())
-            else:                   node.set_memory("forward", node.forward_calculation())
-        
+            else: node.set_memory("forward", node.__class__.forward_calculation([x.get_memory("forward") for x in node.get_childrens()]))
+ 
         with np.errstate(divide='ignore', invalid='ignore'):  
                 
             recursion(self)
@@ -175,7 +180,7 @@ class OperationNode:
         def recursion(node):
             
             if(not issubclass(type(node), Leaf)):
-                for child, backward in zip(node.get_childrens(), node.backward_calculation()):                
+                for child, backward in zip(node.get_childrens(), node.__class__.backward_calculation([x.get_memory("forward") for x in node.get_childrens()], node.get_memory("backward"))):                
                     child.set_memory("backward", backward)
                     recursion(child)
                     
@@ -201,12 +206,11 @@ class OperationNode:
     #CHECK OPERATION ZONE
     def _check_type_name(self, name):
         return True
-    
-    def check_input_domain(self, i, input):
-        if(i < 0 or i > len(self._childrens) - 1): raise ValueError(f"Operation {type(self)} has {len(self._childrens)}, so i = {i} has no coherence (start count from 0)")
-        return True
 
-    def check_output_domain(self, output):
+    def check_input_domain(output):
+        return True
+    
+    def check_output_domain(output):
         return True
     
     #NODE METHODS (valid only for the node, not for the all sub tree). For correct functions, the require memory must be calculated already
@@ -237,11 +241,11 @@ class OperationNode:
         return NotImplemented
 
     #Calculate forward value. REQUIRE forwards from childrens
-    def forward_calculation(self):
+    def forward_calculation(real_inputs):
         return NotImplemented
 
     #Calculate backward value. REQUIRE backward from father and forward from childrens
-    def backward_calculation(self):
+    def backward_calculation(real_inputs, expected_output):
         return NotImplemented
 
     #Copy all sub tree
@@ -286,7 +290,7 @@ class OperationNode:
             
             Printer.node(str(id(node)), f'<\n<FONT COLOR="{title_color}">{node.__class__.__name__.upper()}</FONT><BR/>\n<FONT COLOR="{text_color}">{f(node)}</FONT>>', {'shape': 'octagon', 'color': border_color, 'fillcolor': node_color, 'style': 'filled'})
 
-            for child in [x for x in node.__childrens]: Printer.edge(str(id(node)), recursion(child, level+1))
+            for child in [x for x in node.get_childrens()]: Printer.edge(str(id(node)), recursion(child, level+1))
                 
             return str(id(node))
         
@@ -307,8 +311,8 @@ class OperationNode:
 
 class UnaryOperationNode(OperationNode):
     
-    def __init__(self):
-        super().__init__(1)
+    def __init__(self, is_invertible):
+        super().__init__(1, is_invertible)
              
 class ChainOperationNode(OperationNode):
     
@@ -319,7 +323,7 @@ class ChainOperationNode(OperationNode):
         return k > 0 and k < self.get_max_channels()
    
    
-        
+
 
 class Leaf(OperationNode):
     
@@ -332,11 +336,12 @@ class Leaf(OperationNode):
     def is_variable(self):
         return type(self.get_name()) in [str]
     
-    def forward_calculation(self):
+    def forward_calculation(real_inputs):
         raise ValueError("It is a leaf, it is not possible to do a forward calculation, it has no children")
     
-    def backward_calculation(self):
+    def backward_calculation(real_inputs, expected_output):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
+
 
 
 
@@ -348,16 +353,16 @@ class add(ChainOperationNode):
     def __str__(self):
         return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
 
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+    def forward_calculation(forward_inputs):
         result = 0
-        for i in inputs: result += i
+        for i in forward_inputs: result += i
         return result
     
-    def backward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        output = self.get_memory("backward") 
-        return [output - i for i in inputs]
+    def backward_calculation(forward_inputs, expected_output):
+        forward_sum = 0
+        for i in forward_inputs: forward_sum += i
+        return [expected_output - (forward_sum - i) for i in forward_inputs]
+
 
     def get_string_calculation_structure(self, x):
         return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
@@ -370,29 +375,34 @@ class mul(ChainOperationNode):
     def __str__(self):
         return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
 
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
+    def forward_calculation(forward_inputs):
         result = 1
-        for i in inputs: result *= i
+        for i in forward_inputs: result *= i
         return result
     
-    def backward_calculation(self):
-        
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        output = self.get_memory("backward")
+    def backward_calculation(forward_inputs, expected_output):
         
         result = []
         
-        for input in inputs:
+        forward_prod = 1
+        for i in forward_inputs: forward_prod *= i
+        
+        for input in forward_inputs:
             
-            try: backward_output = output / input
-            except ZeroDivisionError: backward_output = input
+            backward_output = np.divide(expected_output * input,
+                                        forward_prod,
+                                        out = np.full_like(forward_prod, np.nan, dtype=float), 
+                                        where = (forward_prod != 0))
             
-            if(isinstance(input, np.ndarray)):
+            #Every element of this multiplication are constants
+            if(not isinstance(backward_output, np.ndarray) and np.isnan(backward_output)): backward_output = input
+            
+            elif(isinstance(backward_output, np.ndarray)):
+                
                 mask = ~np.isfinite(backward_output)
                 if(not np.isscalar(input)): backward_output[mask] = input[mask]
-                else: backward_output = input
-            
+                else: backward_output[mask] = input
+                
             result.append(backward_output)
         
         return result
@@ -406,34 +416,39 @@ class mul(ChainOperationNode):
 class div(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__()
+        super().__init__(True)
         
-    def check_input_domain(self, i, input):
-        super().check_input_domain(i, input)
-        if(not (self._check_type_name(input) and type(input) != str)): return False
-        if(i == 0 and type(input) in [float, int]): return np.abs(input) >= self._tol
-        elif(i == 0): return np.all(np.abs(input) >= self._tol)
+    def check_input_domain(i, input):
+        if(i == 0 and type(input) in [float, int]): return np.abs(input) >= OperationNode._tol
+        elif(i == 0): return np.all(np.abs(input) >= OperationNode._tol)
 
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]  
+    def forward_calculation(forward_inputs):
             
-        try: return 1 / inputs[0] 
+        try: return 1 / forward_inputs[0] 
         except ZeroDivisionError: np.nan
     
-    def backward_calculation(self):
+    def backward_calculation(forward_inputs, expected_output):
         
-        input = self.get_memory("backward")
+        input = forward_inputs[0]
         
-        with np.errstate(divide='ignore', invalid='ignore'):
-
-            try: output = 1 / input
-            except ZeroDivisionError: output = np.nan
+        backward_output = np.divide(1,
+                           expected_output,
+                           out = np.full_like(input, np.nan, dtype=float), 
+                           where = (input != 0))
+        
+        if(not isinstance(backward_output, np.ndarray) and np.isnan(backward_output)): backward_output = input
+                    
+        elif(isinstance(backward_output, np.ndarray)):
+                        
+            mask = ~np.isfinite(backward_output)
+            if(not np.isscalar(input)): backward_output[mask] = input[mask]
+            else: backward_output[mask] = input
             
-        if(isinstance(output, np.ndarray)):
-            mask = ~np.isfinite(output)
-            output[mask] = input[mask] if isinstance(input, np.ndarray) else input
+        #if(isinstance(output, np.ndarray)):
+            #mask = ~np.isfinite(output)
+            #output[mask] = input[mask] if isinstance(input, np.ndarray) else input
             
-        return [output]
+        return [backward_output]
 
     def get_string_calculation_structure(self, x):
         return f"1 / {x[0]}"
@@ -441,19 +456,17 @@ class div(UnaryOperationNode):
 class sin(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__()
+        super().__init__(False)
         
-    def check_output_domain(self, output):
-        if(not (self._check_type_name(output) and type(output) != str)): return False
-        if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
-        else: return np.all(np.abs(output) <= 1 + self._tol)
+    def check_output_domain(output):
+        if(type(output) in [float, int]): return np.abs(output) <= 1 + OperationNode._tol
+        else: return np.all(np.abs(output) <= 1 + OperationNode._tol)
     
-    def forward_calculation(self):
-        return np.sin(self.get_childrens()[0].get_memory("forward"))
+    def forward_calculation(forward_inputs):
+        return np.sin(forward_inputs[0])
     
-    def backward_calculation(self):
-        real_output = self.get_memory("backward")
-        return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
+    def backward_calculation(forward_inputs, expected_output):
+        return [nif.pseudo_inverse_input_sin(forward_inputs[0], expected_output)]
 
     def get_string_calculation_structure(self, x):
         return f"np.sin({x[0]})"
@@ -461,19 +474,17 @@ class sin(UnaryOperationNode):
 class cos(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__()
+        super().__init__(False)
         
-    def check_output_domain(self, output):
-        if(not (self._check_type_name(output) and type(output) != str)): return False
-        if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
-        else: return np.all(np.abs(output) <= 1 + self._tol)
+    def check_output_domain(output):
+        if(type(output) in [float, int]): return np.abs(output) <= 1 + OperationNode._tol
+        else: return np.all(np.abs(output) <= 1 + OperationNode._tol)
     
-    def forward_calculation(self):
-        return np.cos(self.get_childrens()[0].get_memory("forward"))
-    
-    def backward_calculation(self):
-        real_output = self.get_memory("backward")
-        return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
+    def forward_calculation(forward_inputs):
+        return np.cos(forward_inputs[0])
+
+    def backward_calculation(forward_inputs, expected_output):
+        return [nif.pseudo_inverse_input_cos(forward_inputs[0], expected_output)]
 
     def get_string_calculation_structure(self, x):
         return f"np.cos({x[0]})"
@@ -481,30 +492,25 @@ class cos(UnaryOperationNode):
 class arcsin(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__()
+        super().__init__(True)
 
-    def check_input_domain(self, i, input):
-        
-        super().check_input_domain(i, input)
-        if(not (self._check_type_name(input) and type(input) != str)): return False
-        
+    def check_input_domain(i, input):
+
         input = np.abs(input)
 
         #Domain argument
         if(i == 0 and type(input) in [float, int]): return 0 <= input and input <= 1
         elif(i == 0): return np.all(0 <= input & input <= 1)
         
-    def check_output_domain(self, output):
+    def check_output_domain(output):
         output = np.abs(output)
         return np.all(0 <= output & output <= np.pi/2)
- 
-    def forward_calculation(self):
-        result = np.arcsin(self.get_childrens()[0].get_memory("forward"))
-        return result
     
-    def backward_calculation(self):
-        result = np.sin(self.get_memory("backward"))
-        return [result]
+    def forward_calculation(forward_inputs):
+        return np.arcsin(forward_inputs[0])
+    
+    def backward_calculation(forward_inputs, expected_output):
+        return [np.sin(expected_output)]
 
     def get_string_calculation_structure(self, x):
         return f"np.arcsin({x[0]})"
@@ -512,12 +518,9 @@ class arcsin(UnaryOperationNode):
 class arccos(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__()
+        super().__init__(True)
 
-    def check_input_domain(self, i, input):
-        
-        super().check_input_domain(i, input)
-        if(not (self._check_type_name(input) and type(input) != str)): return False
+    def check_input_domain(i, input):
         
         input = np.abs(input)
 
@@ -525,16 +528,14 @@ class arccos(UnaryOperationNode):
         if(i == 0 and type(input) in [float, int]): return 0 <= input and input <= 1
         elif(i == 0): return np.all(0 <= input & input <= 1)
         
-    def check_output_domain(self, output):
+    def check_output_domain(output):
         return np.all(0 <= output & output <= np.pi)
  
-    def forward_calculation(self):
-        result = np.arccos(self.get_childrens()[0].get_memory("forward"))
-        return result
-    
-    def backward_calculation(self):
-        result = np.cos(self.get_memory("backward"))
-        return [result]
+    def forward_calculation(forward_inputs):
+        return np.arccos(forward_inputs[0])
+        
+    def backward_calculation(forward_inputs, expected_output):
+        return [np.cos(expected_output)]
    
     def get_string_calculation_structure(self, x):
         return f"np.arccos({x[0]})"
@@ -542,49 +543,42 @@ class arccos(UnaryOperationNode):
 class exp(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__()
+        super().__init__(True)
         
-    def check_output_domain(self, output):
+    def check_output_domain(output):
         if(type(output) in [float, int]): return output > 0
         else: return np.all(output > 0)
 
-    def forward_calculation(self):
+    def forward_calculation(forward_inputs):
         with np.errstate(over='ignore'):
-            result = np.exp(self.get_childrens()[0].get_memory("forward"))
-        return result
+            return np.exp(forward_inputs)
 
-    def backward_calculation(self):
+    def backward_calculation(forward_inputs, expected_output):
         with np.errstate(over='ignore'):
-            result = np.log(self.get_memory("backward"))
-        return [result]
-
+            return [np.log(expected_output)]
+        
     def get_string_calculation_structure(self, x):
         return f"np.exp({x[0]})"
    
 class ln(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__()
+        super().__init__(True)
 
-    def check_input_domain(self, i, input):
-        
-        super().check_input_domain(i, input)
-        if(not (self._check_type_name(input) and type(input) != str)): return False
+    def check_input_domain(i, input):
 
         #Domain argument
         if(i == 0 and type(input) in [float, int]): return input > 0
         elif(i == 0): return np.all(input > 0)
 
-    def forward_calculation(self):
+    def forward_calculation(forward_inputs):
         with np.errstate(over='ignore'):
-            result = np.log(self.get_childrens()[0].get_memory("forward"))
-        return result
+            return np.log(forward_inputs)
     
-    def backward_calculation(self):
+    def backward_calculation(forward_inputs, expected_output):
         with np.errstate(over='ignore'):
-            result = np.exp(self.get_memory("backward"))
+            return [np.exp(expected_output)]
 
-        return [result]
 
     def get_string_calculation_structure(self, x):
         return f"np.log({x[0]})"
@@ -592,33 +586,29 @@ class ln(UnaryOperationNode):
 class sqrt(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__()
+        super().__init__(True)
 
-    def check_input_domain(self, i, input):
+    def check_input_domain(i, input):
         
-        super().check_input_domain(i, input)
-        if(not (self._check_type_name(input) and type(input) != str)): return False
-
         #Domain argument
         if(i == 0 and type(input) in [float, int]): return input >= 0
         elif(i == 0): return np.all(input >= 0)
         
-    def check_output_domain(self, output):
+    def check_output_domain(output):
         return np.all(output >= 0)
- 
-    def forward_calculation(self):
-        with np.errstate(over='ignore'):
-            result = np.sqrt(self.get_childrens()[0].get_memory("forward"))
-        return result
     
-    def backward_calculation(self):
+    def forward_calculation(forward_inputs):
         with np.errstate(over='ignore'):
-            result = self.get_memory("backward")**2
+            return np.sqrt(forward_inputs)
+    
+    def backward_calculation(forward_inputs, expected_output):
+        with np.errstate(over='ignore'):
+            return [expected_output**2]
+        
 
-        return [result]
-   
     def get_string_calculation_structure(self, x):
         return f"np.sqrt({x[0]})"
+
 
 
 #div, sin, cos, arcsin, arccos, exp, ln, sqrt

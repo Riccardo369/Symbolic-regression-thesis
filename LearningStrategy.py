@@ -8,28 +8,7 @@ import Indicators as In
 import Exceptions as ex
 import utils
 
-def plot(X, Y1, Y2):
-    
-    if(type(Y1) in [int, float]): Y1 = np.array([Y1]*len(X)) 
-    if(type(Y2) in [int, float]): Y2 = np.array([Y2]*len(X)) 
-    
-    plt.plot(X, Y1, color = "red", label = "Y1")
-    plt.plot(X, Y2, color = "blue", label = "Y2")
-    plt.legend()
-    plt.show()
 
-
-
-def view(node, level = 0):
-    
-    f, b = node.get_memory("forward"), node.get_memory("backward")
-    
-    forward = f"mean {np.mean(f)}, var {np.var(f)}" if isinstance(f, np.ndarray) else f
-    backward = "" # f"mean {np.mean(b)}, var {np.var(b)}" if isinstance(b, np.ndarray) else b
-    
-    print("-"*level, node, "=", f"forward: {forward}, backward: {backward}")
-    
-    for c in node.get_childrens(): view(c, level + 1)
 
 
 
@@ -112,7 +91,9 @@ class AnalysisRamification(SymbolicRegressionLearning):
     def _pre_learning(self, model, metrics, TR_inputs_dict, TR_output):
         super()._pre_learning(model, metrics, TR_inputs_dict, TR_output)
         self._ranges_iterations = []
-         
+       
+    #Da vedere se considerare solo il forward, per la gestione delle scale, rumori e dominio (ma con il rischio di non avere abbastanza punti in nessuna parte dell' albero)
+    #Oppure tenere così, ma capendo come gestire il dominio e rumore
     def __structural_domain_check(model, TR_inputs_dict, TR_output):
         model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
         return np.all(np.isfinite(model.get_root().get_memory("forward"))) & np.all([np.all(np.isfinite(x.get_memory("backward"))) for x in model.get_root().get_all_subtree_nodes() if isinstance(x, op.Leaf)])
@@ -200,7 +181,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         if(oper_node.is_constant()): return True
 
-
         oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict)
         
         analysis = utils.total_analysis(oper_node.get_memory("forward"), old_node.get_memory("backward"), ["linear", "general"])
@@ -234,7 +214,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
     #Extension phase (tree already wet with TR set)
     def __extension_step(self, TR_inputs_dict, TR_output):
         
-        model_firm = str(self._model.copy().simplify_model())
+        model_firm = str(self._model)
         i = self._dict_extension_history[model_firm] if model_firm in self._dict_extension_history.keys() else 0
         
         choices = []
@@ -301,31 +281,20 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         print(f"Start training")
         
-        linear_pattern = False
-        
         #The search stop if one of this requirements are true:
         #- there is no any step to choose
         #- stop_criteria require to stop
         #- the model give a perfect linear pattern with output (more stronger that chatterjee indicator)
-        while((not linear_pattern) and (not stop_criteria(self)) and self.__extension_step(TR_inputs_dict, TR_output)):
+        while((not stop_criteria(self)) and self.__extension_step(TR_inputs_dict, TR_output)):
                 
             print(f"Extension phase, iteration {i+1} done {'-'*50}")
    
             self._model.simplify_model()
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
             self.checkpoint_metrics()
-            analysis = utils.total_analysis(self._model.get_root().get_memory("forward"), TR_output, ["linear"])
-            linear_pattern = np.abs(1 - np.abs(analysis["linear"])) <= 1e-6
 
             i += 1
-            
-        if((type(self._model.get_root()) not in [int, float])):
-            
-            #Final linear extension (on root) correction
-            le = utils.linear_extension(self._model.get_root().get_memory("forward"), TR_output)    
-            self._model.replace_subtree(self._model.get_root(), AnalysisRamification.__add_linear_extension(self._model.get_root(), le["m"], le["q"]))
-            self._model.simplify_model()
-            
+                    
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
         
         self.checkpoint_metrics()

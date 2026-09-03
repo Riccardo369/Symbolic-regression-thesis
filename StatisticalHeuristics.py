@@ -171,14 +171,12 @@ def all_heuristic_statisticals(X, Y, X_name = None):
     abs_dY = np.abs(dY)
     mask = np.isfinite(abs_dY)
 
-    if np.sum(mask) >= 3:
-        # Calcolo dell'asimmetria della pendenza
-        s = np.abs(skew(abs_dY[mask]))
+    # Calcolo dell'asimmetria della pendenza
+    s = np.abs(skew(abs_dY[mask]))
         
-        # Mappatura naturale in [0, 1) priva di costanti arbitrarie
-        result["div"] = s / (1.0 + s)
-    else:
-        result["div"] = 0.0
+    # Mappatura naturale in [0, 1) priva di costanti arbitrarie
+    result["div"] = s / (1.0 + s)
+
     
     
     #ARCSIN / ARCCOS: PER QUESTO, C'è SUI LIMITI DELLA FUNZIONE, UN ACCRESCIMENTO CHE FINISCE VERSO L' ALTO / BASSO, COME SE CI FOSSE UN MURO SU CUI SBATTI IL MUSO PER VERTICALE    
@@ -187,9 +185,12 @@ def all_heuristic_statisticals(X, Y, X_name = None):
     
     # Nelle funzioni arcsin/arccos, la pendenza cresce man mano che ci si allontana dal centro
     arcsin_score = ind.spearman_correlation(dist_from_center, np.abs(dY))
-    arcsin_score = max(0.0, arcsin_score) if not np.isnan(arcsin_score) else 0.0
     
-    is_arcsin_val = int(is_arcsin(X, Y))
+    is_arcsin_val = int(arcsin_score > 0)
+    
+    arcsin_score = np.abs(arcsin_score) if not np.isnan(arcsin_score) else 0.0
+
+
     
     result["arcsin"] = arcsin_score + ((is_arcsin_val) * epsilon_classification)
     result["arccos"] = arcsin_score + ((1 - is_arcsin_val) * epsilon_classification)

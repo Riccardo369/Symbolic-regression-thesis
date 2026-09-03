@@ -161,9 +161,53 @@ horizontal_compose_functions = ["add(exp(X1), sqrt(X2))",
 
 
 
-analizza_euristica_statistica(funzioni_da_considerare = level_1_functions)
-analizza_euristica_statistica(funzioni_da_considerare = level_2_functions)
-analizza_euristica_statistica(funzioni_da_considerare = horizontal_compose_functions)
+#analizza_euristica_statistica(funzioni_da_considerare = level_1_functions)
+#analizza_euristica_statistica(funzioni_da_considerare = level_2_functions)
+#analizza_euristica_statistica(funzioni_da_considerare = horizontal_compose_functions)
+
+
+#Osservazione test statistical heuristics: 
+
+"""
+- La varianza delle posizioni diminuisce all' aumentare del numero di punti disponibili, questo per tutti i 3 livelli di rumore
+- L' incertezza della varianza diminuisce sempre all' aumenatre del numero di punti disponibili, in tutti i 3 livelli di rumore
+- La media delle posizioni aumenta all' aumentare del rumore
+- La media delle posizioni, all aumentare dei punti disponibili,
+  * nel caso delle operazioni basiche diminuisce,
+  * nelle operazioni annidate a 2 livelli è rimane stabile
+  * Nelle operazioni complesse diminuisce / rimane stabile
+
+Nella varianza, i valori massimi (cioè con pochi dati e molto rumore), la varianza si aggira verso i 0.05. Questo vuol dire che le euristiche e la concorrenza stessa è 
+robusta all' aumentare dei punti, e proporzionale al rumore (poichè confonde le euristiche sballando il risultato), ma il rumore viene compensato all' aumentare dei punti.
+Significa che le euristiche riescono (per quanto il rumore permetta) ad essere concentrare sulla loro caratteristica da identificare.
+
+L' incertezza di varianza è inversamente proporzionale al numero di punti disponibili, ma aumenta all' aumentare del rumore.
+
+La media delle posizioni che aumenta all' aumentare del rumore, significa che non sono robuste ai rumori, anche perchè le caratteristiche stesse, su cui sono 
+concentrate le euristiche, vengono cambiate un pò dal rumore, e questo le euristiche ne risentono. Nonostante questo però, sembrano avere una resistenza significativa a questo 
+rumore che le confonde. L' aumentare dei punti non compensa così tanto il rumore, anche perchè allo stesso livello di rumore, la media rimane stabile o scende di pochissimo.
+
+
+Ricapitolando:
+
+- Buon focus (non si distraggono a vedere cose non esistenti), ma ha una confidenza sul focus che è inversamente proporzionale al numero di punti.
+- Analizzano ciò che vedono (anche se quello che vedono è distorto dal rumore)
+
+
+n = numero di punti
+r = rumore
+
+
+Varianza:   inversamente proporzionale alla n e direttamente proporzionale alla r
+Incertezza: inversamente proporzionale alla n e direttamente proporzionale alla r
+Bias:       costante                   alla n e direttamente proporzionale alla r
+
+Quindi la qualità di questa gara di euristiche è direttamente proporzionale alla n ed inversamente proporzionale alle r, questo è collegato al discorso che faceva Koldorgomov 
+(o come si chiama) sulla relazione tra i dati, il rumore etc. etc. (e penso anche che valga per tutti gli altri modelli di ML in generale) 
+
+"""
+
+
 
 
 
@@ -299,4 +343,19 @@ plot_non_invertible_metric("mae_cos")
 plot_non_invertible_metric("pearson_sin")
 plot_non_invertible_metric("pearson_cos")
 
+
+
+
+#Osservazione non invertible function: 
+
+"""
+MAE sin / cos:     Per qualsiasi funzione che io ho, all' aumentare di n, l' errore       è quasi costante
+Pearson sin / cos: Per qualsiasi fuznione che io ho, all' aumentare di n, la correlazione è quasi costante
+
+Ciò significa che la tecnica di pseudo inversa, ricostruisce bene il segnale (dato dal fatto che la correlazione lineare è quasi perfetta, che si aggira sempre sopra i 0.95), 
+è che i punti cercano di essere il più vicini possibili, anche l' errore generale è più alto, ma questo dipende dalla sotto funzione g che c'è dietro.
+
+In più, questa tecnica è invariante ad n, quindi non cambia al numero di punti disponibili.
+
+"""
 

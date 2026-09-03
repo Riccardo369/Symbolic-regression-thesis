@@ -84,7 +84,7 @@ def internal_test(X_distributions, Y_tree, variable_operation_couple, noise, see
     Y = Y[:tot]
    
     #Add noise if requested
-    if(noise): Y += np.random.normal(0, noise * np.std(Y), size = Y.shape)
+    if(noise): Y += generator.normal(0, noise * np.std(Y), size = Y.shape)
         
     #Results
     coefficients_results = []
