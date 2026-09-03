@@ -248,11 +248,7 @@ for a in range(len(choice_nodes)):
 
             metric_results = tree.learn(TR_inputs,
                                         TR_output,
-                                        ls.AnalysisRamification([op.div, op.abs, op.exp, op.sqrt, op.sin],
-                                                                
-                                                                choice_nodes[a]
-                                                                
-                                                                ),
+                                        ls.HeuristicLearning(),
                                         
                                         stop_criteria = lambda ls: stop_criteria_function(ls, counter, TR_output),
                                         

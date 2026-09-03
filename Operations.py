@@ -312,12 +312,12 @@ class OperationNode:
 class UnaryOperationNode(OperationNode):
     
     def __init__(self, is_invertible):
-        super().__init__(1, is_invertible)
+        super().__init__(1, invertible = is_invertible)
              
 class ChainOperationNode(OperationNode):
     
     def __init__(self):
-        super().__init__(float("inf"))
+        super().__init__(float("inf"), invertible = True)
         
     def accept_number_childrens(self, k):
         return k > 0 and k < self.get_max_channels()
@@ -328,7 +328,7 @@ class ChainOperationNode(OperationNode):
 class Leaf(OperationNode):
     
     def __init__(self, label):
-        super().__init__(0, label)
+        super().__init__(0, label, invertible = True)
     
     def _check_type_name(self, name):
         return (type(name) in [str, int, float] and not isinstance(name, np.ndarray)) or np.isscalar(name)

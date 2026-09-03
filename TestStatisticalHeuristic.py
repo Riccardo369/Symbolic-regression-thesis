@@ -90,7 +90,7 @@ def internal_test(X_distributions, Y_tree, variable_operation_couple, noise, see
     coefficients_results = []
         
     #For each input x
-    for x in X.keys(): coefficients_results += sh.all_heuristic_statisticals(X[x], Y, x)
+    for x in X.keys(): coefficients_results += sh.all_heuristic_statisticals_complete(X[x], Y, x)
                  
     #Sort results
     classification_coefficients = sorted([x for x in coefficients_results if np.isfinite(x["value"])], key = lambda x: -x["value"])

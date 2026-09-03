@@ -7,9 +7,8 @@ import Errors as er
 import Indicators as In
 import Exceptions as ex
 import utils
-
-
-
+import StatisticalHeuristics as sh
+import Indicators as ind
 
 
 
@@ -21,7 +20,7 @@ class SymbolicRegressionLearning:
         self._metric_results = {}
         self._metric_functions = []
     
-    def _pre_learning(self, model, metrics, TR_inputs_dict, TR_output):
+    def _pre_learning(self, model, metrics):
         self._model = model
         self._metric_functions = metrics
         self._metric_results = {key: [] for key in metrics.keys()}
@@ -39,7 +38,7 @@ class SymbolicRegressionLearning:
         return NotImplemented
         
     def __call__(self, model, TR_inputs_dict, TR_output, stop_criteria, metric_functions = {}):
-        self._pre_learning(model, metric_functions, TR_inputs_dict, TR_output)
+        self._pre_learning(model, metric_functions)
         self._body_learning(TR_inputs_dict, TR_output, stop_criteria)
         self._post_learning()
         
@@ -56,25 +55,17 @@ class SymbolicRegressionLearning:
     def set_metrics(self, metrics):
         self._metrics = metrics.copy()
 
-class AnalysisRamification(SymbolicRegressionLearning):
+class HeuristicLearning(SymbolicRegressionLearning):
     
     #The order of binary operations is the order of construction every time a node is extended (every node will be extended with all binary operations, and the order is defined by
     # the order of binary_operations list)
     
     #get_package_importance_nodes analyze nodes and returns a list of packages (for importance), where every package contains a list of triples node - feature- operation. 
     # If it is possible to choose a valid extension with first package, the algorithm will stop, otherwise it will search the extension on next package
-    def __init__(self, unary_operations, get_package_importance_nodes):
+    def __init__(self):
         
         super().__init__()
-        
-        for oper in unary_operations:
-            if(not issubclass(oper, op.OperationNode)): raise ValueError(f"The operation {oper} is not a OperationNode type")
-            if(oper().get_max_channels() != 1): raise TypeError(f"{oper} has no 1 channel, it is not acceptable an unary operation like that")
-        
-        self._unary_operations = list(unary_operations)
-        
-        self.__get_package_importance_nodes = get_package_importance_nodes
-        
+
         self._ranges_iterations = []
         
         #Every values of dict = (index of package, index of extension to start inside the package)
@@ -88,16 +79,10 @@ class AnalysisRamification(SymbolicRegressionLearning):
         
         return result
     
-    def _pre_learning(self, model, metrics, TR_inputs_dict, TR_output):
-        super()._pre_learning(model, metrics, TR_inputs_dict, TR_output)
+    def _pre_learning(self, model, metrics):
+        super()._pre_learning(model, metrics)
         self._ranges_iterations = []
        
-    #Da vedere se considerare solo il forward, per la gestione delle scale, rumori e dominio (ma con il rischio di non avere abbastanza punti in nessuna parte dell' albero)
-    #Oppure tenere così, ma capendo come gestire il dominio e rumore
-    def __structural_domain_check(model, TR_inputs_dict, TR_output):
-        model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-        return np.all(np.isfinite(model.get_root().get_memory("forward"))) & np.all([np.all(np.isfinite(x.get_memory("backward"))) for x in model.get_root().get_all_subtree_nodes() if isinstance(x, op.Leaf)])
-
     def __valid_dict_history_form(Dict):
         if(not all([type(x) == str for x in Dict.keys()])): return False
         if(not all([type(x) == tuple and 
@@ -115,7 +100,7 @@ class AnalysisRamification(SymbolicRegressionLearning):
         return self._dict_extension_history.copy()
     
     def set_dict_extension_history(self, Dict):
-        valid = AnalysisRamification.__valid_dict_history_form(Dict)
+        valid = HeuristicLearning.__valid_dict_history_form(Dict)
         if(valid): self._dict_extension_history = Dict.copy()
         return valid
 
@@ -134,8 +119,8 @@ class AnalysisRamification(SymbolicRegressionLearning):
     #If a node is a multiplication chain, add a addition number with 0 (non ha senso aggiungere anche un altra multiplication)
     #If a node is a addition chain, add a multiplication number with 1 (non ha senso aggiungere anche un altra addition)
     #If a node is not a constant, and not a chain (* or +), apply multiplication and addition adding
-    def linear_extend_model(model):
-        
+    def linear_extend_model(self):
+ 
         def recursion(node):
             
             #Go down
@@ -162,97 +147,241 @@ class AnalysisRamification(SymbolicRegressionLearning):
                     
                 substitution.new_connection(node.copy_sub_tree())
                 
-            else: substitution = AnalysisRamification.__add_linear_extension(node, 1, 0)
+            else: substitution = HeuristicLearning.__add_linear_extension(node, 1, 0)
                 
-            model.replace_subtree(node, substitution)
+            self._model.replace_subtree(node, substitution)
             
-        recursion(model.get_root())
+        recursion(self._model.get_root())
+     
+     
+             
+    def teletransport(self, model_firm):
+        
+        #Every time you do the teletransportaion, the model_firm is a trap where you cannot go further
+        self._dict_extension_history[model_firm] = None
+        
+        #Calculate all possible transition valid transition, and sorted by value
+        possible_transportations = sorted([{"model": x, "value": self._dict_extension_history[x][1]} for x in self._dict_extension_history.keys() if self._dict_extension_history[x] != None], key = lambda x: -x["value"])
+        
+        #If no transport is possible, the algorithm finish
+        if(len(possible_transportations) == 0): return False
+        
+        #Go to the most promising state. The risk is to fall to a next state that is not the best considering the all next state from memory,
+        #but we cannot know (otherwise the computational cost will be more heavy)
+        self._model.set_root(SymbolicRegression.string_to_tree(possible_transportations["model"]).get_root())
+        
+        #Return the signal that algorithm can go again
+        return True
         
         
 
-    #Get (if possible) the extension (with delta metric) of this combination
-    def __analyze_extension(self, TR_inputs_dict, TR_output, config):
-          
         
-        old_node = config["node"]
-        oper_node = config["new node"]
+    #DA SISTEMARE    
+    def heuristics_analysis(self, TR_inputs_dict):
 
-        choices = [oper_node]
+        choices = []
         
-        if(oper_node.is_constant()): return True
+        def recursion(node, choices):
+            
+            #Calculate if all subtree is linear
+            result_linearities = all([recursion(c) for c in node.get_childrens()])
+            
+            
+            X = node.get_memory("forward")
+            Y = node.get_memory("backward")
+                            
+            mask = np.isfinite(Y)                
+            confidence = np.sum(mask) / len(Y)
+            
+            X = X[mask]
+            Y = Y[mask]
+            
+            coefficients.append({"variable": None, "operation": "constant", "value": 1 / (1 + np.std(Y)), "new constant": np.mean(Y)})
+            
+            #Unary operation
+            if(isinstance(node, op.UnaryOperationNode)):
+                
+                #Invertible operation, apply the heuristics
+                if(node.is_invertible()): coefficients = sh.all_heuristic_statisticals(X, Y)
+                
+                #Non invertible operation, apply the linear correlation for non invertible situation
+                else:
+                    
+                    #Calculate for all operations (all unary operations are needed)
+                    for uo in [op.sin, op.cos, op.exp, op.ln, op.sqrt, op.div]:
+                        
+                        #If this operation has problems alreay with domain, will create problem to tree all, so it is not a good operation
+                        if(uo.check_input_domain(0, X)): continue
+                        
+                        g = uo.forward_calculation([X])
+            
+                        #Calculate the linear correlation between g = ou(X) and pseudo inverse of g from Y
+                        coefficients.append({"variable": None, "operation": uo.__class__.__name__, "value": ind.linear_correlation(g, uo.backward_calculation([g], Y))})
+                    
+                    #Calculate the additive coefficients: linearity
+                    coefficients.append({"variable": None, "operation": "linear", "value": np.abs(ind.linear_correlation(X, uo.backward_calculation([X], Y)))})
 
-        oper_node.forward_calculation_memory_sub_tree(TR_inputs_dict)
-        
-        analysis = utils.total_analysis(oper_node.get_memory("forward"), old_node.get_memory("backward"), ["linear", "general"])
-        
-        if(np.abs(analysis["linear"]) >= np.abs(analysis["general"])):
-            
-            linear_ext = utils.linear_extension(oper_node.get_memory("forward"), old_node.get_memory("backward"))
-            m = linear_ext["m"] if np.isfinite(linear_ext["m"]) else 1
-            q = linear_ext["q"] if np.isfinite(linear_ext["q"]) else 0
-            
-            choices.insert(0, AnalysisRamification.__add_linear_extension(oper_node, m, q))
-            
-        for try_node in choices:
-            
-            #Try the substition
-            self._model.replace_subtree(old_node, try_node)
-  
-            #Check the structural domain
-            valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
+                
+                #Adding all linear correlation with features
+                coefficients += [{"variable": f, "operation": "linear", "value": np.abs(ind.linear_correlation(TR_inputs_dict[f], Y))} for f in TR_inputs_dict.keys()]
+                
 
-            #Do the substition
-            self._model.replace_subtree(try_node, old_node)
+            elif(isinstance(node, op.Leaf)):
+                
+                
+                #For each variable of dataset
+                for f in TR_inputs_dict.keys():
+                    
+                    #If name of variable is f, consider the name like None (because we are talking about the variable name)
+                    name = f if f != node.get_name() else None
+                    
+                    #Skip che constant coefficient (is already calculated and its not change with input)
+                    coefficients += [x for x in sh.all_heuristic_statisticals(TR_inputs_dict[f][mask], Y, name)]
+                
+                
+            #The chain operation
+            else:
+                
+                #Choose the most important features with FOCI algorithm
+                len_vector = np.sum(mask)
+                matrix_features = np.array([x.get_memory("forward")[mask] if not x.is_constant() else np.array([x.get_memory("forward")]*len_vector) for x in node.get_childrens()]).T
+                important_childrens = ind.most_important_features(matrix_features, Y)
+                
+                #Divide the important childrens to not important childrens
+                childrens = []
+                other_childrens = []
+                
+                for i, c in enumerate(node.get_childrens()):
+                    
+                    if(i in important_childrens): childrens.append(c)
+                    else: other_childrens.append(c)
 
-            config["new node"] = try_node
+                #Calculate the total input of important nodes and other nodes
+                total_input = node.forward_calculation([x.get_memory("forward") for x in childrens])
+                total_other_input = node.forward_calculation([x.get_memory("forward") for x in other_childrens])
+                
+                #Calculate the two backwards, considering most important nodes like one unit node, and other nodes like another unit under add chain
+                backwards = node.backward_calculation([total_input, total_other_input], Y)
+                
+                #Calculate all coefficients considering only the total input of important node and backward of important node
+                coefficients = sh.all_heuristic_statisticals(total_input, backwards[0], name = np.nan)
+                
+                #Calculate the total linear 
+                coefficients.append({"variable": None, "operation": "linear", "value": np.abs(ind.linear_correlation(X, Y))})
+                
+                for c in coefficients: c["childrens"] = important_childrens
+                
+                
+                
             
-            #Check structure domain
-            if(valid_domain): return True
+            
+            #Sort the coefficients
+            coefficients = sorted([x for x in coefficients], key = lambda x: -x["value"])
+            
+            #Filter coefficients considering only the valid number and not 0 coefficients
+            coefficients = [x for x in coefficients if (~np.isfinite(x["value"]) or x["value"] <= 1e-20)]
+            
+            #Scale the coefficients considering ow many data is aviable in this node
+            for coeff in coefficients:
+                coeff["value"] *= confidence
+                coeff["node"] = node
+            
+            #Check if the winner is the linearity of node
+            first_place = coefficients[0]
+            
         
-        return False
+            #If own linearity wins, no coefficient must be considered (because in that node, it is all perfect)
+            local_linearity = False
+            
+            if(first_place["variable"] == None and first_place["operation"] == "linear"): local_linearity = True
+            else: choices += coefficients
+            
+            return local_linearity and result_linearities
+            
+                
+               
+        linearity = recursion(self._model.get_root(), choices)    
+
+        return {"choices": choices, "linearity": linearity}
+        
+        
+        
+        
+        
+        
+    
+    
 
     #Extension phase (tree already wet with TR set)
     def __extension_step(self, TR_inputs_dict, TR_output):
         
+        #Calculate the firm
         model_firm = str(self._model)
-        i = self._dict_extension_history[model_firm] if model_firm in self._dict_extension_history.keys() else 0
+        i = self._dict_extension_history[model_firm][0] if model_firm in self._dict_extension_history.keys() else 0
         
-        choices = []
-        
-        AnalysisRamification.linear_extend_model(self._model)
+        #PREPARATION STEP  
+        self.linear_extend_model()
 
+        #FORWARD - BACKWARD STEPS
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
         
-        choices = self.__get_package_importance_nodes(self._model.get_root().get_all_subtree_nodes(), self._unary_operations, TR_inputs_dict)
+        #CONTROL TO TELETRANSPORT
+        if(np.any(~np.isfinite(self._model.get_root().get_memory("forward")))): return self.teletransport(model_firm)
+
+        #STATISTICAL SCORES STEP
+        competition = self.heuristics_analysis(TR_inputs_dict)
         
-        #print("All remaining choices to test")
-        #for x in choices[i:]: print(x)
+        #If all nodes achieve the linearity situation, the algorithm stops
+        if(competition["linearity"]): return False
         
-        #Package the choices by importance
-        for choice in choices[i:]:
-
-            #Analyze the extension
-            acceptable = self.__analyze_extension(TR_inputs_dict, TR_output, choice)
-
-            if(not acceptable):
-                i += 1
-                continue
-                        
-            #print("Extension choosed", choice)
-
-            #Do the extension
-            self._model.replace_subtree(choice["node"], choice["new node"])
+        choices = competition["choices"]
+        
+        
+        #CONTROL TO TELETRANSPORT
+        if(choices == []): return self.teletransport(model_firm)
+        
+        
+        
+        #DA SISTEMARE
+        if(i < len(choices)):
             
-            #Go to one step with i index
-            if(i < len(choices)): i += 1
-            else: return False
+            choice = choices[i]
+            i += 1
+            
+            
+            
+            #EXTENSION STEP
+            
+            node_to_extend = choice["node"]
+        
+            
+            if(choice["operation"] == "constant"): self._model.replace_subtree(choice["node"], op.Leaf(choice["new constant"]))
+            elif(choice["operation"] == "linear"): self._model.replace_subtree(choice["node"], op.Leaf(choice["variable"]))
+            
+            #Unary node
+            elif(isinstance(node_to_extend, op.UnaryOperationNode)): ...
+            
+            #Leaf node
+            elif(isinstance(node_to_extend, op.Leaf)): ...
+            
+            #Chain node
+            else: ...
+            
+            ...
+            
+              
+            #SYNTAX REDUCTION STEP
+            self._model.simplify_model()
+            
+            #UPDATE THE MNEMONIC MEMORY (APPLY  i and choice score)
+            self._dict_extension_history[model_firm] = (i, choice["value"])
+            
+            return True
+            
+        #The chance are finished, so this state is dead
+        else: return self.teletransport(model_firm)
 
-            #Save the new position
-            self._dict_extension_history[model_firm] = i
-                
-            break
 
-        return True
 
     
     #TR_inputs_dict: numpy array's dict
@@ -289,7 +418,6 @@ class AnalysisRamification(SymbolicRegressionLearning):
                 
             print(f"Extension phase, iteration {i+1} done {'-'*50}")
    
-            self._model.simplify_model()
             self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
             self.checkpoint_metrics()
 

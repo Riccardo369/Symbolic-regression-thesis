@@ -66,7 +66,7 @@ for test in test_functions:
     Y = eval(f"lambda X: {test}")(X)
     
     metric_results = model.learn({"X": X}, Y,
-                            ls.AnalysisRamification([op.neg, op.div, op.sin, op.cos, op.abs, op.exp, op.ln],
+                            ls.HeuristicLearning([op.neg, op.div, op.sin, op.cos, op.abs, op.exp, op.ln],
                                                     lambda x: (np.isfinite(x["Chaterjee"]) and x["Chaterjee"] > 0) or (np.isfinite(x["MAE"]) and x["MAE"] > 0),
                                                     lambda x: (-x["Chaterjee"], -x["MAE"]),
                                                     get_package_importance_nodes,
