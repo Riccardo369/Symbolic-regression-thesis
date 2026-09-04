@@ -207,7 +207,7 @@ class OperationNode:
     def _check_type_name(self, name):
         return True
 
-    def check_input_domain(output):
+    def check_input_domain(i, output):
         return True
     
     def check_output_domain(output):
@@ -309,6 +309,11 @@ class OperationNode:
         plt.show(block = block)
 
 
+
+
+
+
+
 class UnaryOperationNode(OperationNode):
     
     def __init__(self, is_invertible):
@@ -344,7 +349,6 @@ class Leaf(OperationNode):
 
 
 
-
 class add(ChainOperationNode):
     
     def __init__(self):
@@ -362,7 +366,6 @@ class add(ChainOperationNode):
         forward_sum = 0
         for i in forward_inputs: forward_sum += i
         return [expected_output - (forward_sum - i) for i in forward_inputs]
-
 
     def get_string_calculation_structure(self, x):
         return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
@@ -410,9 +413,6 @@ class mul(ChainOperationNode):
     def get_string_calculation_structure(self, x): 
         return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
 
-
-
-
 class div(UnaryOperationNode):
     
     def __init__(self):
@@ -443,10 +443,6 @@ class div(UnaryOperationNode):
             mask = ~np.isfinite(backward_output)
             if(not np.isscalar(input)): backward_output[mask] = input[mask]
             else: backward_output[mask] = input
-            
-        #if(isinstance(output, np.ndarray)):
-            #mask = ~np.isfinite(output)
-            #output[mask] = input[mask] if isinstance(input, np.ndarray) else input
             
         return [backward_output]
 
@@ -500,11 +496,11 @@ class arcsin(UnaryOperationNode):
 
         #Domain argument
         if(i == 0 and type(input) in [float, int]): return 0 <= input and input <= 1
-        elif(i == 0): return np.all(0 <= input & input <= 1)
+        elif(i == 0): return np.all((0 <= input) & (input <= 1))
         
     def check_output_domain(output):
         output = np.abs(output)
-        return np.all(0 <= output & output <= np.pi/2)
+        return np.all((0 <= output) & (output <= np.pi/2))
     
     def forward_calculation(forward_inputs):
         return np.arcsin(forward_inputs[0])
@@ -526,10 +522,10 @@ class arccos(UnaryOperationNode):
 
         #Domain argument
         if(i == 0 and type(input) in [float, int]): return 0 <= input and input <= 1
-        elif(i == 0): return np.all(0 <= input & input <= 1)
+        elif(i == 0): return np.all((0 <= input) & (input <= 1))
         
     def check_output_domain(output):
-        return np.all(0 <= output & output <= np.pi)
+        return np.all((0 <= output) & (output <= np.pi))
  
     def forward_calculation(forward_inputs):
         return np.arccos(forward_inputs[0])
@@ -551,7 +547,7 @@ class exp(UnaryOperationNode):
 
     def forward_calculation(forward_inputs):
         with np.errstate(over='ignore'):
-            return np.exp(forward_inputs)
+            return np.exp(forward_inputs[0])
 
     def backward_calculation(forward_inputs, expected_output):
         with np.errstate(over='ignore'):
@@ -573,12 +569,11 @@ class ln(UnaryOperationNode):
 
     def forward_calculation(forward_inputs):
         with np.errstate(over='ignore'):
-            return np.log(forward_inputs)
+            return np.log(forward_inputs[0])
     
     def backward_calculation(forward_inputs, expected_output):
         with np.errstate(over='ignore'):
             return [np.exp(expected_output)]
-
 
     def get_string_calculation_structure(self, x):
         return f"np.log({x[0]})"
@@ -599,13 +594,12 @@ class sqrt(UnaryOperationNode):
     
     def forward_calculation(forward_inputs):
         with np.errstate(over='ignore'):
-            return np.sqrt(forward_inputs)
+            return np.sqrt(forward_inputs[0])
     
     def backward_calculation(forward_inputs, expected_output):
         with np.errstate(over='ignore'):
             return [expected_output**2]
         
-
     def get_string_calculation_structure(self, x):
         return f"np.sqrt({x[0]})"
 

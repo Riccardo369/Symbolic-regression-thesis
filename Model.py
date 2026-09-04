@@ -7,6 +7,8 @@ import sympy as sp
 import Exceptions as ex
 import Simplifications as si
 
+import warnings
+
 
 
 class SymbolicRegression:
@@ -193,11 +195,17 @@ class SymbolicRegression:
 
     #Learn phase   
     def learn(self, TR_inputs_dict, TR_output, LearningAlgorithm, stop_criteria = lambda x: False, metric_functions = {}):
+        
+        warnings.filterwarnings('ignore', category=RuntimeWarning)
 
-        return LearningAlgorithm(self,
-                                 TR_inputs_dict,
-                                 TR_output,
-                                 stop_criteria,
-                                 metric_functions)
+        result = LearningAlgorithm(self,
+                                TR_inputs_dict,
+                                TR_output,
+                                stop_criteria,
+                                metric_functions)
+        
+        warnings.filterwarnings('default', category=RuntimeWarning)
+        
+        return result
 
 
