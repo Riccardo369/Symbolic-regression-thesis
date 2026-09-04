@@ -125,9 +125,6 @@ def all_heuristic_statisticals(X, Y, X_name = None):
     
     result = dict()
     
-    #CONSTANT / LINEAR
-    result["linear"] =  np.abs(linear_correlation(X, Y))
-    
     #SIN / COS
     sin_coeff = sinusoidal_coefficient(Y)
     
@@ -201,7 +198,8 @@ def all_heuristic_statisticals(X, Y, X_name = None):
 
 
 def all_heuristic_statisticals_complete(X, Y, X_name = None):
-    return all_heuristic_statisticals(X, Y, X_name) + [{"variable": X_name, "operation": "constant", "value": 1 / (1 + np.std(Y))}]
+    return all_heuristic_statisticals(X, Y, X_name) + [{"variable": X_name, "operation": "constant", "value": 1 / (1 + np.std(Y))},
+                                                       {"variable": X_name, "operation": "linear", "value": np.abs(linear_correlation(X, Y))}]
 
     
     

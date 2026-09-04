@@ -173,10 +173,15 @@ class HeuristicLearning(SymbolicRegressionLearning):
         #Return the signal that algorithm can go again
         return True
         
-        
+       
+      
+    #Calculate all statistical heuristic considering only the operations that has no any problem with domain 
+    def valid_heuristics_analysis(self, X, Y, X_name = None):
+        coefficients = sh.all_heuristic_statisticals(X, Y, X_name)
+        return [x for x in coefficients if eval(f"op.{x['operation']}.check_input_domain(0, X)")]
 
-        
-    #DA SISTEMARE    
+
+   
     def heuristics_analysis(self, TR_inputs_dict):
 
         choices = []
@@ -186,61 +191,73 @@ class HeuristicLearning(SymbolicRegressionLearning):
             #Calculate if all subtree is linear
             result_linearities = all([recursion(c) for c in node.get_childrens()])
             
+            coefficients = []
             
-            X = node.get_memory("forward")
+            father = node.get_father()
+            
+            original_X = node.get_memory("forward")
             Y = node.get_memory("backward")
                             
             mask = np.isfinite(Y)                
             confidence = np.sum(mask) / len(Y)
             
-            X = X[mask]
+            X = original_X[mask]
             Y = Y[mask]
             
-            coefficients.append({"variable": None, "operation": "constant", "value": 1 / (1 + np.std(Y)), "new constant": np.mean(Y)})
+            #Cost: 2 + var
             
-            #Unary operation
-            if(isinstance(node, op.UnaryOperationNode)):
+            #Add constant and linear coefficients about itself
+            coefficients.append({"variable": None, "operation": "constant", "value": 1 / (1 + np.std(Y)), "new constant": np.mean(Y)})
+            coefficients.append({"variable": None, "operation": "linear", "value": np.abs(ind.linear_correlation(X, Y))})
+                  
+            
+            #Add linear variable coefficients (cost for variable: - 1)
+            name = node.get_name() if isinstance(node, op.Leaf) and not node.is_constant() else None
+            coefficients += [{"variable": f, "operation": "linear", "value": np.abs(ind.linear_correlation(TR_inputs_dict[f], Y))} for f in TR_inputs_dict.keys() if f != name]
+            
+            
+            #For unary and chain operations  (cost: oper)
+            if(not isinstance(node, op.Leaf)):
+                
+                if(father == None): coefficients += self.valid_heuristics_analysis(X, Y)
                 
                 #Invertible operation, apply the heuristics
-                if(node.is_invertible()): coefficients = sh.all_heuristic_statisticals(X, Y)
-                
+                elif(father.is_invertible()): coefficients += self.valid_heuristics_analysis(X, Y)
+                    
                 #Non invertible operation, apply the linear correlation for non invertible situation
                 else:
+                    
+                    real_Y = father.get_memory("backward")
+                    
+                    new_mask = np.isfinite(real_Y)
+                    
+                    new_coeff = np.sum(new_mask) / len(real_Y)
                     
                     #Calculate for all operations (all unary operations are needed)
                     for uo in [op.sin, op.cos, op.exp, op.ln, op.sqrt, op.div]:
                         
                         #If this operation has problems alreay with domain, will create problem to tree all, so it is not a good operation
-                        if(uo.check_input_domain(0, X)): continue
+                        if(uo.check_input_domain(0, original_X[new_mask])): continue
                         
-                        g = uo.forward_calculation([X])
+                        g = uo.forward_calculation([original_X[new_mask]])
             
-                        #Calculate the linear correlation between g = ou(X) and pseudo inverse of g from Y
-                        coefficients.append({"variable": None, "operation": uo.__class__.__name__, "value": ind.linear_correlation(g, uo.backward_calculation([g], Y))})
-                    
-                    #Calculate the additive coefficients: linearity
-                    coefficients.append({"variable": None, "operation": "linear", "value": np.abs(ind.linear_correlation(X, uo.backward_calculation([X], Y)))})
-
-                
-                #Adding all linear correlation with features
-                coefficients += [{"variable": f, "operation": "linear", "value": np.abs(ind.linear_correlation(TR_inputs_dict[f], Y))} for f in TR_inputs_dict.keys()]
-                
-
-            elif(isinstance(node, op.Leaf)):
-                
-                
-                #For each variable of dataset
-                for f in TR_inputs_dict.keys():
-                    
-                    #If name of variable is f, consider the name like None (because we are talking about the variable name)
-                    name = f if f != node.get_name() else None
-                    
-                    #Skip che constant coefficient (is already calculated and its not change with input)
-                    coefficients += [x for x in sh.all_heuristic_statisticals(TR_inputs_dict[f][mask], Y, name)]
-                
-                
-            #The chain operation
+                        #Calculate the linear correlation between g = ou(X) and pseudo inverse of g from Y (and apply the scaling, because it is a particular situation, the Y is not the node Y but the father Y)
+                        coefficients.append({"variable": None, "operation": uo.__class__.__name__, "value": ind.linear_correlation(g, uo.backward_calculation([g], real_Y[mask]))*new_coeff})
+             
+            #For leaf node (variable and constant)  (cost: oper)     
             else:
+                
+                #Choose the best variable
+                variable_choices = [{"var": x, "score": np.abs(ind.chatterjee_correlation(TR_inputs_dict[x][mask], Y))} for x in TR_inputs_dict.keys()]
+                var_choosed = sorted(variable_choices, key = lambda x: -x["score"])[0]["var"]
+                
+                #Calculate all coefficients with that variable choosed
+                coefficients += self.valid_heuristics_analysis(TR_inputs_dict[var_choosed][mask], Y, name)
+
+
+
+            #The chain operation (cost: oper)
+            if(isinstance(node, op.ChainOperationNode)):
                 
                 #Choose the most important features with FOCI algorithm
                 len_vector = np.sum(mask)
@@ -264,11 +281,8 @@ class HeuristicLearning(SymbolicRegressionLearning):
                 backwards = node.backward_calculation([total_input, total_other_input], Y)
                 
                 #Calculate all coefficients considering only the total input of important node and backward of important node
-                coefficients = sh.all_heuristic_statisticals(total_input, backwards[0], name = np.nan)
-                
-                #Calculate the total linear 
-                coefficients.append({"variable": None, "operation": "linear", "value": np.abs(ind.linear_correlation(X, Y))})
-                
+                coefficients += self.valid_heuristics_analysis(total_input, backwards[0], name = np.nan)
+
                 for c in coefficients: c["childrens"] = important_childrens
                 
                 
@@ -283,7 +297,11 @@ class HeuristicLearning(SymbolicRegressionLearning):
             
             #Scale the coefficients considering ow many data is aviable in this node
             for coeff in coefficients:
-                coeff["value"] *= confidence
+                
+                father = coeff["node"].get_father()
+                
+                #If father is non invertible, do not apply the scaling, because the scaling is applied already
+                coeff["value"] *= 1 if father != None and not father.is_invertible() else confidence
                 coeff["node"] = node
             
             #Check if the winner is the linearity of node
@@ -293,14 +311,17 @@ class HeuristicLearning(SymbolicRegressionLearning):
             #If own linearity wins, no coefficient must be considered (because in that node, it is all perfect)
             local_linearity = False
             
-            if(first_place["variable"] == None and first_place["operation"] == "linear"): local_linearity = True
+            if(first_place["variable"] == None and ((first_place["operation"] == "linear" and not node.is_constant()) or 
+                                                    (first_place["operation"] == "constant" and node.is_constant()))): local_linearity = True
             else: choices += coefficients
             
             return local_linearity and result_linearities
             
                 
                
-        linearity = recursion(self._model.get_root(), choices)    
+        linearity = recursion(self._model.get_root(), choices)   
+        
+        choices = sorted(choices, key = lambda x: -x["value"]) 
 
         return {"choices": choices, "linearity": linearity}
         
@@ -341,39 +362,60 @@ class HeuristicLearning(SymbolicRegressionLearning):
         if(choices == []): return self.teletransport(model_firm)
         
         
-        
-        #DA SISTEMARE
+        #EXTENSION STEP
         if(i < len(choices)):
             
             choice = choices[i]
             i += 1
             
-            
-            
-            #EXTENSION STEP
-            
-            node_to_extend = choice["node"]
-        
-            
-            if(choice["operation"] == "constant"): self._model.replace_subtree(choice["node"], op.Leaf(choice["new constant"]))
+            node = choice["node"]
+
+            if(choice["operation"] == "constant"): self._model.replace_subtree(choice["node"], op.Leaf(choice["new constant"]))       
             elif(choice["operation"] == "linear"): self._model.replace_subtree(choice["node"], op.Leaf(choice["variable"]))
+                            
+            #Constant / variable or unary operations or chain operation (up extension)
+            elif(isinstance(node, op.Leaf) or 
+                 isinstance(node, op.UnaryOperationNode) or 
+                 (isinstance(node, op.ChainOperationNode) and "childrens" not in choice.keys())):
+
+                base = eval(f"op.{choice['operation']}")()
+                
+                if(isinstance(node, op.Leaf)): base.new_connection(op.Leaf(choice["variable"]))
+                else: base.new_connection(choice["node"].copy_sub_tree())
+                
+                self._model.replace_subtree(choice["node"], base)
             
-            #Unary node
-            elif(isinstance(node_to_extend, op.UnaryOperationNode)): ...
-            
-            #Leaf node
-            elif(isinstance(node_to_extend, op.Leaf)): ...
-            
-            #Chain node
-            else: ...
-            
-            ...
-            
+            #Chain operation (down extension)
+            else: 
+                
+                childrens = node.get_childrens()
+                
+                index_important_childrens = choice["childrens"]
+                
+                root_chain = node.__class__.__name__()
+                
+                oper = eval(f"op.{choice['operation']}")()
+
+                chain_under_oper = node.__class__.__name__()
+                
+                root_chain.new_connection(oper)
+                                
+                for i in range(len(childrens)):
+                                    
+                    if(i not in index_important_childrens): root_chain.new_connection(childrens[i])
+                
+                oper.new_connection(chain_under_oper)
+                for i in index_important_childrens: chain_under_oper.new_connection(childrens[i].copy_sub_tree())
+                
+                self._model.replace_subtree(choice["node"], root_chain)
+                
+
+
               
             #SYNTAX REDUCTION STEP
             self._model.simplify_model()
             
-            #UPDATE THE MNEMONIC MEMORY (APPLY  i and choice score)
+            #UPDATE THE MNEMONIC MEMORY (APPLY i and choice score)
             self._dict_extension_history[model_firm] = (i, choice["value"])
             
             return True
