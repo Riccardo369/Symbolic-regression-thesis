@@ -161,21 +161,19 @@ horizontal_compose_functions = ["add(exp(X1), sqrt(X2))",
 
 
 
-#analizza_euristica_statistica(funzioni_da_considerare = level_1_functions)
-#analizza_euristica_statistica(funzioni_da_considerare = level_2_functions)
-#analizza_euristica_statistica(funzioni_da_considerare = horizontal_compose_functions)
+analizza_euristica_statistica(funzioni_da_considerare = level_1_functions)
+analizza_euristica_statistica(funzioni_da_considerare = level_2_functions)
+analizza_euristica_statistica(funzioni_da_considerare = horizontal_compose_functions)
+
 
 
 #Osservazione test statistical heuristics: 
 
 """
 - La varianza delle posizioni diminuisce all' aumentare del numero di punti disponibili, questo per tutti i 3 livelli di rumore
-- L' incertezza della varianza diminuisce sempre all' aumenatre del numero di punti disponibili, in tutti i 3 livelli di rumore
+- L' incertezza della varianza diminuisce sempre all' aumentare del numero di punti disponibili, in tutti i 3 livelli di rumore
 - La media delle posizioni aumenta all' aumentare del rumore
-- La media delle posizioni, all aumentare dei punti disponibili,
-  * nel caso delle operazioni basiche diminuisce,
-  * nelle operazioni annidate a 2 livelli è rimane stabile
-  * Nelle operazioni complesse diminuisce / rimane stabile
+- La media delle posizioni, all aumentare dei punti disponibili, in tutti e 3 i casi rimane quasi stabile
 
 Nella varianza, i valori massimi (cioè con pochi dati e molto rumore), la varianza si aggira verso i 0.05. Questo vuol dire che le euristiche e la concorrenza stessa è 
 robusta all' aumentare dei punti, e proporzionale al rumore (poichè confonde le euristiche sballando il risultato), ma il rumore viene compensato all' aumentare dei punti.
@@ -338,10 +336,10 @@ def plot_non_invertible_metric(metric_label):
 
 
 
-plot_non_invertible_metric("mae_sin")
-plot_non_invertible_metric("mae_cos")
-plot_non_invertible_metric("pearson_sin")
-plot_non_invertible_metric("pearson_cos")
+#plot_non_invertible_metric("mae_sin")
+#plot_non_invertible_metric("mae_cos")
+#plot_non_invertible_metric("pearson_sin")
+#plot_non_invertible_metric("pearson_cos")
 
 
 

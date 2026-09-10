@@ -14,11 +14,14 @@ sympy_convertion_dict = {
     "mul": sp.Mul,
     "div": lambda x: 1/x,
     "sin": sp.sin,
+    "cos": sp.cos,
     "arcsin": sp.asin,
-    "abs": sp.Abs,
+    "arccos": sp.acos,
     "exp": sp.exp,
-    "ln": sp.log
+    "ln": sp.log,
+    "sqrt": sp.sqrt
     }
+
 
 
 
@@ -42,6 +45,9 @@ def to_sympy(node):
 
 
 
+     
+         
+    
 
 
 def from_sympy(expr):
@@ -80,8 +86,8 @@ def from_sympy(expr):
                 
                 node = op.div()
                 node.new_connection(bases)
-                          
                 
+              
     elif(expr.func in sympy_convertion_dict.values()):
     
         for key in sympy_convertion_dict.keys():

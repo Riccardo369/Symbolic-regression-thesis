@@ -3,6 +3,7 @@ import lark
 import Operations as op
 import matplotlib.pyplot as plt
 import sympy as sp
+import time
 
 import Exceptions as ex
 import Simplifications as si
@@ -171,23 +172,56 @@ class SymbolicRegression:
             return f(**{key: inputs_dict[key] for key in aviable_parameters})
         
         return result_function
-
     
     def simplify_model(self):
         
+        def recursion_cleaning_constant(node):
+            
+            if(isinstance(node, op.ChainOperationNode)):
+                
+                childrens = node.get_childrens()
+                        
+                if(isinstance(node, op.mul)):
+                    
+                    for c in childrens:
+                        
+                        if(c.is_constant() and c.get_name() == 0): 
+                            
+                            self.replace_subtree(node, op.Leaf(0))
+                            return 
+                            
+                        if(c.is_constant() and c.get_name() == 1): node.free_connection(c)
+                        
+                elif(isinstance(node, op.add)):
+                                 
+                    for c in childrens:
+                        if(c.is_constant() and c.get_name() == 0): node.free_connection(c)
+                    
+                    
+                childrens = node.get_childrens()
+                
+                if(len(childrens) == 1): self.replace_subtree(node, childrens[0].copy_sub_tree())
+            
+            for c in node.get_childrens(): recursion_cleaning_constant(c)
+            
+            
+
+     
         try:
-        
+
             f = si.to_sympy(self.get_root().copy_sub_tree())
             f = sp.expand(f, force = True)
             f = sp.factor(f)
             f = sp.powsimp(f, force=True)
-            f = si.from_sympy(f)
             
-            if((len(self.get_root().get_all_subtree_nodes()) >= len(f.get_all_subtree_nodes())) or True): 
-                self.replace_subtree(self.get_root(), f)
+            f = si.from_sympy(f)
+
+            if(len(f.get_all_subtree_nodes()) <= len(self.get_root().get_all_subtree_nodes())): self.replace_subtree(self.get_root(), f)
             
         except: pass
         
+        recursion_cleaning_constant(self.get_root())
+
         return self
     
 

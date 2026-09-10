@@ -42,7 +42,7 @@ n = [100, 1000, 10000]
 def internal_test(X_distributions, Y_tree, variable_operation_couple, noise, seed, n):
     
     def X_generation(X_distributions, generator, n):
-        return {k: generator.uniform(X_distributions[k]["domain"][0], X_distributions[k]["domain"][1], n) for k in X_distributions.keys()}
+        return {k: generator.uniform(X_distributions[k][0], X_distributions[k][1], n) for k in X_distributions.keys()}
 
     generator = np.random.default_rng(seed)
     
@@ -120,14 +120,6 @@ def internal_test(X_distributions, Y_tree, variable_operation_couple, noise, see
 
 
 
-
-#Per il riconoscimento di funzioni f(x) = y, c'è il coefficiente di pearson
-#Per il riconoscimento di funzioni a*f(x) + b = y: c'è il coefficiente di pearson
-#Per il riconoscimento di funzioni f(a*x + b) = y: Fai l' inversa, e fai poi pearson dentro, se la funzione non è suriettiva sinusoidale, altrimenti fai tecniche particolari per ricavare a e b
-#Per il riconoscimento di funzioni a*f(c*x + d) + b = y, 
-#Per il riconoscimento di funzioni annidate: bisogna vedere
-#Per il riconoscimento di funzioni annidate con costanti: bisogna vedere
-#Extract all couples (var, oper) in the tree
 def extract_variable_operation_couples(tree):
     
     result = set()
@@ -149,6 +141,7 @@ def extract_variable_operation_couples(tree):
     return result
 
 
+
 def extract_valid_domain(tree, var):
     
     result = set()
@@ -165,10 +158,14 @@ def extract_valid_domain(tree, var):
     
     recursion(tree.get_root(), result)
     
-    domains = [domain[x] for x in result] + [(-a, a)]
+    domains = [domain[x] for x in result] + [(-float("inf"), float("inf"))]
     
     min_domain = max([x[0] for x in domains])
     max_domain = min([x[1] for x in domains])
+    
+    if(min_domain == -float("inf")): min_domain = -a
+    if(max_domain == float("inf")): max_domain = a
+    
     return (min_domain, max_domain)
     
     
@@ -207,13 +204,13 @@ def test(Y_string_tree, result, n, noise, seeds):
     for var in variables:
         
         domain = extract_valid_domain(tree, var)
-        Inputs_string[var] = {'domain': (domain[0], domain[1])}
+        Inputs_string[var] =  (domain[0], domain[1])
 
 
     #Create label
-    X_labels = [f"{k}: " + f'{str(Inputs_string[var]["domain"])}' for k in Inputs_string.keys()]
-    label = ", ".join(X_labels) +  f", Y = {Y_string_tree}" + f" [n = {n}] [noise = {noise}]"
+    X_labels = [f"{var}: " + f'{str(Inputs_string[var])}' for var in Inputs_string.keys()]
     
+    label = ", ".join(X_labels) +  f", Y = {Y_string_tree}" + f" [n = {n}] [noise = {noise}]"
     
     if(label not in result.keys()): actual_tests = 0
     else: actual_tests = len(result[label])
@@ -236,6 +233,7 @@ forbidden_concatenation = [" - ".join(x) for x in [("ln", "exp"),
 
 
 
+
 def depth_test(i, result, n, noise, seeds):
     
     for c in list(permutations(domain.keys(), i)):
@@ -249,6 +247,10 @@ def depth_test(i, result, n, noise, seeds):
         
 def fast_test(Y_string, result, n, noise, seeds):
     result = test(Y_string, result, n, noise, seeds)
+
+
+
+
 
 
 

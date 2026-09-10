@@ -326,9 +326,6 @@ class ChainOperationNode(OperationNode):
         
     def accept_number_childrens(self, k):
         return k > 0 and k < self.get_max_channels()
-   
-   
-
 
 class Leaf(OperationNode):
     

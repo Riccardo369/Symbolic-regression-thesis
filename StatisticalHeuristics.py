@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import permutations
 import json
-from scipy.stats import skew
+from scipy.stats import skew, kurtosis
+import time
 
 import InformationSOTA.artificial_formulas as af
 #import Domains as dm
@@ -111,8 +112,25 @@ def is_arcsin(X, Y):
     return ind.spearman_correlation(X, Y) >= 0
 
 
+def fast_spearman(rank_x, y):
+    
+    # Fai il ranking di Y in modo super veloce con argsort
+    rank_y = np.empty_like(y, dtype=float)
+    rank_y[np.argsort(y)] = np.arange(len(y))
+    
+    # Calcola Pearson direttamente sui ranghi
+    return ind.pearson_correlation(rank_x, rank_y)
 
 
+def __monoton_acceleration(X, dy_abs, f):
+    
+    lin_dy_abs = f(dy_abs)
+    
+    mask = np.isfinite(lin_dy_abs)
+        
+    return np.abs(ind.spearman_correlation(X[mask], lin_dy_abs[mask]))
+    
+    
 
 
 #Some heuristic has to repeat the same operation, so for optimizing the computation, it is created this function that calculates all statistical heuristics
@@ -122,7 +140,7 @@ def all_heuristic_statisticals(X, Y, X_name = None):
     index_sort = np.argsort(X)
     X = X[index_sort]
     Y = Y[index_sort]
-    
+
     result = dict()
     
     #SIN / COS
@@ -132,61 +150,43 @@ def all_heuristic_statisticals(X, Y, X_name = None):
     result["cos"] = sin_coeff + ((1 - int(is_sin(X, Y))) * epsilon_classification)
 
     dY = np.gradient(Y, X)
+    abs_dY = np.clip(np.abs(dY), 1e-20, None)
+
 
     #EXP
-    # L'esponenziale accelera: consideriamo il valore assoluto della pendenza
-    abs_dY = np.abs(dY)
-    abs_dY = np.clip(abs_dY, 1e-20, None) # Evita log(0)
-    ln_dY = np.log(abs_dY)
-
-    mask_exp = np.isfinite(ln_dY)
+    result["exp"] = __monoton_acceleration(X, abs_dY, lambda x: np.log(x))
     
-    # Spearman cattura la crescita logaritmica della pendenza anche se distorta da composte
-    result["exp"] = np.abs(ind.spearman_correlation(X[mask_exp], ln_dY[mask_exp]))
-
     #LN
-    # Il logaritmo decelera: l'inverso della pendenza ha una relazione monotona con X
-    inv_dY = invert(dY)
-    mask_ln = np.isfinite(inv_dY)
-
-    result["ln"] = np.abs(ind.spearman_correlation(X[mask_ln], inv_dY[mask_ln]))
+    result["ln"] = __monoton_acceleration(X, abs_dY, lambda x: 1/x)
     
     #SQRT
-    mask_pos = dY > 0 # La radice reale ha pendenza positiva
- 
-    # Spearman tra X e dY sarà FORTEMENTE NEGATIVO (pendenza che scende)
-    corr_sqrt = ind.spearman_correlation(X[mask_pos], dY[mask_pos])
-        
-    # Se la pendenza scende fortemente con X, è un ottimo candidato SQRT
-    result["sqrt"] = np.abs(corr_sqrt) if corr_sqrt < 0 else 0.0
-    
+    result["sqrt"] = __monoton_acceleration(X, abs_dY, lambda x: 2*(x**(3/2)))
+
     #DIV
-    abs_dY = np.abs(dY)
-    mask = np.isfinite(abs_dY)
-
+     
     # Calcolo dell'asimmetria della pendenza
-    s = np.abs(skew(abs_dY[mask]))
-        
-    # Mappatura naturale in [0, 1) priva di costanti arbitrarie
-    result["div"] = s / (1.0 + s)
-
-    
-    
+    k = kurtosis(Y, fisher = True) + 2      
+    result["div"] = k / (1.0 + k)
+ 
+  
     #ARCSIN / ARCCOS: PER QUESTO, C'è SUI LIMITI DELLA FUNZIONE, UN ACCRESCIMENTO CHE FINISCE VERSO L' ALTO / BASSO, COME SE CI FOSSE UN MURO SU CUI SBATTI IL MUSO PER VERTICALE    
-    Y_norm = rescaling(Y, np.min(Y), np.max(Y), 0, 1)              # Normalizziamo in [0, 1]
-    dist_from_center = np.abs(Y_norm - 0.5)                        # Massima agli estremi, minima al centro
+    #Y_norm = rescaling(Y, np.min(Y), np.max(Y), 0, 1)
+    dist_from_center = Y - np.mean(Y)
+    
+    #Y - np.mean(Y) serve per calcolare la distanza tra ogni punto della forma ed il punto centrale. Il punto centrale è la media così si ha una robustezza agl' outlier
+    #Il trucco sta nel fare un folding di dist_from center (con un abs), in modo tale da avere un unica direzione che parte dal centro, e analizzarla con spearman con l' andamento della derivata (sempre in abs).
+    #In questo modo spearman vedrà se il comportamento di entrambe le direzioni sia unico, quindi simmetrico.
+    
     
     # Nelle funzioni arcsin/arccos, la pendenza cresce man mano che ci si allontana dal centro
-    arcsin_score = ind.spearman_correlation(dist_from_center, np.abs(dY))
+    arcsin_score = np.abs(ind.spearman_correlation(np.abs(dist_from_center), np.abs(dY)))
     
-    is_arcsin_val = int(arcsin_score > 0)
-    
-    arcsin_score = np.abs(arcsin_score) if not np.isnan(arcsin_score) else 0.0
+    is_arcsin_val = is_arcsin(X, Y)
 
-
-    
     result["arcsin"] = arcsin_score + ((is_arcsin_val) * epsilon_classification)
     result["arccos"] = arcsin_score + ((1 - is_arcsin_val) * epsilon_classification)
+    
+    
     
     #Prepare result
     result = [{"variable": X_name, "operation": k, "value": result[k]} for k in result.keys()]
@@ -213,29 +213,35 @@ def function_base_score(X, Y, f):
 
     
     
-    
+
   
-#X_original = np.linspace(-10, 1, 100)
+#X_original = np.linspace(-1, 1, 100)
 #
-#for Y_string in ["np.sin(np.exp(X))", "np.sin(np.log(X))"]: #["np.arcsin(np.exp(X))", "np.exp(np.arcsin(X))", "np.log(X)+np.arcsin(X)", "np.exp(np.arcsin(X))"]:
-#    
+#for Y_string in ["np.log(np.arcsin(X))", "np.arcsin(X)"]:
+#
 #    X = X_original.copy()
 #
 #    Y = eval(Y_string)
 #
 #    mask = np.isfinite(Y)
-#    
+# 
 #    X = X[mask]
 #    Y = Y[mask]
-#    
-#    
 #
+#    dy = np.gradient(Y, X)
+#    
+#    min_Y = np.min(Y)
+#    max_Y = np.max(Y)
+#    
+#    Y_norm = rescaling(Y, np.min(Y), np.max(Y), 0, 1)
+#    dist_from_center = np.abs(Y - 0.5)
+#            
+#    # Nelle funzioni arcsin/arccos, la pendenza cresce man mano che ci si allontana dal centro
+#    print(np.abs(ind.spearman_correlation(dist_from_center, dy)))
+#        
 #    plt.plot(X, Y, color = "black", label = Y_string)
-#    plt.plot(X, monoton_reconstruction(Y), color = "red", label = "Y reconstruction")
 #    plt.legend()
 #    plt.show()
-
-
 
 
 
