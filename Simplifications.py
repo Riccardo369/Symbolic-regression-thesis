@@ -4,8 +4,6 @@ import sympy as sp
 
 import Operations as op
 import Exceptions as ex
-import utils
-
 
 
 
@@ -19,7 +17,8 @@ sympy_convertion_dict = {
     "arccos": sp.acos,
     "exp": sp.exp,
     "ln": sp.log,
-    "sqrt": sp.sqrt
+    "sqrt": sp.sqrt,
+    
     }
 
 
@@ -45,12 +44,11 @@ def to_sympy(node):
 
 
 
-     
-         
-    
 
 
-def from_sympy(expr):
+
+
+def from_sympy(expr, TR_inputs_dict):
     
     """Riconverte un'espressione SymPy nel tuo albero di OperationNode."""
     if(isinstance(expr, sp.Symbol)): return op.Leaf(str(expr))
@@ -62,40 +60,44 @@ def from_sympy(expr):
         
         base, exp = expr.args
         
-        if(int(exp) != exp): raise ValueError(f"Not integer exp in Pow non supported: {exp}")
+        base = from_sympy(base, TR_inputs_dict)
         
-        else:
+        try:
             
-            bases = from_sympy(base)
+            output_base = base.forward_calculation_memory_sub_tree(TR_inputs_dict).get_memory("forward")
+            valid_base = np.all(np.isfinite(output_base)) and op.ln.check_input_domain(0, output_base)
             
-            n = np.abs(exp)
-            
-            bases = [bases.copy_sub_tree() for _ in range(n)]
+        except: valid_base = False
+        
+        if(not valid_base): raise ex.ExponentialSimplificationError(f"It is not possible to translate the power {base} ^ {exp} in exp(ln({base}) * {exp})")
 
-            if(n > 1):
-                
-                mul_chain = op.mul()
-                for i in bases: mul_chain.new_connection(i)
-                bases = mul_chain
-                
-            else: bases = bases[0]
+        node = op.exp()
+        
+        log = op.ln()
+        log.new_connection(base)
+        
+        mul = op.mul()
+        mul.new_connection(log)
+        mul.new_connection(from_sympy(exp, TR_inputs_dict))
+        
+        node.new_connection(mul)
+        
             
-            if(exp > 0): node = mul_chain
-            
-            else:
-                
-                node = op.div()
-                node.new_connection(bases)
-                
-              
     elif(expr.func in sympy_convertion_dict.values()):
     
         for key in sympy_convertion_dict.keys():
             if(expr.func == sympy_convertion_dict[key]): node = eval(f"op.{key}")()
             
         for arg in expr.args:
-            child_node = from_sympy(arg)
+            child_node = from_sympy(arg, TR_inputs_dict)
             node.new_connection(child_node) # Imposta automaticamente il padre!
+            
+            
+            
+            
+            
+    elif(isinstance(expr, (sp.Number, sp.NumberSymbol))): return op.Leaf(float(expr.evalf()))
+        
             
             
     else: raise ValueError(f"Operatore SymPy non supportato: {expr.func}")

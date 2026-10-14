@@ -5,6 +5,6 @@ InformationSOTA/Feynman_with_units/*
 InformationSOTA/ode-strogatz-master/*
 InformationSOTA/srbench-master/*
 InformationSOTA/pmlb-master/*
-Results/Checkpoints/*
-Results/CompleteResults/*
-Results/RoughResults/*
+BenchmarkResults/*
+__pycache__/*
+.vscode/*

@@ -336,10 +336,10 @@ def plot_non_invertible_metric(metric_label):
 
 
 
-#plot_non_invertible_metric("mae_sin")
-#plot_non_invertible_metric("mae_cos")
-#plot_non_invertible_metric("pearson_sin")
-#plot_non_invertible_metric("pearson_cos")
+plot_non_invertible_metric("mae_sin")
+plot_non_invertible_metric("mae_cos")
+plot_non_invertible_metric("pearson_sin")
+plot_non_invertible_metric("pearson_cos")
 
 
 
@@ -356,4 +356,88 @@ Ciò significa che la tecnica di pseudo inversa, ricostruisce bene il segnale (d
 In più, questa tecnica è invariante ad n, quindi non cambia al numero di punti disponibili.
 
 """
+
+
+
+def plot_heatmap_curtosi(
+    funzione_target: str = "np.log(X)",
+    file_path: str = "KurtosisApplicationResults.json",
+    color_by: str = "mean",  # 'mean' o 'var' per definire la scala cromatica
+):
+    """Carica i dati dal JSON e genera la heatmap indicando sia Media che Varianza in ogni scacco.
+
+    Parameters:
+    -----------
+    funzione_target : str
+        La funzione target da filtrare (es. 'np.log(X)', '1/X', 'X').
+    file_path : str
+        Il percorso del file JSON contenente i risultati.
+    color_by : str
+        Determina quale valore usiamo per i colori della heatmap ('mean' o 'var').
+    """
+    # 1. Caricamento Dati
+    with open(file_path, "r") as f:
+        data = json.load(f)
+
+    df = pd.DataFrame(data)
+
+    # 2. Filtraggio
+    df_filtered = df[df["f"] == funzione_target].copy()
+
+    if df_filtered.empty:
+        print(f"Nessun dato trovato per la funzione: '{funzione_target}'")
+        return
+
+    # 3. Calcolo di Media e Varianza
+    summary_df = (
+        df_filtered.groupby(["noise", "n"])["kurtosis"]
+        .agg(mean="mean", var="var")
+        .reset_index()
+    )
+
+    # 4. Pivot Tables separate per colore e annotazioni
+    pivot_mean = summary_df.pivot_table(index="noise", columns="n", values="mean")
+    pivot_var = summary_df.pivot_table(index="noise", columns="n", values="var")
+
+    # 5. Creazione della matrice di etichette per gli scacchi (Media sopra, Varianza sotto)
+    annot_matrix = np.empty(pivot_mean.shape, dtype=object)
+    for i in range(pivot_mean.shape[0]):
+        for j in range(pivot_mean.shape[1]):
+            m_val = pivot_mean.iloc[i, j]
+            v_val = pivot_var.iloc[i, j]
+            annot_matrix[i, j] = f"Mean: {m_val:.3f}\nVar: {v_val:.3f}"
+
+    # Seleziona quale pivot usare per i colori dello sfondo
+    pivot_color = pivot_mean if color_by == "mean" else pivot_var
+    label_color = "Media" if color_by == "mean" else "Varianza"
+
+    # 6. Plot della Heatmap
+    sns.set_theme(style="whitegrid")
+    plt.figure(figsize=(10, 7))
+
+    sns.heatmap(
+        pivot_color,
+        annot=annot_matrix,
+        fmt="",  # Disattiva la formattazione automatica dato che annot contiene stringhe
+        cmap="YlOrRd",
+        cbar_kws={"label": f"Valore {label_color} Curtosi"},
+        annot_kws={"size": 9.5},  # Adatta la dimensione del testo per far entrare entrambe le righe
+    )
+
+    plt.title(f"Kurtosis with {funzione_target}")
+    plt.xlabel("Points")
+    plt.ylabel("Noise level")
+
+    plt.tight_layout()
+    plt.show()
+
+    return summary_df
+
+
+
+
+#for i in ["np.log(X)", "np.arcsin(X)", "1000000*np.sin(X)", "1/X", "1/np.abs(X)", "np.sin(X)/np.cos(X)", "X"]:
+    
+    #plot_heatmap_curtosi(funzione_target = i)
+
 

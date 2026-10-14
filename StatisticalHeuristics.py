@@ -1,21 +1,9 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from itertools import permutations
-import json
-from scipy.stats import skew, kurtosis
-import time
-
-import InformationSOTA.artificial_formulas as af
-#import Domains as dm
-import utils
-import Operations as op
+from scipy.stats import kurtosis
 import Indicators as ind
-from Model import SymbolicRegression
-
 
 
 epsilon_classification = 1e-20
-rng = np.random.default_rng()
 
 
 def invert(X):
@@ -26,27 +14,6 @@ def invert(X):
 #Può distruggere le scale, distruggere le traslazioni, e permette di fare calcoli più veloci, senza perdere le correlazioni spaziali tra i valori
 def rescaling(X, a, b, c, d):
     return c + (((X - a) * (d - c)) / (b - a))
-
-
-#Transforma il valore di una pendenza in un valore da 0 ad 1, più la pendenza è violenta (lontana dallo 0), più è vicina ad 1, più è vicina a 0, più è 0
-def power_pendency(x):
-    return (2 / np.pi) * np.arctan(np.abs(x))
-
-#Calcola le pendenze stimate nei punti intermezzi a quelli trovati
-def calculation_pendency(X, Y):
-    
-    Min_X, Max_X = np.min(X), np.max(X)
-    Min_Y, Max_Y = np.min(Y), np.max(Y)
-    
-    X = rescaling(X, Min_X, Max_X, 0, 1)
-    Y = rescaling(Y, Min_Y, Max_Y, 0, 1)
-
-    new_X = X[:-1] + ((X[1:] - X[:-1]) / 2)
-    pendency = (Y[1:] - Y[:-1]) / (X[1:] - X[:-1])
-
-    new_X = rescaling(new_X, 0, 1, Min_X, Max_X)
-
-    return new_X, pendency
 
 
 
@@ -67,22 +34,6 @@ def sinusoidal_coefficient(Y):
     return (total_change / (total_change + 1))
 
 
-
-
-def arcsinusoidal_coefficient1(X, Y):
-
-    y_min, y_max = np.min(Y), np.max(Y)
-    if y_max == y_min: return 0.0
-    
-    Y_norm = 2 * (Y - y_min) / (y_max - y_min) - 1
-    
-    Z = np.sin((np.pi / 2) * Y_norm)
-    
-    mask = np.isfinite(Z) & np.isfinite(X)
-
-    score = np.abs(ind.linear_correlation(X[mask], Z[mask]))
-    
-    return score
 
 
 def is_sin(X, Y):
@@ -112,16 +63,6 @@ def is_arcsin(X, Y):
     return ind.spearman_correlation(X, Y) >= 0
 
 
-def fast_spearman(rank_x, y):
-    
-    # Fai il ranking di Y in modo super veloce con argsort
-    rank_y = np.empty_like(y, dtype=float)
-    rank_y[np.argsort(y)] = np.arange(len(y))
-    
-    # Calcola Pearson direttamente sui ranghi
-    return ind.pearson_correlation(rank_x, rank_y)
-
-
 def __monoton_acceleration(X, dy_abs, f):
     
     lin_dy_abs = f(dy_abs)
@@ -135,6 +76,8 @@ def __monoton_acceleration(X, dy_abs, f):
 
 #Some heuristic has to repeat the same operation, so for optimizing the computation, it is created this function that calculates all statistical heuristics
 def all_heuristic_statisticals(X, Y, X_name = None):
+    
+    if(len(X) == 0 or len(Y) == 0): return []
     
     #Sort the elements considering the X values
     index_sort = np.argsort(X)
@@ -163,12 +106,12 @@ def all_heuristic_statisticals(X, Y, X_name = None):
     result["sqrt"] = __monoton_acceleration(X, abs_dY, lambda x: 2*(x**(3/2)))
 
     #DIV
-     
+
     # Calcolo dell'asimmetria della pendenza
     k = kurtosis(Y, fisher = True) + 2      
     result["div"] = k / (1.0 + k)
- 
-  
+
+
     #ARCSIN / ARCCOS: PER QUESTO, C'è SUI LIMITI DELLA FUNZIONE, UN ACCRESCIMENTO CHE FINISCE VERSO L' ALTO / BASSO, COME SE CI FOSSE UN MURO SU CUI SBATTI IL MUSO PER VERTICALE    
     #Y_norm = rescaling(Y, np.min(Y), np.max(Y), 0, 1)
     dist_from_center = Y - np.mean(Y)
@@ -186,139 +129,13 @@ def all_heuristic_statisticals(X, Y, X_name = None):
     result["arcsin"] = arcsin_score + ((is_arcsin_val) * epsilon_classification)
     result["arccos"] = arcsin_score + ((1 - is_arcsin_val) * epsilon_classification)
     
-    
-    
     #Prepare result
     result = [{"variable": X_name, "operation": k, "value": result[k]} for k in result.keys()]
     
     return result
 
 
-
-
-
 def all_heuristic_statisticals_complete(X, Y, X_name = None):
     return all_heuristic_statisticals(X, Y, X_name) + [{"variable": X_name, "operation": "constant", "value": 1 / (1 + np.std(Y))},
                                                        {"variable": X_name, "operation": "linear", "value": np.abs(linear_correlation(X, Y))}]
-
-    
-    
-
-
-
-def function_base_score(X, Y, f):
-    Y1 = f(X)
-    mask = np.isfinite(Y1)
-    return np.abs(ind.linear_correlation(Y[mask], Y1[mask]))
-
-    
-    
-
-  
-#X_original = np.linspace(-1, 1, 100)
-#
-#for Y_string in ["np.log(np.arcsin(X))", "np.arcsin(X)"]:
-#
-#    X = X_original.copy()
-#
-#    Y = eval(Y_string)
-#
-#    mask = np.isfinite(Y)
-# 
-#    X = X[mask]
-#    Y = Y[mask]
-#
-#    dy = np.gradient(Y, X)
-#    
-#    min_Y = np.min(Y)
-#    max_Y = np.max(Y)
-#    
-#    Y_norm = rescaling(Y, np.min(Y), np.max(Y), 0, 1)
-#    dist_from_center = np.abs(Y - 0.5)
-#            
-#    # Nelle funzioni arcsin/arccos, la pendenza cresce man mano che ci si allontana dal centro
-#    print(np.abs(ind.spearman_correlation(dist_from_center, dy)))
-#        
-#    plt.plot(X, Y, color = "black", label = Y_string)
-#    plt.legend()
-#    plt.show()
-
-
-
-#Funzionamento per ogni operazione:
-
-#Tipologie di operazioni da cui provengono i nodi: costanti, operazioni, variabili
-
-#Se la lineare vince sugl' altri, ed il nodo è operazione o variabile, si eliminano tutti i candidati dalla gara, perchè essendo lineare, va tutto bene,
-#altrimenti se è una costante, si va con l' applicazione della variabile
-
-
-    
-    
-    
-
-
-
-
-
-
-
-#LN e EXP: considerare la loro velocità
-
-#SIN e COS: considerare per entrambi il cambio di segno, ed il fatto che la distanza sia regolare. Per distinguere tra i due, è molto difficile, ma nel pratico poco
-#importa, perchè cos(x) = sin(x + pi/2)
-
-#ARCSIN, ARCCOS e SQRT: sono deboli, nel senso che mescolate ed annidate altre funzioni, non cambiano di molto il comportamento, apparte qualche allungamento
-
-
-
-
-
-################################################################################################################
-################################################################################################################
-################################################################################################################
-
-#DESCRIZIONE INVARIANTE ALLE SCALE E TRASLAZIONI INTERNE ED ESTERNE:
-
-#sin e cos, i fratelli sinusoidali, il loro andamento oscilla, lento giù, veloce giù, lento giù, punto di fermo, lento su, veloce su, lento su, punto di fermo, e ricomincia
-#cos parte pi/2 più avanti rispetto a sin, andamento uguale.
-#CON LE 2 SCALE E LE TRASLAZIONI, POSSONO DIVENTARE UNO UGUALE ALL' ALTRO, RISCHIO DI CONFONDERLI
-
-#arcsin e arccos, frateli antisinusoidali, il loro andamento è monotono, sul centro pendenza veloce, sugl' estremi pendenza velocissima, come se avessero un muro simmetrico da qualche parte
-#arcsin: andamento verso su
-#arccos: andamento verso giù
-#CON LE 2 SCALE E LE TRASLAZIONI, POSSONO DIVENTARE UNO UGUALE ALL' ALTRO, RISCHIO DI CONFONDERLI
-
-#ln e exp, fratelli rivali con crescita monotona:
-#ln crescita rapidissima all' inizio, poi si rallenta bruscamente
-#exp crescita lentissima, poi accelera bruscamente
-#CON LE 2 SCALE E LE TRASLAZIONI, POSSONO DIVENTARE UNO UGUALE ALL' ALTRO, RISCHIO DI CONFONDERLI. Difficilmente si confondono: la crescita lenta di exp è più lenta della descrescita di ln.
-
-#cot: asintoti verticali continui su: k*pi per ogni k nei numeri naturali. L' andamento è velocissimo quando si scompare e compare sull' asintoto, quando è vicino ad una soglia  in y, l' andamento rallenta.
-#In ogni ciclo (tra un asintoto ed un altro), la funzione è simmetrica (con segno opposto) su quella soglia in y.
-
-#div: asintoto su uno specchio, vicino ad una soglia in x, compare e scompare velocissimamente, seguendo il segno del dominio (se dietro alla soglia è negativo, d' avanti è positivo e viceversa).
-#Andando appena più distanti da quello specchio, la funzione rallenta di tantissimo, con una curva molto violenta.
-
-#abs: tutto ciò che è sotto una soglia in x, viene proiettato verso su, come fosse ribaltato usando quella soglia come specchio
-
-#sqrt: la y ha un andamento quadratico rispetto alla x (e vale solo dove la x e y sono positive).
-#I coefficienti interni ed esterni di scala e transizione sono gli stessi come se la y diventa x e la x diventa y
-
-
-
-#SIN e COS: comportamento sinusoidale
-
-#ARCSIN e ARCCOS: comportamento di spinta contro il muro
-
-#LN e EXP: cambio continuo ed improvviso di accelerazione (|spearman| * un qualcosa che faccio capire l' accelerazione, se aumenta diminuisce in modo brusco)
-
-#COT: 
-
-#DIV: tutto piatto, tranne vicino all' asintoto che accelera e decelera in modo brusco
-
-#ABS: sotto una certa soglia, viene ribaltato tutto quanto verso su
-
-#SQRT: da vedere al contrario (invertendo Y ed X), deve essere un comportamento quadratico tra Y ed X (ma solo da una parte di un punto cardine).
-
 

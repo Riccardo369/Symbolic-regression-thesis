@@ -6,3 +6,6 @@ class BackwardCalculationError(Exception):
 
 class SimplificationError(Exception):
     pass
+
+class ExponentialSimplificationError(Exception):
+    pass

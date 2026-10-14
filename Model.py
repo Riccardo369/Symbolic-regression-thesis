@@ -1,14 +1,11 @@
-import numpy as np
 import lark
-import Operations as op
-import matplotlib.pyplot as plt
 import sympy as sp
-import time
-
-import Exceptions as ex
-import Simplifications as si
-
 import warnings
+
+
+import Operations as op
+import LearningStrategy as ls
+import Simplifications as si
 
 
 
@@ -173,71 +170,73 @@ class SymbolicRegression:
         
         return result_function
     
-    def simplify_model(self):
+    
+    
+    
+    def simplify_model(self, TR_inputs_dict = {}):
         
         def recursion_cleaning_constant(node):
             
-            if(isinstance(node, op.ChainOperationNode)):
-                
-                childrens = node.get_childrens()
-                        
-                if(isinstance(node, op.mul)):
+            def recursion(tree, node):
+            
+                if(isinstance(node, op.ChainOperationNode)):
                     
-                    for c in childrens:
-                        
-                        if(c.is_constant() and c.get_name() == 0): 
+                    childrens = node.get_childrens()
                             
-                            self.replace_subtree(node, op.Leaf(0))
-                            return 
-                            
-                        if(c.is_constant() and c.get_name() == 1): node.free_connection(c)
+                    if(isinstance(node, op.mul)):
                         
-                elif(isinstance(node, op.add)):
-                                 
-                    for c in childrens:
-                        if(c.is_constant() and c.get_name() == 0): node.free_connection(c)
+                        for c in childrens:
+                            
+                            if(c.is_constant() and c.get_name() == 0): 
+                                
+                                tree.replace_subtree(node, op.Leaf(0))
+                                return 
+                                
+                            if(c.is_constant() and c.get_name() == 1): node.free_connection(c)
+                            
+                    elif(isinstance(node, op.add)):
+                                    
+                        for c in childrens:
+                            if(c.is_constant() and c.get_name() == 0): node.free_connection(c)
+                        
+                    childrens = node.get_childrens()
                     
-                    
-                childrens = node.get_childrens()
+                    if(len(childrens) == 1): tree.replace_subtree(node, childrens[0].copy_sub_tree())
                 
-                if(len(childrens) == 1): self.replace_subtree(node, childrens[0].copy_sub_tree())
+                for c in node.get_childrens(): recursion(tree, c)
+                
+            return recursion(node, node)
             
-            for c in node.get_childrens(): recursion_cleaning_constant(c)
             
+        f = si.to_sympy(self.get_root().copy_sub_tree())
+        f = sp.expand(f)
+        f = sp.factor(f)
+        f = sp.powsimp(f)
             
-
-     
         try:
-
-            f = si.to_sympy(self.get_root().copy_sub_tree())
-            f = sp.expand(f, force = True)
-            f = sp.factor(f)
-            f = sp.powsimp(f, force=True)
+            f = si.from_sympy(f, TR_inputs_dict)
+            recursion_cleaning_constant(f)
             
-            f = si.from_sympy(f)
-
-            if(len(f.get_all_subtree_nodes()) <= len(self.get_root().get_all_subtree_nodes())): self.replace_subtree(self.get_root(), f)
-            
-        except: pass
+        except: return self
         
-        recursion_cleaning_constant(self.get_root())
-
+        if(len(f.get_all_subtree_nodes()) <= len(self.get_root().get_all_subtree_nodes())): self.replace_subtree(self.get_root(), f)
+        
         return self
     
 
 
 
     #Learn phase   
-    def learn(self, TR_inputs_dict, TR_output, LearningAlgorithm, stop_criteria = lambda x: False, metric_functions = {}):
+    def learn(self, TR_inputs_dict, TR_output, stop_criteria = lambda x: False, metric_functions = {}):
         
         warnings.filterwarnings('ignore', category=RuntimeWarning)
-
-        result = LearningAlgorithm(self,
-                                TR_inputs_dict,
-                                TR_output,
-                                stop_criteria,
-                                metric_functions)
-        
+                
+        result = ls.StatisticalHeuristicLearning()(self,
+                                                   TR_inputs_dict,
+                                                   TR_output,
+                                                   stop_criteria,
+                                                   metric_functions)
+                            
         warnings.filterwarnings('default', category=RuntimeWarning)
         
         return result

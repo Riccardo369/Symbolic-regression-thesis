@@ -5,10 +5,6 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 
-import Exceptions as ex
-import Indicators as ind
-import Errors as er
-import utils
 import NonInvertibleFunctions as nif
 
 class OperationNode:
@@ -149,9 +145,18 @@ class OperationNode:
         return recursion(self)
 
     #SET MEMORY ZONE
-    def set_memory(self, memory_name, value):  
+    def set_memory(self, memory_name, value, target_len):
+        
         if(not isinstance(value, np.ndarray) and type(value) not in [float, int] and not isinstance(value, np.generic) and value != None): raise ValueError(f"Memory must contains only a numpy tensor or a number float / int, not a {type(value)}")
-        self._memories[memory_name] = value.copy() if isinstance(value, np.ndarray) else value
+
+        if(value is None): self._memories[memory_name] = None
+        
+        else:
+            
+            val_arr = np.asarray(value)
+            if val_arr.ndim == 0: value = np.full(target_len, float(value))
+            self._memories[memory_name] = value
+            
         return self
     
     def set_name(self, name):        
@@ -160,12 +165,12 @@ class OperationNode:
         return self
 
     #CALCULATION AND AUTOMATICALLY SET MEMORY ALL SUB TREE ZONE
-    def forward_calculation_memory_sub_tree(self, inputs_dict):
+    def forward_calculation_memory_sub_tree(self, inputs_dict, target_len):
                
         def recursion(node):
             for child in node.get_childrens(): recursion(child)
-            if(type(node) == Leaf): node.set_memory("forward", inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name())
-            else: node.set_memory("forward", node.__class__.forward_calculation([x.get_memory("forward") for x in node.get_childrens()]))
+            if(type(node) == Leaf): node.set_memory("forward", inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name(), target_len)
+            else: node.set_memory("forward", node.__class__.forward_calculation([x.get_memory("forward") for x in node.get_childrens()]), target_len)
  
         with np.errstate(divide='ignore', invalid='ignore'):  
                 
@@ -173,15 +178,15 @@ class OperationNode:
         
         return self
 
-    def backward_calculation_memory_sub_tree(self, output):
+    def backward_calculation_memory_sub_tree(self, output, target_len):
         
-        self.set_memory("backward", output)
+        self.set_memory("backward", output, target_len)
         
         def recursion(node):
             
             if(not issubclass(type(node), Leaf)):
                 for child, backward in zip(node.get_childrens(), node.__class__.backward_calculation([x.get_memory("forward") for x in node.get_childrens()], node.get_memory("backward"))):                
-                    child.set_memory("backward", backward)
+                    child.set_memory("backward", backward, target_len)
                     recursion(child)
                     
         with np.errstate(divide='ignore', invalid='ignore'):  
@@ -196,8 +201,8 @@ class OperationNode:
         def recursion(node):
             for child in node.get_childrens(): recursion(child)
             if(type(node) == Leaf):
-                node.set_memory(memory_name, None)
-            else: node.set_memory(memory_name, None)
+                node.set_memory(memory_name, None, 1)
+            else: node.set_memory(memory_name, None, 1)
                 
         recursion(self)
         
@@ -252,9 +257,6 @@ class OperationNode:
     def copy_sub_tree(self):
         
         result = self.__class__(self._name) if(self.__class__.__name__ == "Leaf") else self.__class__()
-        
-        #Non necessita della copia perchè i metodi set fanno una copia già di default
-        #for key in self._memories.keys(): result.set_memory(key, self._memories[key])
         
         for child in self._childrens:
             result.new_connection(child.copy_sub_tree())
@@ -393,15 +395,9 @@ class mul(ChainOperationNode):
                                         forward_prod,
                                         out = np.full_like(forward_prod, np.nan, dtype=float), 
                                         where = (forward_prod != 0))
-            
-            #Every element of this multiplication are constants
-            if(not isinstance(backward_output, np.ndarray) and np.isnan(backward_output)): backward_output = input
-            
-            elif(isinstance(backward_output, np.ndarray)):
-                
-                mask = ~np.isfinite(backward_output)
-                if(not np.isscalar(input)): backward_output[mask] = input[mask]
-                else: backward_output[mask] = input
+
+            mask = ~np.isfinite(backward_output)
+            backward_output[mask] = input[mask]
                 
             result.append(backward_output)
         
@@ -432,14 +428,9 @@ class div(UnaryOperationNode):
                            expected_output,
                            out = np.full_like(input, np.nan, dtype=float), 
                            where = (input != 0))
-        
-        if(not isinstance(backward_output, np.ndarray) and np.isnan(backward_output)): backward_output = input
-                    
-        elif(isinstance(backward_output, np.ndarray)):
-                        
-            mask = ~np.isfinite(backward_output)
-            if(not np.isscalar(input)): backward_output[mask] = input[mask]
-            else: backward_output[mask] = input
+             
+        mask = ~np.isfinite(backward_output)
+        backward_output[mask] = input[mask]
             
         return [backward_output]
 

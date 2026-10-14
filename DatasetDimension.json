@@ -1,0 +1,1758 @@
+[
+    {
+        "dataset": "1027_ESL",
+        "features": 4,
+        "TR points": 292,
+        "VL points": 74,
+        "TS points": 122
+    },
+    {
+        "dataset": "1028_SWD",
+        "features": 10,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "1029_LEV",
+        "features": 4,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "1030_ERA",
+        "features": 4,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "1089_USCrime",
+        "features": 13,
+        "TR points": 28,
+        "VL points": 7,
+        "TS points": 12
+    },
+    {
+        "dataset": "1096_FacultySalaries",
+        "features": 4,
+        "TR points": 30,
+        "VL points": 7,
+        "TS points": 13
+    },
+    {
+        "dataset": "1191_BNG_pbc",
+        "features": 18,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "1193_BNG_lowbwt",
+        "features": 9,
+        "TR points": 18662,
+        "VL points": 4666,
+        "TS points": 7776
+    },
+    {
+        "dataset": "1196_BNG_pharynx",
+        "features": 10,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "1199_BNG_echoMonths",
+        "features": 9,
+        "TR points": 10497,
+        "VL points": 2625,
+        "TS points": 4374
+    },
+    {
+        "dataset": "1201_BNG_breastTumor",
+        "features": 9,
+        "TR points": 69984,
+        "VL points": 17496,
+        "TS points": 29160
+    },
+    {
+        "dataset": "1203_BNG_pwLinear",
+        "features": 10,
+        "TR points": 106288,
+        "VL points": 26572,
+        "TS points": 44287
+    },
+    {
+        "dataset": "1595_poker",
+        "features": 10,
+        "TR points": 615006,
+        "VL points": 153751,
+        "TS points": 256253
+    },
+    {
+        "dataset": "192_vineyard",
+        "features": 2,
+        "TR points": 31,
+        "VL points": 8,
+        "TS points": 13
+    },
+    {
+        "dataset": "195_auto_price"
+    },
+    {
+        "dataset": "197_cpu_act",
+        "features": 21,
+        "TR points": 4915,
+        "VL points": 1229,
+        "TS points": 2048
+    },
+    {
+        "dataset": "201_pol",
+        "features": 48,
+        "TR points": 9000,
+        "VL points": 2250,
+        "TS points": 3750
+    },
+    {
+        "dataset": "207_autoPrice"
+    },
+    {
+        "dataset": "210_cloud",
+        "features": 5,
+        "TR points": 64,
+        "VL points": 17,
+        "TS points": 27
+    },
+    {
+        "dataset": "215_2dplanes",
+        "features": 10,
+        "TR points": 24460,
+        "VL points": 6116,
+        "TS points": 10192
+    },
+    {
+        "dataset": "218_house_8L",
+        "features": 8,
+        "TR points": 13670,
+        "VL points": 3418,
+        "TS points": 5696
+    },
+    {
+        "dataset": "225_puma8NH",
+        "features": 8,
+        "TR points": 4915,
+        "VL points": 1229,
+        "TS points": 2048
+    },
+    {
+        "dataset": "227_cpu_small",
+        "features": 12,
+        "TR points": 4915,
+        "VL points": 1229,
+        "TS points": 2048
+    },
+    {
+        "dataset": "228_elusage",
+        "features": 2,
+        "TR points": 33,
+        "VL points": 8,
+        "TS points": 14
+    },
+    {
+        "dataset": "229_pwLinear",
+        "features": 10,
+        "TR points": 120,
+        "VL points": 30,
+        "TS points": 50
+    },
+    {
+        "dataset": "230_machine_cpu",
+        "features": 6,
+        "TR points": 125,
+        "VL points": 31,
+        "TS points": 53
+    },
+    {
+        "dataset": "294_satellite_image",
+        "features": 36,
+        "TR points": 3861,
+        "VL points": 965,
+        "TS points": 1609
+    },
+    {
+        "dataset": "344_mv",
+        "features": 10,
+        "TR points": 24460,
+        "VL points": 6116,
+        "TS points": 10192
+    },
+    {
+        "dataset": "4544_GeographicalOriginalofMusic",
+        "features": 117,
+        "TR points": 635,
+        "VL points": 159,
+        "TS points": 265
+    },
+    {
+        "dataset": "485_analcatdata_vehicle",
+        "features": 4,
+        "TR points": 28,
+        "VL points": 8,
+        "TS points": 12
+    },
+    {
+        "dataset": "503_wind",
+        "features": 14,
+        "TR points": 3944,
+        "VL points": 986,
+        "TS points": 1644
+    },
+    {
+        "dataset": "505_tecator",
+        "features": 124,
+        "TR points": 144,
+        "VL points": 36,
+        "TS points": 60
+    },
+    {
+        "dataset": "519_vinnie",
+        "features": 2,
+        "TR points": 228,
+        "VL points": 57,
+        "TS points": 95
+    },
+    {
+        "dataset": "522_pm10",
+        "features": 7,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "523_analcatdata_neavote",
+        "features": 2,
+        "TR points": 60,
+        "VL points": 15,
+        "TS points": 25
+    },
+    {
+        "dataset": "527_analcatdata_election2000",
+        "features": 14,
+        "TR points": 40,
+        "VL points": 10,
+        "TS points": 17
+    },
+    {
+        "dataset": "529_pollen",
+        "features": 4,
+        "TR points": 2308,
+        "VL points": 578,
+        "TS points": 962
+    },
+    {
+        "dataset": "537_houses",
+        "features": 8,
+        "TR points": 12384,
+        "VL points": 3096,
+        "TS points": 5160
+    },
+    {
+        "dataset": "542_pollution",
+        "features": 15,
+        "TR points": 36,
+        "VL points": 9,
+        "TS points": 15
+    },
+    {
+        "dataset": "547_no2",
+        "features": 7,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "556_analcatdata_apnea2",
+        "features": 3,
+        "TR points": 285,
+        "VL points": 71,
+        "TS points": 119
+    },
+    {
+        "dataset": "557_analcatdata_apnea1",
+        "features": 3,
+        "TR points": 285,
+        "VL points": 71,
+        "TS points": 119
+    },
+    {
+        "dataset": "560_bodyfat",
+        "features": 14,
+        "TR points": 151,
+        "VL points": 38,
+        "TS points": 63
+    },
+    {
+        "dataset": "561_cpu",
+        "features": 7,
+        "TR points": 125,
+        "VL points": 31,
+        "TS points": 53
+    },
+    {
+        "dataset": "562_cpu_small",
+        "features": 12,
+        "TR points": 4915,
+        "VL points": 1229,
+        "TS points": 2048
+    },
+    {
+        "dataset": "564_fried",
+        "features": 10,
+        "TR points": 24460,
+        "VL points": 6116,
+        "TS points": 10192
+    },
+    {
+        "dataset": "573_cpu_act",
+        "features": 21,
+        "TR points": 4915,
+        "VL points": 1229,
+        "TS points": 2048
+    },
+    {
+        "dataset": "574_house_16H",
+        "features": 16,
+        "TR points": 13670,
+        "VL points": 3418,
+        "TS points": 5696
+    },
+    {
+        "dataset": "579_fri_c0_250_5",
+        "features": 5,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "581_fri_c3_500_25",
+        "features": 25,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "582_fri_c1_500_25",
+        "features": 25,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "583_fri_c1_1000_50",
+        "features": 50,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "584_fri_c4_500_25",
+        "features": 25,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "586_fri_c3_1000_25",
+        "features": 25,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "588_fri_c4_1000_100",
+        "features": 100,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "589_fri_c2_1000_25",
+        "features": 25,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "590_fri_c0_1000_50",
+        "features": 50,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "591_fri_c1_100_10",
+        "features": 10,
+        "TR points": 60,
+        "VL points": 15,
+        "TS points": 25
+    },
+    {
+        "dataset": "592_fri_c4_1000_25",
+        "features": 25,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "593_fri_c1_1000_10",
+        "features": 10,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "594_fri_c2_100_5",
+        "features": 5,
+        "TR points": 60,
+        "VL points": 15,
+        "TS points": 25
+    },
+    {
+        "dataset": "595_fri_c0_1000_10",
+        "features": 10,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "596_fri_c2_250_5",
+        "features": 5,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "597_fri_c2_500_5",
+        "features": 5,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "598_fri_c0_1000_25",
+        "features": 25,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "599_fri_c2_1000_5",
+        "features": 5,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "601_fri_c1_250_5",
+        "features": 5,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "602_fri_c3_250_10",
+        "features": 10,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "603_fri_c0_250_50",
+        "features": 50,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "604_fri_c4_500_10",
+        "features": 10,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "605_fri_c2_250_25",
+        "features": 25,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "606_fri_c2_1000_10",
+        "features": 10,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "607_fri_c4_1000_50",
+        "features": 50,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "608_fri_c3_1000_10",
+        "features": 10,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "609_fri_c0_1000_5",
+        "features": 5,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "611_fri_c3_100_5",
+        "features": 5,
+        "TR points": 60,
+        "VL points": 15,
+        "TS points": 25
+    },
+    {
+        "dataset": "612_fri_c1_1000_5",
+        "features": 5,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "613_fri_c3_250_5",
+        "features": 5,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "615_fri_c4_250_10",
+        "features": 10,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "616_fri_c4_500_50",
+        "features": 50,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "617_fri_c3_500_5",
+        "features": 5,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "618_fri_c3_1000_50",
+        "features": 50,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "620_fri_c1_1000_25",
+        "features": 25,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "621_fri_c0_100_10",
+        "features": 10,
+        "TR points": 60,
+        "VL points": 15,
+        "TS points": 25
+    },
+    {
+        "dataset": "622_fri_c2_1000_50",
+        "features": 50,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "623_fri_c4_1000_10",
+        "features": 10,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "624_fri_c0_100_5",
+        "features": 5,
+        "TR points": 60,
+        "VL points": 15,
+        "TS points": 25
+    },
+    {
+        "dataset": "626_fri_c2_500_50",
+        "features": 50,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "627_fri_c2_500_10",
+        "features": 10,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "628_fri_c3_1000_5",
+        "features": 5,
+        "TR points": 600,
+        "VL points": 150,
+        "TS points": 250
+    },
+    {
+        "dataset": "631_fri_c1_500_5",
+        "features": 5,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "633_fri_c0_500_25",
+        "features": 25,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "634_fri_c2_100_10",
+        "features": 10,
+        "TR points": 60,
+        "VL points": 15,
+        "TS points": 25
+    },
+    {
+        "dataset": "635_fri_c0_250_10",
+        "features": 10,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "637_fri_c1_500_50",
+        "features": 50,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "641_fri_c1_500_10",
+        "features": 10,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "643_fri_c2_500_25",
+        "features": 25,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "644_fri_c4_250_25",
+        "features": 25,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "645_fri_c3_500_50",
+        "features": 50,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "646_fri_c3_500_10",
+        "features": 10,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "647_fri_c1_250_10",
+        "features": 10,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "648_fri_c1_250_50",
+        "features": 50,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "649_fri_c0_500_5",
+        "features": 5,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "650_fri_c0_500_50",
+        "features": 50,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "651_fri_c0_100_25",
+        "features": 25,
+        "TR points": 60,
+        "VL points": 15,
+        "TS points": 25
+    },
+    {
+        "dataset": "653_fri_c0_250_25",
+        "features": 25,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "654_fri_c0_500_10",
+        "features": 10,
+        "TR points": 300,
+        "VL points": 75,
+        "TS points": 125
+    },
+    {
+        "dataset": "656_fri_c1_100_5",
+        "features": 5,
+        "TR points": 60,
+        "VL points": 15,
+        "TS points": 25
+    },
+    {
+        "dataset": "657_fri_c2_250_10",
+        "features": 10,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "658_fri_c3_250_25",
+        "features": 25,
+        "TR points": 150,
+        "VL points": 37,
+        "TS points": 63
+    },
+    {
+        "dataset": "659_sleuth_ex1714",
+        "features": 7,
+        "TR points": 28,
+        "VL points": 7,
+        "TS points": 12
+    },
+    {
+        "dataset": "663_rabe_266",
+        "features": 2,
+        "TR points": 72,
+        "VL points": 18,
+        "TS points": 30
+    },
+    {
+        "dataset": "665_sleuth_case2002",
+        "features": 6,
+        "TR points": 88,
+        "VL points": 22,
+        "TS points": 37
+    },
+    {
+        "dataset": "666_rmftsa_ladata",
+        "features": 10,
+        "TR points": 304,
+        "VL points": 77,
+        "TS points": 127
+    },
+    {
+        "dataset": "678_visualizing_environmental",
+        "features": 3,
+        "TR points": 66,
+        "VL points": 17,
+        "TS points": 28
+    },
+    {
+        "dataset": "687_sleuth_ex1605",
+        "features": 5,
+        "TR points": 37,
+        "VL points": 9,
+        "TS points": 16
+    },
+    {
+        "dataset": "690_visualizing_galaxy",
+        "features": 4,
+        "TR points": 193,
+        "VL points": 49,
+        "TS points": 81
+    },
+    {
+        "dataset": "695_chatfield_4",
+        "features": 12,
+        "TR points": 141,
+        "VL points": 35,
+        "TS points": 59
+    },
+    {
+        "dataset": "706_sleuth_case1202",
+        "features": 6,
+        "TR points": 55,
+        "VL points": 14,
+        "TS points": 24
+    },
+    {
+        "dataset": "712_chscase_geyser1",
+        "features": 2,
+        "TR points": 133,
+        "VL points": 33,
+        "TS points": 56
+    },
+    {
+        "dataset": "banana",
+        "features": 2,
+        "TR points": 3180,
+        "VL points": 795,
+        "TS points": 1325
+    },
+    {
+        "dataset": "titanic",
+        "features": 8,
+        "TR points": 1259,
+        "VL points": 315,
+        "TS points": 525
+    },
+    {
+        "dataset": "feynman_III_10_19",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_12_43",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_13_18",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_14_14",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_15_12",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_15_14",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_15_27",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_17_37",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_19_51",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_21_20",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_4_32",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_4_33",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_7_38",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_8_54",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_III_9_52",
+        "features": 6,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_10_9",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_11_27",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_11_28",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_11_3",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_13_17",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_13_23",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_13_34",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_15_4",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_15_5",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_21_32",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_24_17",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_27_16",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_27_18",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_2_42",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_34_11",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_34_2",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_34_29a",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_34_29b",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_35_18",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_35_21",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_36_38",
+        "features": 8,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_37_1",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_38_14",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_38_3",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_3_24",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_4_23",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_6_11",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_6_15a",
+        "features": 6,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_6_15b",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_8_31",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_8_7",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_10_7",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_11_19",
+        "features": 6,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_12_1",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_12_11",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_12_4",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_12_5",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_13_12",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_13_4",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_14_3",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_14_4",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_15_10",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_15_3t",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_15_3x",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_16_6",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_18_12",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_18_14",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_18_4",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_24_6",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_25_13",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_27_6",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_29_16",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_11_20",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_II_34_2a",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_12_2",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_29_4",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_44_4",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_19",
+        "features": 6,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_30_3",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_32_17",
+        "features": 6,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_32_5",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_34_1",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_34_14",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_34_27",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_34_8",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_37_4",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_38_12",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_39_1",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_39_11",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_39_22",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_40_1",
+        "features": 6,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_41_16",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_43_16",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_43_31",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_43_43",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_47_23",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_48_2",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_50_26",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_6_2",
+        "features": 2,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_6_2a",
+        "features": 1,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_6_2b",
+        "features": 3,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_8_14",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_I_9_18",
+        "features": 9,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_1",
+        "features": 7,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_11",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_12",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_13",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_14",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_15",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_16",
+        "features": 6,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_17",
+        "features": 6,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_18",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_2",
+        "features": 6,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_20",
+        "features": 7,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_3",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_4",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_5",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_6",
+        "features": 7,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_7",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_8",
+        "features": 4,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "feynman_test_9",
+        "features": 5,
+        "TR points": 600000,
+        "VL points": 150000,
+        "TS points": 250000
+    },
+    {
+        "dataset": "strogatz_bacres1",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_bacres2",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_barmag1",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_barmag2",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_glider1",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_glider2",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_lv1",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_lv2",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_predprey1",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_predprey2",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_shearflow1",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_shearflow2",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_vdp1",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    },
+    {
+        "dataset": "strogatz_vdp2",
+        "features": 2,
+        "TR points": 240,
+        "VL points": 60,
+        "TS points": 100
+    }
+]
