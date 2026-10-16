@@ -161,9 +161,9 @@ horizontal_compose_functions = ["add(exp(X1), sqrt(X2))",
 
 
 
-analizza_euristica_statistica(funzioni_da_considerare = level_1_functions)
-analizza_euristica_statistica(funzioni_da_considerare = level_2_functions)
-analizza_euristica_statistica(funzioni_da_considerare = horizontal_compose_functions)
+#analizza_euristica_statistica(funzioni_da_considerare = level_1_functions)
+#analizza_euristica_statistica(funzioni_da_considerare = level_2_functions)
+#analizza_euristica_statistica(funzioni_da_considerare = horizontal_compose_functions)
 
 
 
@@ -264,23 +264,12 @@ def PseudoInverseWorkingShowOnSin(g):
    
    
    
-   
 
 
 
-
-
-def plot_non_invertible_metric(metric_label):
-    
+def plot_non_invertible_metric(metric_label, noise_level):
     data = json.load(open("TestNonInvertibleResults.json", "r"))
-    
-    """Genera il grafico per la metrica specificata per la tipologia di funzione scelta.
 
-    Parameters:
-    - data: lista di dizionari o pandas.DataFrame contenente i risultati.
-    - metric_label: str, una tra 'mae_sin', 'mae_cos', 'pearson_sin', 'pearson_cos'.
-    - typology: str, tipologia di dati da filtrare (default: 'pseudo_inverse').
-    """
     # Mappatura dei titoli descrittivi per i 4 pannelli
     title_map = {
         "mae_sin": "MAE sin",
@@ -297,9 +286,16 @@ def plot_non_invertible_metric(metric_label):
     # Converti in DataFrame se è una lista di dizionari
     df = pd.DataFrame(data) if isinstance(data, list) else data
 
-    # Raggruppa per calcolare la media dei valori per ciascuna funzione e dimensione del campione
+    df_filtered = df[df["noise_level"] == noise_level]
+
+    if df_filtered.empty:
+        raise ValueError(
+            f"Nessun dato trovato per noise_level = {noise_level}"
+        )
+
+    # 2. Raggruppa sui dati filtrati
     df_grouped = (
-        df.groupby(["n_samples", "function"])[metric_label]
+        df_filtered.groupby(["n_samples", "function"])[metric_label]
         .mean()
         .reset_index()
     )
@@ -319,28 +315,29 @@ def plot_non_invertible_metric(metric_label):
     )
 
     # Configurazione assi e scala
-    plt.xscale("log")  # Scala logaritmica ideale per n_samples (100, 1000, 10000)
+    plt.xscale("log")  # Scala logaritmica per n_samples
     plt.title(
-        f"Andamento di {title_map[metric_label]} - Tipologia: pseudo_inverse",
+        f"{title_map[metric_label]} (Noise Level: {noise_level})",
         fontsize=14,
         fontweight="bold",
     )
-    plt.xlabel("Numero di elementi (n_samples)", fontsize=12)
+    plt.xlabel("n samples", fontsize=12)
     plt.ylabel(title_map[metric_label], fontsize=12)
-    plt.legend(title="Funzione $g(X)$", bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.legend(
+        title="Function $g(X)$", bbox_to_anchor=(1.05, 1), loc="upper left"
+    )
 
     plt.tight_layout()
     plt.show()
+    
 
-
-
-
-
-plot_non_invertible_metric("mae_sin")
-plot_non_invertible_metric("mae_cos")
-plot_non_invertible_metric("pearson_sin")
-plot_non_invertible_metric("pearson_cos")
-
+    
+plot_non_invertible_metric("pearson_sin", 0)
+plot_non_invertible_metric("pearson_cos", 0)
+plot_non_invertible_metric("pearson_sin", 0.5)
+plot_non_invertible_metric("pearson_cos", 0.5)
+plot_non_invertible_metric("pearson_sin", 1)
+plot_non_invertible_metric("pearson_cos", 1)
 
 
 

@@ -75,6 +75,7 @@ def __monoton_acceleration(X, dy_abs, f):
 
 
 #Some heuristic has to repeat the same operation, so for optimizing the computation, it is created this function that calculates all statistical heuristics
+#Method used for learning algorithm in LearningStrategy ("StatisticalHeuristicLearning")
 def all_heuristic_statisticals(X, Y, X_name = None):
     
     if(len(X) == 0 or len(Y) == 0): return []
@@ -135,6 +136,7 @@ def all_heuristic_statisticals(X, Y, X_name = None):
     return result
 
 
+#Method used for TestStatisticalHeuristic
 def all_heuristic_statisticals_complete(X, Y, X_name = None):
     return all_heuristic_statisticals(X, Y, X_name) + [{"variable": X_name, "operation": "constant", "value": 1 / (1 + np.std(Y))},
                                                        {"variable": X_name, "operation": "linear", "value": np.abs(linear_correlation(X, Y))}]

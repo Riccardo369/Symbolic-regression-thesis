@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from Model import SymbolicRegression
+#from Model import SymbolicRegression
 import Operations as op
 import Errors as er
 import StatisticalHeuristics as sh
@@ -24,6 +24,10 @@ class StatisticalHeuristicLearning:
 
         #Every values of dict = (index of package, index of extension to start inside the package)
         self._dict_extension_history = dict()
+        
+        
+    def __string_to_tree(self, string):
+        return self._model.__class__.string_to_tree(string)
         
     def checkpoint_metrics(self):
         for key in self._metric_results:
@@ -67,7 +71,7 @@ class StatisticalHeuristicLearning:
                     type(x[1]) == int for x in Dict.values()])): return False
         
         for key in Dict.keys():
-            try: SymbolicRegression.string_to_tree(key)
+            try: self.__string_to_tree(key)
             except: return False
             
         return True
@@ -94,7 +98,7 @@ class StatisticalHeuristicLearning:
 
         #Go to the most promising state. The risk is to fall to a next state that is not the best considering the all next state from memory,
         #but we cannot know (otherwise the computational cost will be more heavy)
-        self._model.set_root(SymbolicRegression.string_to_tree(possible_transportations[0]["model"]).get_root())
+        self._model.set_root(self.__string_to_tree(possible_transportations[0]["model"]).get_root())
         
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict, len(TR_output))
 
@@ -125,7 +129,7 @@ class StatisticalHeuristicLearning:
         results = []
         
         results.append({"variable": None, "operation": "linear", "value": np.abs(ind.pearson_correlation(node.get_memory("forward")[mask], Y))})
-                     
+        
         results.append({"variable": None, "operation": "constant", "value": 1 / (1 + np.std(Y)), "new constant": np.mean(Y)})
         
         name_var = node.get_name()

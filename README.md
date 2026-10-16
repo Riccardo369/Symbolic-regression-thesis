@@ -43,3 +43,5 @@ For having a complete map of files and folders:
 - Every Test*.py files execute a diferent internal experiment.
 
 - Every Test*.json contains the result from Test*.py experiment.
+
+- InternalExperimentsExecution.py execute from one files all internal experiments.

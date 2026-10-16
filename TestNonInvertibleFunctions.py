@@ -18,9 +18,9 @@ import NonInvertibleFunctions as nif
 #Instead, if you don't "add" some information, the backward of input is the forward of input, and that dosen't add any information to input subtree.
 
 
-
 #Various g(x)
-g_functions = ["(2*X) + (np.pi/4)",
+g_functions = ["X",
+    "(2*X) + (np.pi/4)",
                "np.exp(0.5*X)",
                "(X**3) - (3*X)",
                "1/X",
@@ -28,7 +28,7 @@ g_functions = ["(2*X) + (np.pi/4)",
                "X + (0.5*np.sin(3*X))"]
 
 
-approaches = [{"typology": "pseudo_inverse", "sin": nif.pseudo_inverse_input_sin, "cos": nif.pseudo_inverse_input_cos}]
+approach = {"sin": nif.pseudo_inverse_input_sin, "cos": nif.pseudo_inverse_input_cos}
 
 
 #Apply f(g(x)), reverse f with various technique (giving X like input and y like output), and calculate pearson / MAE between g(x) and reversed f
@@ -49,32 +49,31 @@ for seed in seeds_list:
         X = generator.uniform(low = -10, high = 10, size = n)
             
         for g in g_functions:
-            
-            for tecnique in approaches:
-            
-                print(f"Non invertible test: random seed {seed}, g = {g}, with {n} points, approach = {tecnique['typology']}")
 
-                g_output = eval(g)
+            g_output = eval(g)
                 
-                Y_sin = np.sin(g_output)
-                Y_cos = np.cos(g_output)
-                
-                inverse_Y_sin = tecnique["sin"](X, Y_sin)
-                inverse_Y_cos = tecnique["cos"](X, Y_cos)
+            Y_sin = np.sin(g_output)
+            Y_cos = np.cos(g_output)
             
+            noise = generator.uniform(low = -1, high = 1, size = n)
+            
+            for noise_level in [0, 0.5, 1]:
+                
+                print(f"Non invertible test: random seed {seed}, g = {g}, with {n} points, with {noise_level} noise level")
+                
+                inverse_Y_sin = approach["sin"](X, (Y_sin + (noise * noise_level)) % 1)
+                inverse_Y_cos = approach["cos"](X, (Y_cos + (noise * noise_level)) % 1)
+                
                 result.append({
                             'seed': seed,
                             'n_samples': n,
                             'function': g,
-                            'mae_sin': np.abs(er.MAE(X, inverse_Y_sin)),
-                            'mae_cos': np.abs(er.MAE(X, inverse_Y_cos)),
-                            "typology": tecnique["typology"],
+                            'noise_level': noise_level,
                             "pearson_sin": np.abs(ind.pearson_correlation(X, inverse_Y_sin)),
                             "pearson_cos": np.abs(ind.pearson_correlation(X, inverse_Y_cos))
                         })
-    
-    
+
+
 print("Save results...")
 json.dump(result, open("TestNonInvertibleResults.json", "w", encoding="utf-8"), indent=4)
 print("Statistical tests done!")
-

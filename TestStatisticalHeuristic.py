@@ -39,7 +39,7 @@ n = [100, 1000, 10000]
 
 
 
-def internal_test(X_distributions, Y_tree, variable_operation_couple, noise, seed, n):
+def internal_test(X_distributions, Y_tree, variable_operation_couple, noise_level, seed, n):
     
     def X_generation(X_distributions, generator, n):
         return {k: generator.uniform(X_distributions[k][0], X_distributions[k][1], n) for k in X_distributions.keys()}
@@ -50,7 +50,7 @@ def internal_test(X_distributions, Y_tree, variable_operation_couple, noise, see
     X = X_generation(X_distributions, generator, n)
 
     #Calculate result
-    Y = Y_tree.get_root().forward_calculation_memory_sub_tree(X).get_memory("forward")
+    Y = Y_tree.get_root().forward_calculation_memory_sub_tree(X, n).get_memory("forward")
         
     #Remove nan points
     tot = len(Y)
@@ -65,7 +65,7 @@ def internal_test(X_distributions, Y_tree, variable_operation_couple, noise, see
             
         #Add new X random points
         additional_X = X_generation(X_distributions, generator, n)
-        additional_Y = Y_tree.get_root().forward_calculation_memory_sub_tree(additional_X).get_memory("forward")
+        additional_Y = Y_tree.get_root().forward_calculation_memory_sub_tree(additional_X, n).get_memory("forward")
             
         #Apply mask
         additional_mask = np.isfinite(additional_Y)
@@ -82,10 +82,9 @@ def internal_test(X_distributions, Y_tree, variable_operation_couple, noise, see
     #Remove the residual valid points 
     X = {k: X[k][:tot] for k in X.keys()}
     Y = Y[:tot]
-   
-    #Add noise if requested
-    if(noise): Y += generator.normal(0, noise * np.std(Y), size = Y.shape)
-        
+
+    Y += generator.normal(0, noise_level * np.std(Y), size = Y.shape)
+    
     #Results
     coefficients_results = []
         
@@ -175,9 +174,9 @@ def extract_valid_domain(tree, var):
 
 #Dentro il metodo test fai la funzione una sola volta, con tutto l' albero parsato e l' analisi con associazione variabile - operazione
 #Come stringa di Y_function ci passi la stringa valida per il modello SymbolicRegression
-def test(Y_string_tree, result, n, noise, seeds):
+def test(Y_string_tree, result, n, noise_level, seeds):
     
-    print(f"Statistical heuristics: tests {len(seeds)}, expression = {Y_string_tree}, with {n} points, noise = {noise}")
+    print(f"Statistical heuristics: tests {len(seeds)}, expression = {Y_string_tree}, with {n} points, noise_level = {noise_level}")
     
     #Create tree
     tree = SymbolicRegression.string_to_tree(Y_string_tree)
@@ -210,7 +209,7 @@ def test(Y_string_tree, result, n, noise, seeds):
     #Create label
     X_labels = [f"{var}: " + f'{str(Inputs_string[var])}' for var in Inputs_string.keys()]
     
-    label = ", ".join(X_labels) +  f", Y = {Y_string_tree}" + f" [n = {n}] [noise = {noise}]"
+    label = ", ".join(X_labels) +  f", Y = {Y_string_tree}" + f" [n = {n}] [noise_level = {noise_level}]"
     
     if(label not in result.keys()): actual_tests = 0
     else: actual_tests = len(result[label])
@@ -220,7 +219,7 @@ def test(Y_string_tree, result, n, noise, seeds):
     #Repeat test
     for i in range(max(len(seeds) - actual_tests, 0)):
         
-        result[label].append(internal_test(Inputs_string, tree, variable_operation_couples, noise, seeds[i], n))
+        result[label].append(internal_test(Inputs_string, tree, variable_operation_couples, noise_level, seeds[i], n))
             
     return result
 
@@ -234,7 +233,7 @@ forbidden_concatenation = [" - ".join(x) for x in [("ln", "exp"),
 
 
 
-def depth_test(i, result, n, noise, seeds):
+def depth_test(i, result, n, noise_level, seeds):
     
     for c in list(permutations(domain.keys(), i)):
         
@@ -242,13 +241,15 @@ def depth_test(i, result, n, noise, seeds):
         
         Y_string = "(".join([x for x in c]) + "(X" + (")"*i)
         
-        result = test(Y_string, result, n, noise, seeds)
+        test(Y_string, result, n, noise_level, seeds)
+     
+     
+     
+     
         
         
-def fast_test(Y_string, result, n, noise, seeds):
-    result = test(Y_string, result, n, noise, seeds)
-
-
+def fast_test(Y_string, result, n, noise_level, seeds):
+    test(Y_string, result, n, noise_level, seeds)
 
 
 
@@ -263,21 +264,21 @@ load_dotenv()
 seeds_str = os.getenv("SEEDS_LIST")
 seeds = [int(seed.strip()) for seed in seeds_str.split(",") if seed.strip()]
 
-for noise in [0, 0.5, 1]:
+for noise_level in [0, 0.5, 1]:
 
     for n in [100, 1000, 10000]:
         
-        depth_test(1, result, n, noise, seeds)
-        depth_test(2, result, n, noise, seeds)
+        depth_test(1, result, n, noise_level, seeds)
+        depth_test(2, result, n, noise_level, seeds)
         
-        fast_test("add(exp(X1), sqrt(X2))", result, n, noise, seeds)
-        fast_test("add(sin(X1), exp(X2))", result, n, noise, seeds)
-        fast_test("mul(X1, sin(X2))", result, n, noise, seeds)
-        fast_test("sin(mul(X1, X2))", result, n, noise, seeds)
-        fast_test("add(exp(X1), sqrt(X2), arcsin(X3))", result, n, noise, seeds)
-        fast_test("add(sin(X1), mul(exp(X1), cos(X1)))", result, n, noise, seeds)
-        fast_test("mul(X1, sin(add(X2, X3)))", result, n, noise, seeds)
-        fast_test("add(sin(mul(X1, X2)), X3)", result, n, noise, seeds)
+        fast_test("add(exp(X1), sqrt(X2))", result, n, noise_level, seeds)
+        fast_test("add(sin(X1), exp(X2))", result, n, noise_level, seeds)
+        fast_test("mul(X1, sin(X2))", result, n, noise_level, seeds)
+        fast_test("sin(mul(X1, X2))", result, n, noise_level, seeds)
+        fast_test("add(exp(X1), sqrt(X2), arcsin(X3))", result, n, noise_level, seeds)
+        fast_test("add(sin(X1), mul(exp(X1), cos(X1)))", result, n, noise_level, seeds)
+        fast_test("mul(X1, sin(add(X2, X3)))", result, n, noise_level, seeds)
+        fast_test("add(sin(mul(X1, X2)), X3)", result, n, noise_level, seeds)
     
 
 
