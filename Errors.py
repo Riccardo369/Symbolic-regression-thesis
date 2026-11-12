@@ -1,22 +1,12 @@
 import numpy as np
 import Operations as op
 
-def MDL(Y, Y_model, model):
-    
-    def count_nodes(node):
-        if(not issubclass(type(node), op.Leaf)): return sum([count_nodes(x)+1 for x in node.get_childrens()])
-        else: return 1
-        
-    return ((Y.shape[0]*np.log(np.mean(np.abs(Y - Y_model)))) + (count_nodes(model.get_root())*np.log(Y.shape[0]))) / 2  
+def MAE(y_model, y_true):
+    return np.mean(np.abs(y_model - y_true))
 
-
-def MaxAE(x, y):
-    return np.max(np.abs(x - y))
-
-def MAE(x, y):
-    return np.mean(np.abs(x - y))
-
-
-def MSE(x, y):
+def MSE(y_model, y_true):
     with np.errstate(over='ignore'):
-        return np.mean((x - y)**2)
+        return np.mean((y_model - y_true)**2)
+
+def R2(y_model, y_true):
+    return 1 - (MSE(y_model, y_true) / np.var(y_true))

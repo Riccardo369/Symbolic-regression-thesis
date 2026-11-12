@@ -1,5 +1,9 @@
 from scipy.stats import pearsonr, spearmanr, rankdata, kendalltau
+import xicorpy as xi
 import numpy as np
+from scipy.stats import kurtosis
+
+
 
 def prepare(x, y):
     
@@ -18,54 +22,61 @@ def prepare(x, y):
     
 #For linearity correlation
 def pearson_correlation(x, y):
+    
+    if(len(x) == 0 or len(y) == 0): return 0
+    
     x, y = prepare(x, y)
     
-    if(np.var(y) == 0): return 1
-    if(np.var(x) == 0 and np.var(y) > 0): return 0
-    
-    result = pearsonr(x, y)[0]
-    return result
+    try: return pearsonr(x, y)[0]
+    except: return 0
 
 #For monoton correlation
 def spearman_correlation(x, y):
+    
+    if(len(x) == 0 or len(y) == 0): return 0
+    
     x, y = prepare(x, y)
     
     if(np.var(y) == 0): return 1
     if(np.var(x) == 0 and np.var(y) > 0): return 0
     
-    result = spearmanr(x, y)[0]
-    return result
+    try: return spearmanr(x, y)[0]
+    except: return 0
 
-#For monoton correlation
-def kendall_correlation(x, y):
-    result = kendalltau(*prepare(x, y))[0]
-    if(np.isnan(result)): result = 0
-    return result
 
 #For sinusoidal and monoton correlation
 #With less points, chatterjee is less precise with identification
 def chatterjee_correlation(x, y):
     
+    if(len(x) == 0 or len(y) == 0): return 0
+    
     x, y = prepare(x, y)
     
-    n = np.float64(len(x))
-    if n < 2: return 0.0
+    try: return xi.compute_xi_correlation(x, y)[0][0]
+    except: return 0
+
+
+
+def kurtosis_coefficient(y):
     
-    idx = np.argsort(x)
-    y_ordered = y[idx]
+    if(len(y) == 0): return 0
     
-    r = rankdata(y_ordered, method='ordinal').astype(np.float64)
-    gr_r = rankdata(y_ordered, method='max').astype(np.float64)
+    result = kurtosis(y, fisher = True) + 2
+    return result if np.isfinite(result) else 0
+
+
+
+#--------------------------------------------------------------------------------------------------------------
+
+def most_important_features(features, Y):
     
-    sum_abs_diff = np.sum(np.abs(np.diff(r)))
+    #At least 3 elements are required for algorithm
+    if(features.shape[0] < 3 or Y.shape[0] < 3): return []
     
-    denominator_term = np.sum(gr_r * (n - gr_r))
-    
-    if(denominator_term == 0): return 0.0
-    
-    result = 1 - (sum_abs_diff / ((2.0 / n) * denominator_term))
-    
-    return result
+    return xi.select_features_using_foci(Y, features, num_features = None)
+
+
+#--------------------------------------------------------------------------------------------------------------
 
 
 
@@ -107,3 +118,12 @@ if(__name__ == "__main__"):
     print(f(y, x))
     print(f(y, y))
     
+    k = 5
+    c = 100
+    
+    x = np.random.rand(100, k)*c
+    y = np.random.rand(100)*c
+    
+    print(f"Most important features (from {k} features)")
+    print(most_important_features(x, y))
+

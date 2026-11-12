@@ -1,9 +1,12 @@
-import numpy as np
 import lark
-import Operations as op
-import matplotlib.pyplot as plt
+import sympy as sp
+import warnings
 
-import Exceptions as ex
+
+import Operations as op
+import Simplifications as si
+
+
 
 class SymbolicRegression:
     
@@ -34,25 +37,24 @@ class SymbolicRegression:
     
     def replace_subtree(self, tree1, tree2):
 
+        father = tree1.get_father()
+
         if(not self.__root.is_node_present_in_sub_tree(tree1)): raise ValueError(f"Sub tree 1 {tree1} must be in this tree {self}, its not")
         if(self.__root.is_node_present_in_sub_tree(tree2)): raise ValueError(f"Sub tree 2 {tree2} cannot be in this tree {self}, it is")
         
-        father_leaf = tree1.get_father()
-                
+        if(tree2.get_father() != None): raise ValueError(f"tree 2 {tree2} must has no father, has {tree2.get_father()}")
+   
         #The leaf is the root
-        if(father_leaf == None): self.set_root(tree2)
+        if(father == None):
+ 
+            self.set_root(tree2)
                     
         else:
-            
-            for r, c in enumerate(father_leaf.get_childrens()):
-                
-                if(tree1 is c):
-                    i = r
-                    break
-            
-            father_leaf.free_connection(i)
-            
-            father_leaf.new_connection(tree2, i)
+   
+            father.free_connection(tree1) 
+            father.new_connection(tree2)
+        
+        
 
     def __str__(self):
         return str(self.__root)
@@ -104,11 +106,11 @@ class SymbolicRegression:
     def tree_to_string(tree):
         if(not isinstance(tree, SymbolicRegression)): raise ValueError("Tree must be a SymbolicRegression type")
         return str(tree.get_root())
-        
+
     def string_to_tree(string):
         
         parsed_tree = SymbolicRegression.__compiler.parse(string)
-        
+
         def recursive_construction(node):
             
             first_children = node.children[0]
@@ -119,16 +121,17 @@ class SymbolicRegression:
                 result = eval(f"op.{first_children.value}()")
                 childrens_result = [recursive_construction(child) for child in node.children[1:]]
 
-                if(len(childrens_result) != result.get_channels()): raise ValueError(f"Node {first_children.value} has no {len(childrens_result)}, but {result.get_channels()} childrens")
+                if(not result.accept_number_childrens(len(childrens_result))): raise ValueError(f"Node {first_children.value} cannot have no {len(childrens_result)}, but {result.get_max_channels()} childrens")
                 
-                for i, child in enumerate(childrens_result): result.new_connection(child.copy_sub_tree(), i)
-                    
+                for child in childrens_result: result.new_connection(child)
+                
                 return result
                
             #If is a leaf
             else:
                 return op.Leaf(first_children.value if first_children.type == "NAME" else float(first_children.value))
-        
+            
+
         return SymbolicRegression(recursive_construction(parsed_tree))
  
     def get_leafs(self):
@@ -149,8 +152,6 @@ class SymbolicRegression:
         
         f = self.__root.get_string_calculation_function()
         
-        #print(f"f[body]:", f["body"], self)
-        
         f = eval(f"lambda {', '.join(f['leaf_labels'])}: {f['body']}")
         
         aviable_parameters = set(f.__code__.co_varnames[:f.__code__.co_argcount])
@@ -167,71 +168,66 @@ class SymbolicRegression:
             return f(**{key: inputs_dict[key] for key in aviable_parameters})
         
         return result_function
-
-    #Get the model that is the derative on variable x of this model
-    def derivate_model(self, x):
-        return SymbolicRegression.string_to_tree(self.__root.get_derative_subtree(x))
-
-    #Simplify the tree, considering to simplify every node that it is possible to simplify
-    def simplify_model(self):
+    
+    def simplify_model(self, TR_inputs_dict = {}):
         
-        def apply_simplification(node, filter_simply):
+        def clean_chain_node_one_child(tree, node):
             
-            simplification = None
-            for opt in node.get_simplification_subtree():
-                simply = opt()
-                if(not filter_simply(simply)): continue
-                try:
-                    simplification = simply(node).copy_sub_tree()
-                    self.replace_subtree(node, simplification)
-                    break
-                except ex.SimplificationError: pass
+            for c in node.get_childrens(): clean_chain_node_one_child(tree, c)
+            
+            if(isinstance(node, op.ChainOperationNode)):
+                                
+                flat_childrens = []
+                for c in node.get_childrens():
+                    if(type(c) == type(node)):
+                        flat_childrens += c.get_childrens()
+                        node.free_connection(c)
+                    
+                for fc in flat_childrens:
+                    fc.get_father().free_connection(fc)
+                    node.new_connection(fc)
+            
+            if(isinstance(node, op.ChainOperationNode) and len(node.get_childrens()) == 1):
                 
-            return simplification
+                child = node.get_childrens()[0]
+                node.free_connection(child)
+                tree.replace_subtree(node, child)
+                
+                
+        f = si.to_sympy(self.get_root().copy_sub_tree())
+        f = sp.expand(f)
+        f = sp.factor(f)
+        f = sp.powsimp(f)
+        f = sp.nsimplify(f)
+        f.doit()
         
-        def recursion(node):
-            
-            #Calculate the aviable top down simplification until is possible to repeat (the node can change)
-            while(True):
-                new_node = apply_simplification(node, lambda x: x.is_top_down())
-                if(new_node == None or new_node == node): break
-                node = new_node
-                        
-            #Go to leafs
-            for c in node.get_childrens(): recursion(c)
-            
-            #Calculate the aviable bottom up simplification
-            while(True):
-                new_node = apply_simplification(node, lambda x: x.is_bottom_up())
-                if(new_node == None or new_node == node): break
-                node = new_node
-         
-            return node
+        try:
         
-        history = []
+            f = si.from_sympy(f, TR_inputs_dict)
+            if(len(f.get_all_subtree_nodes()) <= len(self.get_root().get_all_subtree_nodes())): self.replace_subtree(self.get_root(), f)
         
-        while(self.__root not in history):
-            
-            #Save the actual form of model
-            history.append(self.__root.copy_sub_tree())
-            
-            #Apply again all simplifications
-            recursion(self.__root)
-            
-        best_root = sorted(history, key = lambda x: len(x.get_all_subtree_nodes()))[0]
-
-        #If the semplification is worse (more nodes), do a rollback, backing to original root
-        if(best_root != self.__root): self.replace_subtree(self.__root, best_root)
+        except: return self
+        
+        clean_chain_node_one_child(self, self.get_root())
         
         return self
+    
+
+
 
     #Learn phase   
-    def learn(self, TR_inputs_dict, TR_output, LearningAlgorithm, stop_criteria = lambda x: False, metric_functions = {}):
-
-        return LearningAlgorithm(self,
-                                 TR_inputs_dict,
-                                 TR_output,
-                                 stop_criteria,
-                                 metric_functions)
+    def learn(self, TR_inputs_dict, TR_output, learning_algorithm, stop_criteria = lambda x: False, metric_functions = {}):
+        
+        warnings.filterwarnings('ignore', category=RuntimeWarning)
+                
+        result = learning_algorithm(self,
+                                    TR_inputs_dict,
+                                    TR_output,
+                                    stop_criteria,
+                                    metric_functions)
+                            
+        warnings.filterwarnings('default', category=RuntimeWarning)
+        
+        return result
 
 

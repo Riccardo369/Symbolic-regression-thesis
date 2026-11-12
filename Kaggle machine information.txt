@@ -1,0 +1,39 @@
+============================================================
+ SCHEDA TECNICA COMPLETA DEL SISTEMA (KAGGLE VM)
+============================================================
+
+--- 1. SISTEMA OPERATIVO ED ARCHITETTURA ---
+Sistema Operativo : Linux 6.12.90+
+Versione OS       : N/A
+Architettura      : x86_64 (64bit)
+Kernel Linux      : 6.12.90+
+
+--- 2. PROCESSORE (CPU) ---
+Modello Processore: Intel(R) Xeon(R) CPU @ 2.20GHz
+Architettura CPU  : GenuineIntel / Family 6
+vCPU (Thread Log.): 4
+Core Fisici       : 2
+Frequenza Attuale : 2200.00 MHz
+Frequenza Min/Max : 0.00 MHz / 0.00 MHz
+L3 Cache          : 55 MiB (1 instance)
+
+--- 3. MEMORIA RAM ---
+RAM Totale        : 31.35 GB
+RAM Disponibile   : 30.09 GB
+RAM Usata         : 0.82 GB (4.0%)
+Memoria Swap      : 0.00 GB
+
+--- 4. SPAZIO DI ARCHIVIAZIONE (DISCO) ---
+Disco /kaggle/working (Directory di lavoro):
+  - Spazio Totale : 19.52 GB
+  - Spazio Usato  : 0.00 GB
+  - Spazio Libero : 19.50 GB
+Disco System Root (/):
+  - Spazio Totale : 8156.88 GB
+  - Spazio Libero : 1119.16 GB
+
+--- 5. ACCELERATORE GRAFICO (GPU / TPU) ---
+GPU Installata    : Nessuna GPU attiva in questa sessione (CPU-Only)
+============================================================
+/bin/sh: 1: Syntax error: Unterminated quoted string
+/bin/sh: 1: nvidia-smi: not found

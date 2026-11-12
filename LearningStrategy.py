@@ -1,235 +1,460 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
-from Model import SymbolicRegression
 import Operations as op
 import Errors as er
-import Indicators as In
-import Exceptions as ex
-import utils
+import StatisticalHeuristics as sh
+import Indicators as ind
+from Model import SymbolicRegression
 
-class SymbolicRegressionLearning:
-    
-    def __init__(self):
-        
-        self._model = None
-        self._metric_results = {}
-        self._metric_functions = []
-    
-    def _pre_learning(self, model, metrics, TR_inputs_dict, TR_output):
-        self._model = model
-        self._metric_functions = metrics
-        self._metric_results = {key: [] for key in metrics.keys()}
-        
-    def _post_learning(self):
-        pass
-        
-    def checkpoint_metrics(self):
-        for key in self._metric_results:
-            result = self._metric_functions[key](self._model)
-            self._metric_results[key].append(result)   
-            print(key, ":", result)
-        
-    def _body_learning(self, TR_inputs_dict, TR_output, stop_criteria):
-        return NotImplemented
-        
-    def __call__(self, model, TR_inputs_dict, TR_output, stop_criteria, metric_functions = {}):
-        self._pre_learning(model, metric_functions, TR_inputs_dict, TR_output)
-        self._body_learning(TR_inputs_dict, TR_output, stop_criteria)
-        self._post_learning()
-        
-        result = self._metric_results.copy()
-        self._metric_results = {}
-        return result
 
-    def get_model(self):
-        return self._model
-    
-    def get_metrics(self):
-        return self._metric_results.copy()
-    
-    def set_metrics(self, metrics):
-        self._metrics = metrics.copy()
-
-class AnalysisRamification(SymbolicRegressionLearning):
+class GreedyStatisticalMapping:
     
     #The order of binary operations is the order of construction every time a node is extended (every node will be extended with all binary operations, and the order is defined by
     # the order of binary_operations list)
     
     #get_package_importance_nodes analyze nodes and returns a list of packages (for importance), where every package contains a list of triples node - feature- operation. 
     # If it is possible to choose a valid extension with first package, the algorithm will stop, otherwise it will search the extension on next package
-    def __init__(self, unary_operations, filtering_criterion, sorting_criterion, get_package_importance_nodes, heuristic_metrics):
+    def __init__(self):
         
-        super().__init__()
-        
-        for oper in unary_operations:
-            if(not issubclass(oper, op.OperationNode)): raise ValueError(f"The operation {oper} is not a OperationNode type")
-            if(oper().get_channels() != 1): raise TypeError(f"{oper} has no 1 channel, it is not acceptable an unary operation like that")
-        
-        self._unary_operations = list(unary_operations)
-        
-        self.__filtering_criterion = filtering_criterion
-        self.__sorting_criterion = sorting_criterion
+        self._model = None
+        self._metric_results = {}
+        self._metric_functions = []
 
-        self._heuristic_metrics = heuristic_metrics
-        
-        self.__get_package_importance_nodes = get_package_importance_nodes
-        
-        self._ranges_iterations = []
-        
         #Every values of dict = (index of package, index of extension to start inside the package)
         self._dict_extension_history = dict()
+
+    def checkpoint_metrics(self):
+        for key in self._metric_results:
+            result = self._metric_functions[key](self._model)
+            self._metric_results[key].append(result)
+            #print(key, result)
+        
+    def _pre_learning(self, model, metrics):
+        self._model = model
+        self._metric_functions = metrics
+        self._metric_results = {key: [] for key in metrics.keys()}
         
     def __call__(self, model, TR_inputs_dict, TR_output, stop_criteria, metric_functions = {}):
-        result = super().__call__(model, TR_inputs_dict, TR_output, stop_criteria, metric_functions)
-        result = {"results": result, "ranges_iterations": list(self._ranges_iterations), "history_dicts": {"extension": self._dict_extension_history}}
         
-        self._dict_extension_history = dict()
+        self._pre_learning(model, metric_functions)
+        self._body_learning(TR_inputs_dict, TR_output, stop_criteria)
+        
+        result = self._metric_results.copy()
+        self._metric_results = {}
+        
+        result = {"results": result, "history": self._dict_extension_history}
         
         return result
     
-    def _pre_learning(self, model, metrics, TR_inputs_dict, TR_output):
-        super()._pre_learning(model, metrics, TR_inputs_dict, TR_output)
-        self._ranges_iterations = []
-         
-    def __structural_domain_check(model, TR_inputs_dict, TR_output):
-        model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-        return np.all(np.isfinite(model.get_root().get_memory("forward"))) & np.all([np.all(np.isfinite(x.get_memory("backward"))) for x in model.get_root().get_all_subtree_nodes() if isinstance(x, op.Leaf)])
-
-    def __checkpoint_heuristic_metrics(self):
-        return {key: self._heuristic_metrics[key](self._model) for key in self._heuristic_metrics.keys()}
-
+    def get_model(self):
+        return self._model
+        
+    def get_metrics(self):
+        return self._metric_results.copy()
+        
+    def set_metrics(self, metrics):
+        self._metrics = metrics.copy()
+       
     def __valid_dict_history_form(Dict):
         if(not all([type(x) == str for x in Dict.keys()])): return False
-        if(not all([type(x) == tuple and 
+        if(not all([type(x) in [tuple, list] and 
                     len(x) == 2 and 
                     type(x[0]) == int and 
-                    type(x[1]) == int for x in Dict.values()])): return False
-        
+                    type(x[1]) in [int, float] for x in Dict.values()])): return False
+
         for key in Dict.keys():
             try: SymbolicRegression.string_to_tree(key)
             except: return False
-            
+
         return True
- 
+
     def get_dict_extension_history(self):
         return self._dict_extension_history.copy()
     
     def set_dict_extension_history(self, Dict):
-        valid = AnalysisRamification.__valid_dict_history_form(Dict)
+        valid = GreedyStatisticalMapping.__valid_dict_history_form(Dict)
         if(valid): self._dict_extension_history = Dict.copy()
         return valid
 
-    def linear_extend_model(model):
+    #rollback to a previous tree
+    def rollback(self, model_firm, TR_inputs_dict, TR_output): 
+      
+        #Every time you do the rollbackaion, the model_firm is a trap where you cannot go further
+        self._dict_extension_history[model_firm] = None
         
-        def recursion(node):
-            
-            if(node.is_constant()): return
-            
-            for c in node.get_childrens(): recursion(c)
-            
-            model.replace_subtree(node, SymbolicRegression.string_to_tree(f"add(mul({node}, 1), 0)").get_root())
-            
-        recursion(model.get_root())
-
-    #Get (if possible) the extension (with delta metric) of this combination
-    def __analyze_extension(self, TR_inputs_dict, TR_output, config):
-                
-        node = config["old node"]
-        oper_node = config["new node"]
+        #Calculate all possible transition valid transition, and sorted by value
+        possible_transportations = sorted([{"model": x, "score": self._dict_extension_history[x][1]} for x in self._dict_extension_history.keys() if self._dict_extension_history[x] != None], key = lambda x: -x["score"])
         
-        linear_ext = utils.linear_extension(oper_node.get_memory("forward"), oper_node.get_memory("backward")) 
-        m = linear_ext["m"] if np.isfinite(linear_ext["m"]) else 1
-        q = linear_ext["q"] if np.isfinite(linear_ext["q"]) else 0
+        #If no transport is possible, the algorithm finish
+        if(len(possible_transportations) == 0): return False
 
-        for try_node in [SymbolicRegression.string_to_tree(f"add(mul({oper_node}, {m}), {q})").get_root(), oper_node]:
+        #Go to the most promising state. The risk is to fall to a next state that is not the best considering the all next state from memory,
+        #but we cannot know (otherwise the computational cost will be more heavy)
+        self._model.set_root(SymbolicRegression.string_to_tree(possible_transportations[0]["model"]).get_root())
         
-            #Try the substition
-            self._model.replace_subtree(node, try_node)
-                
-            #Check the structural domain
-            valid_domain = AnalysisRamification.__structural_domain_check(self._model, TR_inputs_dict, TR_output)
-                
-            #Calculate the new metrics (if domain permitted)
-            if(valid_domain): new_metrics = self.__checkpoint_heuristic_metrics()
+        self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict, len(TR_output))
 
-            #Do the substition
-            self._model.replace_subtree(try_node, node)
-            
-            config["new node"] = try_node
+        self._previous_MDL = None
+        self._actual_MDL = None
 
-            #Check structure domain
-            if(valid_domain): return {key: new_metrics[key] for key in self._heuristic_metrics.keys()}
+        self.__calculate_MDL(TR_inputs_dict, TR_output)
         
+        #Return the signal that algorithm must repeat the iteration
         return None
+            
+    #Calculate all statistical heuristic considering only the operations that has no any problem with domain 
+    def valid_heuristics_analysis(self, X, Y, X_name = None):
+        coefficients = sh.all_heuristic_statisticals(X, Y, X_name)
+        return [x for x in coefficients if getattr(op, x['unary operation']).check_input_domain(0, X)]    
+      
+    def __scaling_coefficients(self, coefficients, scaling_coeff):
+        for c in coefficients: c["score"] *= scaling_coeff
+   
+    def __base_analysis(self, node, TR_inputs_dict, target_len):
+        
+        Y = node.get_memory("backward")
+        
+        name = node.get_name()
+        
+        mask = np.isfinite(Y)
+        
+        Y = Y[mask]
+        
+        results = []
+        
+        results.append({"modification": "replace",
+                        "leaf": np.mean(Y),
+                        "score": 1 / (1 + np.std(Y))})
+        
+        for f in TR_inputs_dict.keys():
+            
+            if(f == name): continue
+            
+            results.append({"modification": "replace",
+                            "leaf": f,
+                            "score": np.abs(ind.pearson_correlation(TR_inputs_dict[f][mask], Y))})
+
+        self.__scaling_coefficients(results, np.sum(mask) / target_len)
+        
+        return results
+
+    def __node_non_linear_analysis(self, node, X, target_len, name):
+        
+        father = node.get_father()
+        father_non_invertible = father != None and not father.is_invertible()  
+        
+        #Non invertible father
+        if(father_non_invertible):
+            
+            results = []
+            
+            Y_father = father.get_memory("backward")
+            
+            mask = np.isfinite(Y_father)
+            
+            #Calculate for all operations (all unary operations are needed)
+            for uo in ["sin", "cos", "exp", "ln", "sqrt", "div"]:
+                
+                real_uo = getattr(op, uo)
+                                                    
+                #If this operation has problems alreay with domain, will create problem to tree all, so it is not a good operation
+                if(not real_uo.check_input_domain(0, X)): continue
+                                                    
+                g = real_uo.forward_calculation([X])
+                          
+                #Calculate the linear correlation between g = ou(X) and pseudo inverse of g from Y (and apply the scaling, because it is a particular situation, the Y is not the node Y but the father Y)
+                results.append({"variable": name,
+                                "modification": "hat",
+                                "unary operation": real_uo,
+                                "score": np.abs(ind.pearson_correlation(g[mask], real_uo.backward_calculation([g[mask]], Y_father[mask])[0]))})
+        
+        #Invertible father
+        else:
+            
+            Y = node.get_memory("backward")
+            
+            mask = np.isfinite(Y)
+            results = self.valid_heuristics_analysis(X, Y, name)
+            
+            for x in results:
+                x["modification"] = "hat"
+                x["unary operation"] = getattr(op, x["unary operation"])
+            
+        self.__scaling_coefficients(results, np.sum(mask) / target_len)
+        
+        return results
+
+    def __leaf_non_linear_analysis(self, node, TR_inputs_dict, target_len):
+    
+        Y = node.get_memory("backward")
+        
+        mask = np.isfinite(Y)
+        
+        variable_choices = [{"var": x, "score": np.abs(ind.chatterjee_correlation(TR_inputs_dict[x][mask], Y))} for x in TR_inputs_dict.keys()]
+        var_choosed = sorted(variable_choices, key = lambda x: -x["score"])[0]["var"]
+        
+        return self.__node_non_linear_analysis(node, TR_inputs_dict[var_choosed], target_len, var_choosed)
+   
+    def __horizontal_complete_analysis(self, node, TR_inputs_dict, target_len, chain_type):
+        
+        real_node = op.Leaf(0)
+        
+        real_node.set_memory("forward", 0, target_len)
+        real_node.set_memory("backward", chain_type.backward_calculation([node.get_memory("forward")], node.get_memory("backward"))[0], target_len)
+        
+        results = []
+        
+        results += self.__leaf_non_linear_analysis(real_node, TR_inputs_dict, target_len)
+        results += self.__base_analysis(real_node, TR_inputs_dict, target_len)
+        
+        for c in results:
+            c["modification"] = "horizontal extension"
+            c["operation extension"] = chain_type
+        
+        return results
+
+    def heuristics_analysis(self, TR_inputs_dict, TR_output):
+        
+        target_len = len(TR_output)
+        
+        choices = []
+  
+        def all_analysis(node):
+
+            coefficients = []
+
+            #Add constant and linear coefficients about itself (cost 1 + var)
+            coefficients += self.__base_analysis(node, TR_inputs_dict, target_len)
+            
+            #For unary and chain operations  (cost: oper)
+            if(not isinstance(node, op.Leaf)):
+                
+                coefficients += self.__node_non_linear_analysis(node, node.get_memory("forward"), target_len, None)
+                
+                X = node.get_memory("forward")
+                Y = node.get_memory("backward")
+                mask = np.isfinite(Y)
+
+            #For leaf node (variable and constant)  (cost: oper)     
+            else: coefficients += self.__leaf_non_linear_analysis(node, TR_inputs_dict, target_len)
+            
+            #The chain operation (cost: oper)
+            if(isinstance(node, op.ChainOperationNode)):
+                
+                Y = node.get_memory("backward")
+                mask = np.isfinite(Y)
+                
+                #Choose the most important features with FOCI algorithm
+                matrix_features = np.array([x.get_memory("forward")[mask] for x in node.get_childrens()]).T
+                
+                important_childrens = ind.most_important_features(matrix_features, Y[mask])
+                
+                #If number of important childrens variabile is at least 1
+                if(len(important_childrens) >= 1):
+                
+                    #Divide the important childrens to not important childrens
+                    childrens = []
+                    other_childrens = []
+                    
+                    for i, c in enumerate(node.get_childrens()):
+                        
+                        if(i in important_childrens): childrens.append(c)
+                        else: other_childrens.append(c)
+   
+                    #Calculate the total input of important nodes and other nodes
+                    total_input = node.__class__.forward_calculation([x.get_memory("forward") for x in childrens])
+                    total_other_input = node.__class__.forward_calculation([x.get_memory("forward") for x in other_childrens])
+ 
+                    if(type(total_input) in [float, int]):
+                        total_input = np.full_like((len(TR_output)), total_input)
+                    
+                    if(type(total_other_input) in [float, int] or total_other_input.shape == ()):
+                        total_other_input = np.full_like(total_input, 0 if type(node) == op.add else 1)
+                    
+                    #Calculate the two backwards, considering most important nodes like one unit node, and other nodes like another unit under add chain
+                    l = op.Leaf(0)
+                    l.set_memory("backward", node.__class__.backward_calculation([total_input, total_other_input], Y)[0], target_len)
+
+                    new_coefficients = self.__node_non_linear_analysis(l, total_input, target_len, None)
+                    
+                    #Calculate all coefficients considering only the total input of important node and backward of important node
+                    for c in new_coefficients:
+                        del c["variable"]
+                        c["modification"] = "sub childrens"
+                        c["childrens"] = important_childrens
+                    
+                    coefficients += new_coefficients
+                    
+            father = node.get_father()
+                
+            if(not isinstance(father, op.add)): coefficients += self.__horizontal_complete_analysis(node, TR_inputs_dict, target_len, op.add)
+            if(not isinstance(father, op.mul)): coefficients += self.__horizontal_complete_analysis(node, TR_inputs_dict, target_len, op.mul)
+            
+            #Sort and filter the coefficients considering only the valid number and not 0 coefficients
+            coefficients = sorted([x for x in coefficients if (np.isfinite(x["score"]))], key = lambda x: -x["score"])
+            
+            #Scale the coefficients considering ow many data is aviable in this node
+            for coeff in coefficients: coeff["node"] = node
+            
+            return coefficients
+        
+        for x in self._model.get_root().get_all_subtree_nodes(): choices += all_analysis(x)
+
+        return sorted(choices, key = lambda x: -x["score"])
+       
 
     #Extension phase (tree already wet with TR set)
     def __extension_step(self, TR_inputs_dict, TR_output):
         
-        original_metrics = self.__checkpoint_heuristic_metrics()
+        target_len = len(TR_output)
         
-        model_firm = str(self._model.copy().simplify_model())
-        k, i = self._dict_extension_history[model_firm] if model_firm in self._dict_extension_history.keys() else (0, 0)
+        #Calculate the firm
+        model_firm = str(self._model)
         
-        choices = []
+        if(model_firm in self._dict_extension_history.keys() and 
+           self._dict_extension_history[model_firm] == None): return self.rollback(model_firm, TR_inputs_dict, TR_output)
         
-        AnalysisRamification.linear_extend_model(self._model)
+        i = self._dict_extension_history[model_firm][0] if model_firm in self._dict_extension_history.keys() else 0
         
-        self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-        
-        #Package the choices by importance
-        for package in self.__get_package_importance_nodes(self._model.get_root().get_all_subtree_nodes(), self._unary_operations, TR_inputs_dict)[k:]:
+        #If this new state is worse of previous state, apply rollback
+        if(not (self._previous_MDL is None) and not (self._actual_MDL is None) and (self._previous_MDL < self._actual_MDL)):
 
-            choices = []
+            result = self.rollback(model_firm, TR_inputs_dict, TR_output)
+            del self._dict_extension_history[model_firm]
+            return result
             
-            #For each choice inside the package, calculate the metrics and the possible extension
-            for choice in package:
+        #FORWARD - BACKWARD STEPS
+        self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict, target_len).backward_calculation_memory_sub_tree(TR_output, target_len)
+        
+        #CONTROL TO rollback
+        if(np.any(~np.isfinite(self._model.get_root().get_memory("forward")))): return self.rollback(model_firm, TR_inputs_dict, TR_output)
 
-                #Analyze the extension
-                result = self.__analyze_extension(TR_inputs_dict, TR_output, choice)
+        #STATISTICAL SCORES STEP
+        choices = self.heuristics_analysis(TR_inputs_dict, TR_output)      
+        
+        #MODIFICATION STEP
+        
+        #CONTROL TO ROLLBACK
+        if(choices == []): return self.rollback(model_firm, TR_inputs_dict, TR_output)
+
+        #EXTENSION STEP
+        if(i >= len(choices)): return self.rollback(model_firm, TR_inputs_dict, TR_output)
+
+        choice = choices[i]
+
+        modification = choice["modification"]
+        node = choice["node"]
+        
+        if(modification == "replace"): new_node = op.Leaf(choice["leaf"])
+            
+        elif(modification == "hat"): 
+            
+            new_node = choice["unary operation"]()
+            new_node.new_connection(node.copy_sub_tree() if choice["variable"] == None else op.Leaf(choice["variable"]))
+
+        elif(modification == "horizontal extension"):
+            
+            #Add a simple leaf
+            if("leaf" in choice.keys()): brother = op.Leaf(choice["leaf"])
+            else: 
                 
-                #If extension is aviable, calculate all data about it
-                if(result != None):
-
-                    choices.append(choice | {"delta heuristic metrics": {key: original_metrics[key] - result[key] for key in self._heuristic_metrics.keys()}})
-
-
-            choices = self.__filtering_criterion(choices)
-
-            choices = self.__sorting_criterion(choices)
+                brother = choice["unary operation"]()            
+                brother.new_connection(op.Leaf(choice["variable"]))
+                
+            new_node = choice["operation extension"]()
+            new_node.new_connection(brother)
+            new_node.new_connection(node.copy_sub_tree())
         
-            #print("Survival choices")
-            #for x in choices: print(x)
+        elif(modification == "sub childrens"): 
+            
+            new_node = choice["node"].__class__()
+            
+            sub_set = []
+            others = []
+            
+            important_childrens = choice["childrens"]
 
-            #If there is no any choices, go ahead  
-            if(len(choices) == 0): continue
-
-            #Do the extension
-            self._model.replace_subtree(choices[i]["old node"], choices[i]["new node"])
-            
-            #print("Extension choosed", choices[i])
-            
-            #Go to one step with i index
-            if(i < len(choices)): i += 1
-            
-            #Update the indices in the case i reach the next package
-            if(i == len(choices)):
-                i = 0
-                k += 1
+            for a, c in enumerate(node.get_childrens()):
+                                   
+                if(a in important_childrens): sub_set.append(c)
+                else: others.append(c)
                 
-            #Save the new position
-            self._dict_extension_history[model_firm] = (k, i)
+            sub_set_child = choice["unary operation"]()
+            chain_sub_set_child = choice["node"].__class__()
+            
+            sub_set_child.new_connection(chain_sub_set_child)
+            for x in sub_set: chain_sub_set_child.new_connection(x)
+            
+            new_node.new_connection(sub_set_child)
+            for x in others: new_node.new_connection(x)
+        
+        else: raise TypeError(f"Modification type {modification} is not allowed")
+
+        self._dict_extension_history[model_firm] = (i+1, choice["score"])
+            
+        self._model.replace_subtree(choice["node"], new_node)        
+                    
+        #SYNTAX REDUCTION STEP
+        self._model.simplify_model(TR_inputs_dict)
+            
+        return True
+
+
+    def __information_cost_structure(self, k):
+        
+        def recursion(node):
+            
+            subtree_cost = np.sum([recursion(c) for c in node.get_childrens()])
+            
+            # Unary operation: sin, cos, arcsin, arccos, exp, ln, sqrt, div
+            if isinstance(node, op.UnaryOperationNode): node_cost = np.log2(8)
                 
-            break
-
-        return len(choices) > 0
-
+            # Chain operation: add, mul
+            elif isinstance(node, op.ChainOperationNode): node_cost = np.log2(2) + np.log2(len(node.get_childrens()))
+                
+            # Constant
+            elif node.is_constant(): node_cost = 1.0
+                
+            # Variable
+            else: node_cost = 1.0 + np.log2(k)
+                
+            return subtree_cost + node_cost
+        
+        return recursion(self._model.get_root()) 
     
+    def __calculate_MDL(self, TR_inputs_dict, TR_output):
+        
+        leafs = self._model.get_leafs()
+
+        n = len(TR_output)
+        k = len(TR_inputs_dict.keys())
+
+        L_struct = self.__information_cost_structure(k)   #Discrete solution / complexity structure
+        L_const = len([x for x in leafs if x.is_constant()]) * 0.5 * np.log2(n)   #Continuous solution
+        L_res = n * 0.5 * np.log2(er.MSE(self._model.get_root().get_memory("forward"), TR_output) + 1e-40)   #Error model
+        
+        MDL_score = L_struct + L_const + L_res
+        MDL_score = MDL_score if np.isfinite(MDL_score) else float("inf")
+        
+        self._previous_MDL = self._actual_MDL
+        self._actual_MDL = MDL_score
+         
+    def __refresh(self, TR_inputs_dict, TR_output):
+        target_len = len(TR_output)
+        self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict, target_len).backward_calculation_memory_sub_tree(TR_output, target_len)
+        self.checkpoint_metrics()
+        
+        self.__calculate_MDL(TR_inputs_dict, TR_output)
+        
+         
     #TR_inputs_dict: numpy array's dict
     #VL_inputs_dict: numpy array's dict
     #TR_output: constant or numpy array
     #VL_output: constant or numpy array
     def _body_learning(self, TR_inputs_dict, TR_output, stop_criteria):
+        
+        self._previuous_MDL = None
+        self._actual_MDL   = None
         
         len_inputs = [len(TR_inputs_dict[x]) for x in TR_inputs_dict.keys()]
         
@@ -241,24 +466,28 @@ class AnalysisRamification(SymbolicRegressionLearning):
         #Set the constant in numpy array (so everything is in array)
         if(type(TR_output) in [int, float]): TR_output = np.array([TR_output for _ in range(np.var(len_inputs))])
 
-        #Calculate all memory
-        self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
         
-        #Checkpoint
-        self.checkpoint_metrics()
+        self.__refresh(TR_inputs_dict, TR_output)
         
         i = 0
         
-        print(f"Start training")
-        
-        while(not stop_criteria(self) and self.__extension_step(TR_inputs_dict, TR_output)):
+        #The search stop if one of this requirements are true:
+        #- there is no any step to choose
+        #- stop_criteria require to stop
+        #- the model give a perfect linear pattern with output (more stronger that chatterjee indicator)
+        while((not stop_criteria(self))):
+            
+            #None = rollback
+            #True = Go with next iteration
+            #False = Stop the learning
+ 
+            Go = None
+            while(Go is None): Go = self.__extension_step(TR_inputs_dict, TR_output)
                 
-            print(f"Extension phase, iteration {i+1} done {'-'*50}")
-                
-            self._model.simplify_model()
-            self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict).backward_calculation_memory_sub_tree(TR_output)
-            self.checkpoint_metrics()
-                
+            self.__refresh(TR_inputs_dict, TR_output)
+
             i += 1
             
-        print("Training done!")
+            #print(f"Iteration done {i} {'-'*100}")
+
+            if(not Go): break

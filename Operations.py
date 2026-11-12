@@ -5,122 +5,95 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import io
 
-import Domains as dm
-import Exceptions as ex
-import Simplifications as si
-import Indicators as ind
-import Errors as er
-import utils
+import NonInvertibleFunctions as nif
 
 class OperationNode:
 
     _tol = 1e-40
     
-    def __init__(self, channels, is_commutative = False, name = None):
+    def __init__(self, max_channels, name = None, invertible = True):
         
-        if(type(channels) not in [int]): raise ValueError(f"Channels number must be a int value, cannot be a {channels}")
+        if(type(max_channels) not in [int] and max_channels != float("inf")): raise ValueError(f"Max channels must be a int number, cannot be {max_channels}")
         
         #Channel numbers
-        self.__channels = channels
-        
-        #Special properties
-        self.__is_commutative = is_commutative
+        self._max_channels = max_channels
         
         #Father
-        self.__father = None
+        self._father = None
         
         #Set parameters
         self.set_name(name)
         
-        self.__childrens = [None for _ in range(channels)]
+        self._is_invertible = invertible
         
-        self.__memories = dict()   
+        self._childrens = []
         
-        self.__memories["forward"] = None
-        self.__memories["backward"] = None
+        self._memories = dict()   
+        
+        self._memories["forward"] = None
+        self._memories["backward"] = None
+        
+    def sort_internal_nodes(self):
+        
+        def recursion(node):
+            
+            for i in node.__childrens: recursion(i)
+            
+            if(isinstance(node, Leaf)): return
+            
+            else: node.__childrens = sorted(node.__childrens, key = lambda x: str(x))
+        
+        recursion(self)
 
     def __eq__(self, x):
         
         #Check if this node is of this type
         if(not isinstance(x, type(self))): return False
-        
-        #If this is a Leaf
-        if(isinstance(x, Leaf)): return self.get_name() == x.get_name()
-        
-        #If this is a unary operation
-        if(self.get_channels() == 1): return self.get_childrens()[0] == x.get_childrens()[0]
-        
-        #If this is a binary operation
-        if(self.get_channels() == 2 and (isinstance(self, add) or isinstance(self, mul))):
-            
-            self_flat = [x for x in utils.flat_elements(self, type(self))]
-            x_flat = [x for x in utils.flat_elements(x, type(x))]
-            
-            same_length = len(self_flat) == len(x_flat)
-            
-            results = []
-            
-            while(len(self_flat) > 0):
-                c = self_flat[0]
-                
-                results.append(c in x_flat)
-                if(not results[-1]): break
-                
-                del self_flat[self_flat.index(c)]
-                del x_flat[x_flat.index(c)]
-            
-            return all(results) and same_length
-        
-        raise ValueError(f"During {self} == {x}, something got wrong, no of previous guards was catched")
+        return str(self) == str(x)
 
     def __str__(self):
         if(isinstance(self, Leaf)): return self._name if type(self._name) == "str" else str(self._name)
-        return f"{self.__class__.__name__}({', '.join([str(x) for x in self.__childrens])})"
+        return f"{self.__class__.__name__}({', '.join([str(x) for x in self._childrens])})"
     
     def __repr__(self):
         return str(self)
-       
-    def equals_subtree(self, node):
+    
+    def _index_child(self, node):
         
-        my_childrens =    self.get_childrens()
-        other_childrens = node.get_childrens()
-        
-        if(len(my_childrens) != len(other_childrens)): return False
-        if(not isinstance(node, type(self))): return False
-        return all([c.equals_subtree(x) for c, x in zip(my_childrens, other_childrens)])
+        for i, child in enumerate(self._childrens):
+            if(id(child) == id(node)): return i
+            
+        return None
      
     #Delete a connection
-    def free_connection(self, i):
-
-        if(i >= self.__channels or i < 0): raise ValueError(f"Cannot set a {i}-th channel in a node with {self.__channels} children for father")
+    def free_connection(self, child):
+ 
+        if(len(self.get_childrens()) == 0): raise ValueError(f"This node has {len(self.get_childrens())}, it is not possible to remove another child")
         
-        brothers = self.__childrens
-        
-        child = brothers[i]
-        brothers[i] = None
-        child.__father = None
-        
-        return self
-       
-    #Create a connection 
-    def new_connection(self, child, i):
-
         if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
         
-        if(child.__father != None): raise ValueError(f"Child {child} has already a father {self}, so connection is useless")
-        if(self.__childrens[i] != None): raise ValueError(f"Father {self} has {child} in own childrens in position {i}, so connection is useless")
+        index = self._index_child(child)
+        if(index == None): raise ValueError(f"Child {child} are not a child of {self}")
         
-        if(i >= self.__channels or i < 0): raise ValueError(f"Cannot set a {i}-th channel in a node with {self.__channels} children for father")
-        if(self.__childrens[i] != None): raise ValueError("Father has already a child in {i}-th position")
-        
-        self.__childrens[i] = child
-        child.__father = self
-        
-        return self
+        del self._childrens[index]
+        child._father = None
 
-    #GET PARAMETERS ZONE
-    def is_commutative(self):
-        return self.__is_commutative
+        return self
+    
+    #Create a connection
+    def new_connection(self, child):
+
+        if(self._max_channels == len(self.get_childrens())): raise ValueError(f"This node has {len(self.get_childrens())}, can have max {self._max_channels}, it is not possible to add a new child")
+        
+        if(not issubclass(type(child), OperationNode)): raise ValueError(f"Child must be a Operation node type, not a {type(child)}")
+        
+        index = self._index_child(child)
+        if(index != None): raise ValueError(f"This child {child} is already like child (not form, like the real child in memory), it is not possible to add again in childrens {self._childrens}, otherwise it will create a acycle graph (not acceptable)")
+
+        self._childrens.append(child)
+        child._father = self
+
+        return self
      
     def is_constant(self):
         return type(self._name) in [int, float] or (np.isscalar(self._name) and type(self._name) != str)
@@ -133,23 +106,32 @@ class OperationNode:
             return any([recursion(c) for c in n.get_childrens()] + [id(n) == id(node)])
 
         return recursion(self)
+    
+    def is_invertible(self):
+        return self._is_invertible
+    
+    def get_max_channels(self):
+        return self._max_channels
            
     def get_channels(self):
-        return self.__channels
+        return len(self._childrens)
+    
+    def accept_number_childrens(self, k):
+        return k <= self._max_channels
         
     def get_name(self):
         return self._name
         
     def get_father(self):
-        return self.__father
+        return self._father
     
     def get_childrens(self):
-        return list(self.__childrens)
+        return list(self._childrens)
     
     #GET MEMORY ZONE
     def get_memory(self, memory_name):
-        if(memory_name not in self.__memories.keys()): return None
-        value = self.__memories[memory_name]
+        if(memory_name not in self._memories.keys()): return None
+        value = self._memories[memory_name]
         return value.copy() if isinstance(value, np.ndarray) else value
 
     #Return all node of subtree
@@ -163,9 +145,18 @@ class OperationNode:
         return recursion(self)
 
     #SET MEMORY ZONE
-    def set_memory(self, memory_name, value):  
+    def set_memory(self, memory_name, value, target_len):
+        
         if(not isinstance(value, np.ndarray) and type(value) not in [float, int] and not isinstance(value, np.generic) and value != None): raise ValueError(f"Memory must contains only a numpy tensor or a number float / int, not a {type(value)}")
-        self.__memories[memory_name] = value.copy() if isinstance(value, np.ndarray) else value
+
+        if(value is None): self._memories[memory_name] = None
+        
+        else:
+            
+            val_arr = np.asarray(value)
+            if val_arr.ndim == 0: value = np.full(target_len, float(value))
+            self._memories[memory_name] = value
+            
         return self
     
     def set_name(self, name):        
@@ -174,28 +165,28 @@ class OperationNode:
         return self
 
     #CALCULATION AND AUTOMATICALLY SET MEMORY ALL SUB TREE ZONE
-    def forward_calculation_memory_sub_tree(self, inputs_dict):
+    def forward_calculation_memory_sub_tree(self, inputs_dict, target_len):
                
         def recursion(node):
             for child in node.get_childrens(): recursion(child)
-            if(type(node) == Leaf): node.set_memory("forward", inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name())
-            else:                   node.set_memory("forward", node.forward_calculation())
-        
+            if(type(node) == Leaf): node.set_memory("forward", inputs_dict[node.get_name()] if type(node.get_name()) == str else node.get_name(), target_len)
+            else: node.set_memory("forward", node.__class__.forward_calculation([x.get_memory("forward") for x in node.get_childrens()]), target_len)
+ 
         with np.errstate(divide='ignore', invalid='ignore'):  
                 
             recursion(self)
         
         return self
 
-    def backward_calculation_memory_sub_tree(self, output):
+    def backward_calculation_memory_sub_tree(self, output, target_len):
         
-        self.set_memory("backward", output)
+        self.set_memory("backward", output, target_len)
         
         def recursion(node):
             
             if(not issubclass(type(node), Leaf)):
-                for child, backward in zip(node.get_childrens(), node.backward_calculation()):                
-                    child.set_memory("backward", backward)
+                for child, backward in zip(node.get_childrens(), node.__class__.backward_calculation([x.get_memory("forward") for x in node.get_childrens()], node.get_memory("backward"))):                
+                    child.set_memory("backward", backward, target_len)
                     recursion(child)
                     
         with np.errstate(divide='ignore', invalid='ignore'):  
@@ -210,8 +201,8 @@ class OperationNode:
         def recursion(node):
             for child in node.get_childrens(): recursion(child)
             if(type(node) == Leaf):
-                node.set_memory(memory_name, None)
-            else: node.set_memory(memory_name, None)
+                node.set_memory(memory_name, None, 1)
+            else: node.set_memory(memory_name, None, 1)
                 
         recursion(self)
         
@@ -220,19 +211,14 @@ class OperationNode:
     #CHECK OPERATION ZONE
     def _check_type_name(self, name):
         return True
-    
-    def check_input_domain(self, i, input):
-        if(i < 0 or i > self.__channels - 1): raise ValueError(f"Operation {type(self)} has only {self.__channels}, so i = {i} has no coherence (start count from 0)")
-        return True
 
-    def check_output_domain(self, output):
+    def check_input_domain(i, output):
+        return True
+    
+    def check_output_domain(output):
         return True
     
     #NODE METHODS (valid only for the node, not for the all sub tree). For correct functions, the require memory must be calculated already
-
-    #Get the list of simplification considering the position where is the node in global tree (considering also the father etc.)
-    def get_simplification_subtree(self, operations = []):
-        return [si.constant] + operations
 
     #Get the string function of all subtree
     def get_string_calculation_function(self):
@@ -249,48 +235,22 @@ class OperationNode:
             
             result = f"({node.get_string_calculation_structure([recursion(child, leaf_labels) for child in node.get_childrens()])})"
             
-            #if(node.get_channels() > 1): return f"({result})"
-            
             return result
         
         body = recursion(self, leaf_labels)
     
         return {"leaf_labels": leaf_labels, "body": body}
-    
-    def get_derative_subtree(self, x):
-        
-        def recursion(node, x):
-
-            extraction = [recursion(c, x) for c in node.get_childrens()]
-            str_derative = [x for x in extraction]
-            return node.get_string_derative_structure(str_derative, x)
-        
-        return recursion(self, x)
  
     #Get the operation in string form 
     def get_string_calculation_structure(self, x):
         return NotImplemented
 
-    #Get the derative operation in string form (for x feature)
-    def get_string_derative_structure(self, sub_strings, x):
-        if(len(sub_strings) != self.__channels): raise ValueError(f"sub_strings len {len(sub_strings)} must be equals to childrens number {self.__channels}")
-        return NotImplemented 
-
     #Calculate forward value. REQUIRE forwards from childrens
-    def forward_calculation(self):
+    def forward_calculation(real_inputs):
         return NotImplemented
 
     #Calculate backward value. REQUIRE backward from father and forward from childrens
-    def backward_calculation(self):
-        return NotImplemented
-
-    #Calculate the confidence of this node (considering the childrens). REQUIRE backward from father and forward from childrens
-    def calculation_hat_confidence(self):
-        return NotImplemented
-
-    def best_constant(self, i):
-        if(self.__channels == 1): raise ValueError("This operations has 1 channel, it has no sense this function")
-        if(i > 2 or i < 0): raise ValueError(f"This operation has {self.__channels}, {i} has no sense")
+    def backward_calculation(real_inputs, expected_output):
         return NotImplemented
 
     #Copy all sub tree
@@ -298,14 +258,8 @@ class OperationNode:
         
         result = self.__class__(self._name) if(self.__class__.__name__ == "Leaf") else self.__class__()
         
-        result.__childrens = [None for _ in self.__childrens]
-        
-        #Non necessita della copia perchè i metodi set fanno una copia già di default
-        for key in self.__memories.keys(): result.set_memory(key, self.__memories[key])
-        
-        for i, child in enumerate(self.__childrens):
-            if(child == None): continue
-            OperationNode.new_connection(result, child.copy_sub_tree(), i)
+        for child in self._childrens:
+            result.new_connection(child.copy_sub_tree())
 
         return result
       
@@ -338,7 +292,7 @@ class OperationNode:
             
             Printer.node(str(id(node)), f'<\n<FONT COLOR="{title_color}">{node.__class__.__name__.upper()}</FONT><BR/>\n<FONT COLOR="{text_color}">{f(node)}</FONT>>', {'shape': 'octagon', 'color': border_color, 'fillcolor': node_color, 'style': 'filled'})
 
-            for child in [x for x in node.__childrens]: Printer.edge(str(id(node)), recursion(child, level+1))
+            for child in [x for x in node.get_childrens()]: Printer.edge(str(id(node)), recursion(child, level+1))
                 
             return str(id(node))
         
@@ -357,10 +311,28 @@ class OperationNode:
         plt.show(block = block)
 
 
+
+
+
+
+
+class UnaryOperationNode(OperationNode):
+    
+    def __init__(self, is_invertible):
+        super().__init__(1, invertible = is_invertible)
+             
+class ChainOperationNode(OperationNode):
+    
+    def __init__(self):
+        super().__init__(float("inf"), invertible = True)
+        
+    def accept_number_childrens(self, k):
+        return k > 0 and k < self.get_max_channels()
+
 class Leaf(OperationNode):
     
     def __init__(self, label):
-        super().__init__(0, False, label)
+        super().__init__(0, label, invertible = True)
     
     def _check_type_name(self, name):
         return (type(name) in [str, int, float] and not isinstance(name, np.ndarray)) or np.isscalar(name)
@@ -368,444 +340,257 @@ class Leaf(OperationNode):
     def is_variable(self):
         return type(self.get_name()) in [str]
     
-    def forward_calculation(self):
+    def forward_calculation(real_inputs):
         raise ValueError("It is a leaf, it is not possible to do a forward calculation, it has no children")
     
-    def backward_calculation(self):
+    def backward_calculation(real_inputs, expected_output):
         raise ValueError("It is a leaf, it is not possible to do a backward calculation, it has no children")
-    
-    def calculation_hat_confidence(self):
-        if(self.is_constant()): result = 1 / (np.var(self.get_memory("backward")) + 1)
-        else: result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-        return result if np.isfinite(result) else 0
 
-    def get_string_derative_structure(self, sub_strings, x):
-        super().get_string_derative_structure(sub_strings, x)
-        return "1" if x == self._name else "0"
-    
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.approximation])
 
-class add(OperationNode):
+
+class add(ChainOperationNode):
     
     def __init__(self):
-        super().__init__(2, True)
-        
-    def __str__(self):
-        return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
- 
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return inputs[0] + inputs[1]
-    
-    def backward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        output = self.get_memory("backward") 
-        return [output - inputs[1], output - inputs[0]]
-    
-    def calculation_hat_confidence(self):
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-        return result
-    
-    def get_string_calculation_structure(self, x):
-        return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
-    
-    def get_string_derative_structure(self, sub_strings, x):  
-        super().get_string_derative_structure(sub_strings, x)
-        return f"add({sub_strings[0]}, {sub_strings[1]})"
-
-    def best_constant(self, i):
-        super().best_constant(i)
-        back = self.backward_calculation()
-        if(~np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
-        return np.mean(back[i])
-    
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.add_chain])
-
-class mul(OperationNode):
-    
-    def __init__(self):
-        super().__init__(2, True)
+        super().__init__()
         
     def __str__(self):
         return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
 
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return inputs[0] * inputs[1]
-    
-    def backward_calculation(self):
-        
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        output = self.get_memory("backward")
-        
-        try: backward_output_0 = output / inputs[1]
-        except ZeroDivisionError: backward_output_0 = np.nan
-        
-        with np.errstate(divide='ignore', invalid='ignore'): 
-              
-            try: backward_output_0 = output / inputs[1]
-            except ZeroDivisionError: backward_output_0 = inputs[1]
-                    
-            try: backward_output_1 = output / inputs[0]
-            except ZeroDivisionError: backward_output_1 = inputs[0]
-        
-        #In questi casi il 2° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
-        if(isinstance(inputs[1], np.ndarray)):
-            mask = ~np.isfinite(backward_output_0)
-            if(not np.isscalar(inputs[0])): backward_output_0[mask] = inputs[0][mask]
-            else: backward_output_0 = inputs[0]
-        
-        #In questi casi il 1° input = 0, quindi il 1° input può essere qualsiasi cosa, quindi anche se stesso
-        if(isinstance(inputs[0], np.ndarray)): 
-            mask = ~np.isfinite(backward_output_1)
-            if(not np.isscalar(inputs[1])): backward_output_1[mask] = inputs[1][mask]
-            else: backward_output_1 = inputs[1]
-        
-        return [backward_output_0, backward_output_1]
-    
-    #def calculation_hat_confidence(self):
-        return ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-
-    def calculation_hat_confidence(self):
-        #print("calculation_hat_confidence mul")
-        #print(self.get_memory("forward"))
-        #print(self.get_memory("backward"))
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
+    def forward_calculation(forward_inputs):
+        result = 0.0
+        for i in forward_inputs: result += i
         return result
     
-    def get_string_calculation_structure(self, x):
-        return f"{' * '.join(sorted([str(r.get_string_calculation_function()['body']) for r in utils.flat_elements(self, self.__class__)]))}"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"add(mul({sub_strings[0]}, {str_function[1]}), mul({sub_strings[1]}, {str_function[0]}))"
-    
-    def best_constant(self, i):
-        super().best_constant(i)
-        back = self.backward_calculation()
-        if(~np.all(np.isfinite(back[i]))): raise ex.BackwardCalculationError("Error not best constant calculation")
-        return np.mean(back[i])
-    
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.mul_distributivity_on_add,
-                                                   si.mul_chain])
+    def backward_calculation(forward_inputs, expected_output):
+        forward_sum = 0.0
+        for i in forward_inputs: forward_sum += i
+        return [expected_output - (forward_sum - i) for i in forward_inputs]
 
-class neg(OperationNode):
+    def get_string_calculation_structure(self, x):
+        return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
+
+class mul(ChainOperationNode):
     
     def __init__(self):
-        super().__init__(1, False)
- 
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]
-        return -inputs[0]
-    
-    def backward_calculation(self):
-        output = self.get_memory("backward") 
-        return [-output]
-    
-    def calculation_hat_confidence(self):
-        result = -ind.pearson_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
+        super().__init__()
+        
+    def __str__(self):
+        return f"{self.__class__.__name__}({', '.join(sorted([str(x) for x in self.get_childrens()]))})"
+
+    def forward_calculation(forward_inputs):
+        result = 1.0
+        for i in forward_inputs: result *= i
         return result
- 
-    def get_string_calculation_structure(self, x):
-        return f"-{x[0]}"
     
-    def get_string_derative_structure(self, sub_strings, x):
-        super().get_string_derative_structure(sub_strings, x)
-        return f"neg({sub_strings[0]})"
-    
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.neg_null,
-                                                   si.relax_neg])
-
-class div(OperationNode):
-    
-    def __init__(self):
-        super().__init__(1, False)
+    def backward_calculation(forward_inputs, expected_output):
         
-    def check_input_domain(self, i, input):
-        super().check_input_domain(i, input)
-        if(not (self._check_type_name(input) and type(input) != str)): return False
-        if(i == 0 and type(input) in [float, int]): return np.abs(input) >= self._tol
-        elif(i == 0): return np.all(np.abs(input) >= self._tol)
-
-    def forward_calculation(self):
-        inputs = [x.get_memory("forward") for x in self.get_childrens()]  
+        result = []
+        
+        forward_prod = 1.0
+        for i in forward_inputs: forward_prod *= i
+        
+        for input in forward_inputs:
             
-        try: return 1 / inputs[0] 
+            backward_output = np.divide(expected_output * input,
+                                        forward_prod,
+                                        out = np.full_like(forward_prod, np.nan, dtype=float), 
+                                        where = (forward_prod != 0))
+
+            mask = ~np.isfinite(backward_output)
+            backward_output[mask] = input[mask]
+                
+            result.append(backward_output)
+        
+        return result
+
+    def get_string_calculation_structure(self, x): 
+        return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
+
+class div(UnaryOperationNode):
+    
+    def __init__(self):
+        super().__init__(True)
+        
+    def check_input_domain(i, input):
+        if(i == 0 and type(input) in [float, int]): return np.abs(input) >= OperationNode._tol
+        elif(i == 0): return np.all(np.abs(input) >= OperationNode._tol)
+
+    def forward_calculation(forward_inputs):
+            
+        try: return 1 / forward_inputs[0] 
         except ZeroDivisionError: np.nan
     
-    def backward_calculation(self):
+    def backward_calculation(forward_inputs, expected_output):
         
-        input = self.get_memory("backward")
+        input = forward_inputs[0]
         
-        with np.errstate(divide='ignore', invalid='ignore'):
+        backward_output = np.divide(1,
+                           expected_output,
+                           out = np.full_like(input, np.nan, dtype=float), 
+                           where = (input != 0))
+             
+        mask = ~np.isfinite(backward_output)
+        backward_output[mask] = input[mask]
+            
+        return [backward_output]
 
-            try: output = 1 / input
-            except ZeroDivisionError: output = np.nan
-            
-        if(isinstance(output, np.ndarray)):
-            mask = ~np.isfinite(output)
-            output[mask] = input[mask] if isinstance(input, np.ndarray) else input
-            
-        return [output]
-    
-    def calculation_hat_confidence(self):
-    
-        In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
-    
-        mask_left = In < 0
-        mask_right = In > 0
-        
-        result_left = -ind.spearman_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
-        result_right = ind.spearman_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
-        
-        result = np.abs(result_left * result_right)
-        return result
-   
     def get_string_calculation_structure(self, x):
         return f"1 / {x[0]}"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-    
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"neg(div(mul({str_function[0]}, {str_function[0]})))"
 
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.div_null,
-                                                   si.div_scission])
-
-class sin(OperationNode):
+class sin(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1)
+        super().__init__(False)
         
-    def check_output_domain(self, output):
-        if(not (self._check_type_name(output) and type(output) != str)): return False
-        if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
-        else: return np.all(np.abs(output) <= 1 + self._tol)
+    def check_output_domain(output):
+        if(type(output) in [float, int]): return np.abs(output) <= 1 + OperationNode._tol
+        else: return np.all(np.abs(output) <= 1 + OperationNode._tol)
     
-    def forward_calculation(self):
-        return np.sin(self.get_childrens()[0].get_memory("forward"))
+    def forward_calculation(forward_inputs):
+        return np.sin(forward_inputs[0])
     
-    def backward_calculation(self):
-        real_output = self.get_memory("backward")
-        return [dm.get_ideal_input_sin(self.get_childrens()[0].get_memory("forward"), real_output)]
-    
-    def calculation_hat_confidence(self):
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-        return result
+    def backward_calculation(forward_inputs, expected_output):
+        return [nif.pseudo_inverse_input_sin(forward_inputs[0], expected_output)]
 
     def get_string_calculation_structure(self, x):
         return f"np.sin({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(cos({str_function[0]}), {sub_strings[0]})"
-
-class arcsin(OperationNode):
+      
+class cos(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1)
+        super().__init__(False)
         
-    def check_output_domain(self, output):
-        if(not (self._check_type_name(output) and type(output) != str)): return False
-        if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
-        else: return np.all(np.abs(output) <= 1 + self._tol)
-        
-    def check_input_domain(self, i, input):
-        super().check_input_domain(i, input)
-        if(not (self._check_type_name(input) and type(input) != str)): return False
-        if(type(input) in [float, int]): return np.abs(input) <= 1 + self._tol
-        else: return np.all(np.abs(input) <= 1 + self._tol)
+    def check_output_domain(output):
+        if(type(output) in [float, int]): return np.abs(output) <= 1 + OperationNode._tol
+        else: return np.all(np.abs(output) <= 1 + OperationNode._tol)
     
-    def forward_calculation(self):
-        return np.arcsin(self.get_childrens()[0].get_memory("forward"))
-    
-    def backward_calculation(self):
-        return [np.sin(self.get_memory("backward"))]
+    def forward_calculation(forward_inputs):
+        return np.cos(forward_inputs[0])
 
-    def calculation_hat_confidence(self):
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-        return result
+    def backward_calculation(forward_inputs, expected_output):
+        return [nif.pseudo_inverse_input_cos(forward_inputs[0], expected_output)]
+
+    def get_string_calculation_structure(self, x):
+        return f"np.cos({x[0]})"
+
+class arcsin(UnaryOperationNode):
+    
+    def __init__(self):
+        super().__init__(True)
+
+    def check_input_domain(i, input):
+
+        input = np.abs(input)
+
+        #Domain argument
+        if(i == 0 and type(input) in [float, int]): return 0 <= input and input <= 1
+        elif(i == 0): return np.all((0 <= input) & (input <= 1))
+        
+    def check_output_domain(output):
+        output = np.abs(output)
+        return np.all((0 <= output) & (output <= np.pi/2))
+    
+    def forward_calculation(forward_inputs):
+        return np.arcsin(forward_inputs[0])
+    
+    def backward_calculation(forward_inputs, expected_output):
+        return [np.sin(expected_output)]
 
     def get_string_calculation_structure(self, x):
         return f"np.arcsin({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"div({sub_strings[0]}, cos(arcsin({str_function[0]})))"
 
-#Il cos non è altro che: cos(x) = sin(x + pi*1.5)
-
-class cos(OperationNode):
+class arccos(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1)
+        super().__init__(True)
+
+    def check_input_domain(i, input):
         
-    def check_output_domain(self, output):
-        if(not (self._check_type_name(output) and type(output) != str)): return False
-        if(type(output) in [float, int]): return np.abs(output) <= 1 + self._tol
-        else: return np.all(np.abs(output) <= 1 + self._tol)
-    
-    def forward_calculation(self):
-        return np.cos(self.get_childrens()[0].get_memory("forward"))
-    
-    def backward_calculation(self):
-        real_output = self.get_memory("backward")
-        return [dm.get_ideal_input_cos(self.get_childrens()[0].get_memory("forward"), real_output)]
-    
-    def calculation_hat_confidence(self):
-        result = ind.pearson_correlation(self.get_memory("forward"), self.get_memory("backward"))
-        return result
-    
+        input = np.abs(input)
+
+        #Domain argument
+        if(i == 0 and type(input) in [float, int]): return 0 <= input and input <= 1
+        elif(i == 0): return np.all((0 <= input) & (input <= 1))
+        
+    def check_output_domain(output):
+        return np.all((0 <= output) & (output <= np.pi))
+ 
+    def forward_calculation(forward_inputs):
+        return np.arccos(forward_inputs[0])
+        
+    def backward_calculation(forward_inputs, expected_output):
+        return [np.cos(expected_output)]
+   
     def get_string_calculation_structure(self, x):
-        return f"np.cos({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(neg(sin({str_function[0]})), {sub_strings[0]})"
+        return f"np.arccos({x[0]})"
 
-class abs(OperationNode):
+class exp(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1)
+        super().__init__(True)
         
-    def check_output_domain(self, output):
-        return np.all(output >= 0)
-    
-    def forward_calculation(self):
-        return np.abs(self.get_childrens()[0].get_memory("forward"))
-    
-    def backward_calculation(self):
-        return [dm.get_ideal_input_abs(self.get_memory("forward"), self.get_memory("backward"))]
-
-    def calculation_hat_confidence(self):
-    
-        In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
-    
-        mask_left = In <= 0
-        mask_right = In >= 0
-        
-        result_left = ind.pearson_correlation(In[mask_left], Out[mask_left]) if np.sum(mask_left) > 1 else 1
-        result_right = -ind.pearson_correlation(In[mask_right], Out[mask_right]) if np.sum(mask_right) > 1 else 1
-        
-        result = np.abs(result_left * result_right)
-        return result
-
-    def get_string_calculation_structure(self, x):
-        return f"np.abs({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul({sub_strings[0]}, div({str_function[0]}, abs({str_function[0]})))"
-    
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.abs_null,
-                                                   si.abs_double_mul_null,
-                                                   si.abs_scission,
-                                                   si.abs_destroy_neg])
-
-class exp(OperationNode):
-    
-    def __init__(self):
-        super().__init__(1, False)
-        
-    def check_output_domain(self, output):
+    def check_output_domain(output):
         if(type(output) in [float, int]): return output > 0
         else: return np.all(output > 0)
 
-    def forward_calculation(self):
+    def forward_calculation(forward_inputs):
         with np.errstate(over='ignore'):
-            result = np.exp(self.get_childrens()[0].get_memory("forward"))
-        return result
+            return np.exp(forward_inputs[0])
 
-    def backward_calculation(self):
+    def backward_calculation(forward_inputs, expected_output):
         with np.errstate(over='ignore'):
-            result = np.log(self.get_memory("backward"))
-        return [result]
-    
-    def calculation_hat_confidence(self):
-        result = ind.spearman_correlation(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
-        return result
-    
+            return [np.log(expected_output)]
+        
     def get_string_calculation_structure(self, x):
         return f"np.exp({x[0]})"
-    
-    def get_string_derative_structure(self, sub_strings, x):
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(exp({str_function[0]}), {sub_strings[0]})"
-
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.exp_ln_null])
-
-class ln(OperationNode):
+   
+class ln(UnaryOperationNode):
     
     def __init__(self):
-        super().__init__(1, False)
+        super().__init__(True)
 
-    def check_input_domain(self, i, input):
-        
-        super().check_input_domain(i, input)
-        if(not (self._check_type_name(input) and type(input) != str)): return False
+    def check_input_domain(i, input):
 
         #Domain argument
         if(i == 0 and type(input) in [float, int]): return input > 0
         elif(i == 0): return np.all(input > 0)
- 
-    def forward_calculation(self):
-        with np.errstate(over='ignore'):
-            result = np.log(self.get_childrens()[0].get_memory("forward"))
-        return result
-    
-    def backward_calculation(self):
-        with np.errstate(over='ignore'):
-            result = np.exp(self.get_memory("backward"))
 
-        return [result]
+    def forward_calculation(forward_inputs):
+        with np.errstate(over='ignore'):
+            return np.log(forward_inputs[0])
     
-    def calculation_hat_confidence(self):
-    
-        In, Out = ind.prepare(self.get_childrens()[0].get_memory("forward"), self.get_memory("backward"))
-    
-        mask_right = In > 0
-        
-        result = ind.spearman_correlation(In[mask_right], Out[mask_right])
-    
-        return result if np.sum(mask_right) > 1 else 0
-   
+    def backward_calculation(forward_inputs, expected_output):
+        with np.errstate(over='ignore'):
+            return [np.exp(expected_output)]
+
     def get_string_calculation_structure(self, x):
         return f"np.log({x[0]})"
+
+class sqrt(UnaryOperationNode):
     
-    def get_string_derative_structure(self, sub_strings, x):
-        super().get_string_derative_structure(sub_strings, x)
-        str_function = [str(x) for x in self.get_childrens()]
-        return f"mul(div({str_function[0]}), {sub_strings[0]})"
+    def __init__(self):
+        super().__init__(True)
 
-    def get_simplification_subtree(self):
-        return super().get_simplification_subtree([si.ln_exp_null])
+    def check_input_domain(i, input):
+        
+        #Domain argument
+        if(i == 0 and type(input) in [float, int]): return input >= 0
+        elif(i == 0): return np.all(input >= 0)
+        
+    def check_output_domain(output):
+        return np.all(output >= 0)
+    
+    def forward_calculation(forward_inputs):
+        with np.errstate(over='ignore'):
+            return np.sqrt(forward_inputs[0])
+    
+    def backward_calculation(forward_inputs, expected_output):
+        with np.errstate(over='ignore'):
+            return [expected_output**2]
+        
+    def get_string_calculation_structure(self, x):
+        return f"np.sqrt({x[0]})"
 
-#add   2 input  commutativa
-#mul   2 input  commutativa
 
-#neg   1 input
-#div   1 input
-#sin   1 input
-#cos   1 input
-#exp   1 input
-#abs   1 input
-#log   1 input
+
+#div, sin, cos, arcsin, arccos, exp, ln, sqrt, add, mul
