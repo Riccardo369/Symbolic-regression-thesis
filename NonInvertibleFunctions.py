@@ -1,6 +1,6 @@
 import numpy as np
 
-
+#General pseudo inverse non invertible for sinusoidal functions
 def __pseudo_inverse_periodic_input(real_input, theta_base, second_candidate_func):
     
     period = 2*np.pi
@@ -18,10 +18,11 @@ def __pseudo_inverse_periodic_input(real_input, theta_base, second_candidate_fun
     
     return np.where(dist_a < dist_b, cand_a_shifted, cand_b_shifted)
 
-
+#Sin pseudo inverse
 def pseudo_inverse_input_sin(real_input, output):
     return __pseudo_inverse_periodic_input(real_input, np.arcsin(output), lambda t: np.pi - t)
 
+#Cos pseudo inverse
 def pseudo_inverse_input_cos(real_input, output):
     return __pseudo_inverse_periodic_input(real_input, np.arccos(output), lambda t: -t)
 

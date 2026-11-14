@@ -11,7 +11,7 @@ For having a complete map of files and folders:
 
 - .env only contains the random seeds of internal experiments (non invertible and heuristic race experiments).
 
-- BenchmarkExperiments notebook execute the DatasetDimension results, execute training phases on datasets and fill BenchmarkResults / BenchmarkCompleteResults.
+- BenchmarkExperiments notebook execute the DatasetDimension results, execute training phases on datasets, fill BenchmarkResults / BenchmarkCompleteResults and extract informations for aggregation for competitors comparation.
 
 - DatasetDimension.json contains information about datasets
 
@@ -35,13 +35,14 @@ For having a complete map of files and folders:
 
 - Simplifications.py contains all useful tools for apply the syntax simplification of a tree model.
 
-- StatisticalHeuristics.py contains all necessary for apply the non parametrical statistical heuristics (used in "GreedyStatisticalMapping" algorithm and in
-  heuristic race internal experiment).
+- StatisticalHeuristics.py contains all necessary for apply the non parametrical statistical heuristics (used in "GreedyStatisticalMapping" algorithm and in heuristic race internal experiment).
 
 - ShowTest.py contains a script where the results of internal experiments are shown.
 
-- Every Test*.py files execute a different internal experiment.
-
 - Every Test*.json contains the result from Test*.py experiment.
 
-- InternalExperimentsExecution.py execute from one file all internal experiments.
+- TestNonInvertibleFunctions.py contains script for launch the internal experiments about pseudo inverse in non invertible function sin and cos.
+
+- TestSimplifications.py contains script where see how simplification function simplfy the structure of model.
+
+- BenchmarkComparitions.json contains all informations about GSM and competitors for each dataaset where GSM are applied.

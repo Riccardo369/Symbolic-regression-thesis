@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import kurtosis
 
 
-
+#Prepare X and Y vectors
 def prepare(x, y):
     
     def is_constant(x):

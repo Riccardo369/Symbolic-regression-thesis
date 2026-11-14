@@ -32,7 +32,8 @@ class OperationNode:
         
         self._memories["forward"] = None
         self._memories["backward"] = None
-        
+    
+    #Sort all children nodes (useful for str and see if 2 tree are equals)
     def sort_internal_nodes(self):
         
         def recursion(node):
@@ -592,5 +593,3 @@ class sqrt(UnaryOperationNode):
         return f"np.sqrt({x[0]})"
 
 
-
-#div, sin, cos, arcsin, arccos, exp, ln, sqrt, add, mul

@@ -38,12 +38,12 @@ load_dotenv()
 seeds_str = os.getenv("SEEDS_LIST")
 seeds_list = [int(seed.strip()) for seed in seeds_str.split(",") if seed.strip()]
 
-#Numero di esperimenti (numero di seed diversi) = 10. In questo caso si possono usare gli stessi seed, perchè il dominio è in R in tutti i casi (facciamo da -10 a 10)
+
+
 for seed in seeds_list:
     
     generator = np.random.default_rng(seed)
       
-    #Variazione del numero di dati:
     for n in [100, 1000, 10000]:
         
         X = generator.uniform(low = -10, high = 10, size = n)

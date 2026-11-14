@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from itertools import permutations
 import json
 import sympy as sp
 
@@ -11,9 +10,6 @@ import sympy as sp
 import NonInvertibleFunctions as nif
 import Operations as op
 from Model import SymbolicRegression
-
-
-
 
 
 
@@ -141,8 +137,8 @@ def plot_non_invertible_metric(noise):
 
 
     
-plot_non_invertible_metric(False)
-plot_non_invertible_metric(True)
+#plot_non_invertible_metric(False)
+#plot_non_invertible_metric(True)
 
 
 
@@ -211,260 +207,24 @@ def distribution_difference_non_invertible(g):
     
     
     
-for i in ["X",
-          "(2*X) + (np.pi/4)",
-          "np.exp(0.5*X)",
-          "(X**3) - (3*X)",
-          "1/X",
-          "np.abs(X)",
-          "X + (0.5*np.sin(3*X))"]:
-
-    distribution_difference_non_invertible(i)
-
-
-
-
-
-
-#BENCHMARK SHOW RESULTS
-
-def general_metrics(results):
-
-    table = {
-        
-    "total iterations": [],
-    "total seconds":    [],
-    "complexity last":  [],
-    "MAE TS last":      [],
-    "MSE TS last":      [],
-    "R2 TS last":       [],
-    "complexity best":  [],
-    "MAE TS best":      [],
-    "MSE TS best":      [],
-    "R2 TS best":       []
-
-    }
-
-
-    for dataset in results.keys():
-        
-        metrics = results[dataset]["GSM"]
-
-        for m in table.keys():
-            
-                table[m].append(metrics[m])
-            
-                
-    for k in table.keys():
-        
-        values = np.array(table[k])
-        
-        total = len(values)
-        infinity_count = np.sum(np.isinf(values))
-        nan_count = np.sum(np.isnan(values))
-        
-        values = values[np.isfinite(values)]
-        
-        print(f"{k}")
-        print(f"Min: {np.min(values)}")
-        print(f"Max: {np.max(values)}")
-        print(f"Mean: {np.mean(values)}")
-        print(f"Std: {np.std(values)}")
-        print(f"Total values: {total}")
-        print(f"Infinite values deleted: {infinity_count}")
-        print(f"Nan values deleted: {nan_count}")
-        print("")
-        
-
-results = json.load(open("BenchmarkComparitions.json", "r"))
-datasets_info = json.load(open("DatasetDimension.json", "r"))
-
-
-#ANALISI SULLE PRESTAZIONI GENERALI RIGUARDO AI DIVERSI TIPI DI DATASETS
-
-#print("STROGATZ DATASETS")
-#general_metrics({k: results[k] for k in results.keys() if k.startswith("strogatz")})
+#for i in ["X",
+#          "(2*X) + (np.pi/4)",
+#          "np.exp(0.5*X)",
+#          "(X**3) - (3*X)",
+#          "1/X",
+#          "np.abs(X)",
+#          "X + (0.5*np.sin(3*X))"]:
 #
-#print("PMLB DATASETS")
-#general_metrics({k: results[k] for k in results.keys() if not k.startswith("strogatz")})
-
-
-"""
-STROGATZ DATASETS
-
-total seconds = Mean: 189, Std: 104
-complexity last = Mean: 9.21, Std: 6.26
-MAE TS last = Mean: 1.1, Std: 1.2
-MSE TS last = Mean: 4.3, Std: 6.24
-R2 TS last = Mean: -39, Std: 82.74
-complexity best = Mean: 7.5, Std: 4.5
-MAE TS best = Mean: 0.51, Std: 0.55
-MSE TS best = Mean: 1.8, Std: 2.06
-R2 TS best = Mean: 0.23, Std: 0.36
-
-PMLB DATASETS
-
-total seconds = Mean: 855.286, Std: 2030.65
-complexity last = Mean: 6.07, Std: 6
-MAE TS last = Mean: 1e+186, Std: inf
-MSE TS last = Mean: 4e+22, Std: 4e+23
-R2 TS last = Mean: -2917786789461.5767, Std: 31016499007500.62
-complexity best = Mean: 6.18, Std: 4.7
-MAE TS best = Mean: 1684.3, Std: 10201.9
-MSE TS best = Mean: 221732170, Std: 1642766175.66
-R2 TS best = Mean: -3, Std: 17.324508577069302
-
-RESULTS:
-
-Costo computazionale: più basso in Strogatz, dovuto anche dal fatto che ci sono meno dati
-
-Generalizzazione sui punti del dataset: Cattiva in Strogatz, catastrofica in PMLB
-
-Model size: Bassa in entrambi, attorno ai 6 / 9 nodi, con picchi fino a 29 nodi in PMLB (dovuti al fatto che il modello non riusciva a trovare un ground truth che si 
-avvicinasse a quello originale, quindi iniziava a cercare a vuoto tentando di approssimare con molti nodi)
-
-L' uso del modello migliore scelto con model selection con VL interna mostra dei modelli migliori rispetto agl' ultimi della lista
-
-Questi risultati mostrano che il modello aumenta il suo costo computazionale all' aumentare dei dati, ha bisogno di un numero molto alto di iterazioni per arrivare ad 
-un modello che si avvicini al ground truth, poichè prova a cercarlo, ma molto spesso si perde dietro a "sciocchezze" (dovuto alla bassa robustezza degl' indicatori ad 
-identificare le operazioni), ma nonostante ciò, la MDL e la semplificazione sintattica riescono a mantenere la complessità del modello sotto controllo.
-"""
-
-
-#ANALISI DELLE PRESTAZIONI SPECIFICHE SU: training time (s), r^2 e dimensioni nodi, RIGUARDO AL VARIARE DELLE DIMENSIONI DEI DATASET (considerando il modello migliore)
-
-def specific_metrics_plot(results, datasets_info, group_labels, functions_aggregation, x_label):
-    
-    X_values = set([functions_aggregation(x) for x in datasets_info if set(group_labels).issubset(set(x.keys()))])
-    x_dataset = {x: [d["dataset"] for d in datasets_info if set(group_labels).issubset(set(d.keys())) and functions_aggregation(d) == x] for x in X_values}
-    
-    X = []
-    
-    time_mean = []
-    time_std = []
-    
-    MAE_mean = []
-    MAE_std = []
-    
-    R2_mean = []
-    R2_std = []
-    
-    dimension_mean = []
-    dimension_std = []
-    
-    for x in x_dataset.keys():
-        
-        datasets = [d for d in x_dataset[x] if d in results.keys()]
-        
-        times =      [results[d]["GSM"]["total seconds"] for d in datasets]
-        MAEs =       [results[d]["GSM"]["MAE TS best"] for d in datasets]
-        R2s =        [results[d]["GSM"]["R2 TS best"] for d in datasets]
-        dimensions = [results[d]["GSM"]["complexity best"] for d in datasets]
-        
-        X.append(x)
-        
-        time_mean.append(np.mean(times))
-        time_std.append(np.std(times))
-        
-        MAE_mean.append(np.mean(MAEs))
-        MAE_std.append(np.std(MAEs))
-                
-        R2_mean.append(np.mean(R2s))
-        R2_std.append(np.std(R2s))
-        
-        dimension_mean.append(np.mean(dimensions))
-        dimension_std.append(np.std(dimensions))
-        
-    index = np.argsort(X)
-    
-    X = np.array(X)[index]
-    time_mean = np.array(time_mean)[index]
-    time_std = np.array(time_std)[index]    
-    MAE_mean = np.array(MAE_mean)[index]
-    MAE_std = np.array(MAE_std)[index]   
-    R2_mean = np.array(R2_mean)[index]
-    R2_std = np.array(R2_std)[index]
-    dimension_mean = np.array(dimension_mean)[index]
-    dimension_std = np.array(dimension_std)[index]
-    
-        
-    #for j in x_dataset.keys(): print(j, x_dataset[j])
-    
-    
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
-
-    ax1.plot(X, time_mean, color='blue', label = "time")
-    ax1.plot(X, MAE_mean, color='red', label = "MAE")
-    ax1.plot(X, R2_mean, color='green', label = "R2")
-    ax1.plot(X, dimension_mean, color='brown', label = "model size")
-    ax1.set_title('Mean')
-    ax1.set_xlabel(x_label)
-    ax1.legend(loc='upper right')
-
-    ax2.plot(X, time_std, color='blue', label = "time")
-    ax2.plot(X, MAE_std, color='red', label = "MAE")
-    ax2.plot(X, R2_std, color='green', label = "R2")
-    ax2.plot(X, dimension_std, color='brown', label = "model size")
-    ax2.set_title('Standard deviation')
-    ax2.set_xlabel(x_label)
-    ax2.legend(loc='upper right')
-
-    # Ottimizza gli spazi per evitare sovrapposizioni tra i testi
-    plt.tight_layout()
-
-    # Mostra il grafico
-    plt.show()
-    
-    
-    
-
-#specific_metrics_plot(results, datasets_info, ["features"], lambda x: x["features"], "features")
-#specific_metrics_plot(results, datasets_info, ["TR points"], lambda x: x["TR points"], "TR points")
-#specific_metrics_plot(results, datasets_info, ["features", "TR points"], lambda x: x["features"] * x["TR points"], "Total values")
+#    distribution_difference_non_invertible(i)
 
 
 
-"""
-Risultati:
 
-All' aumentare delle features:
-
-Il costo computazionale impenna attorno alle 10 features
-R2 inpenna in negativo attorno alle 10 features
-Model size stabile
-
-All' aumentare del numero di punti:
-
-Il costo computazionale aumenta, anche se spezzettato, con crescita n log(n) (giustificato dal fatto che il costo di ogni iterazione è di n log(n), per quanto riguarda i punti n)
-R2 impenna con pochi punti, ma si stabilizza (anche se con molta fragilità) all' aumentare dei punti
-Il numero di model size è sensibile ai dati quando ci sono pochi punti, ma si stabilise poi (anche se con fragilità)
-
-
-All' aumentare dei punti e delle features:
-
-Il costo computazionale aumenta, poi inizia a scendere
-R2 impenna con poche informazioni, ma si stabilizza (anche se con molta fragilità) all' aumentare dell' informazione
-Il numero di model size è sensibile ai dati quando ci sono poche informazioni, ma si stabilise poi (anche se con fragilità)
-
-RESULTS:
-
-Il costo computazionale per ogni iterazione si conferma essere n log(n). Il numero di features ed il numero di punti non basta per definire in modo corretto il comportamento del 
-costo computazionale, perchè ciò dipende anche dalla complessità della ground truth dietro ai dati (siamo sicuri ?)
-
-Le performance, anche se scarse, migliorano all' aumentare dei punti e delle features.
-
-Il model size, è sensibile con poche informazioni, ma si all' aumentare delle informazioni.
-
-"""
-
+#All tools for show results about training on benchmark datasets
 
 
 
 informations = json.load(open("BenchmarkComparitions.json"))
-
-
-
-
 
 
 
@@ -509,6 +269,8 @@ def approx(x, level):
 
 
 def creation_performance_table():
+    
+    #Create the extended table comparation Last - Best
     
     string = r"""\footnotesize
 \setlength{\tabcolsep}{2.5pt}
@@ -567,7 +329,6 @@ def creation_performance_table():
         
         values = values_strogatz if k.startswith("strogatz") else values_PMLB
         
-
         values["last R2"]        .append(r2_last)
         values["last MAE"]       .append(mae_last)
         values["last complexity"].append(int(c_last))
@@ -585,13 +346,13 @@ def creation_performance_table():
     string = string.replace("\_frac", "\\frac")
     string = string.replace(" ) ", " ) \\allowbreak ")
     
-    R2_delta_PMLB =             np.array(values_PMLB["last R2"]        )                        - np.array(values_PMLB["best R2"]        )
-    MAE_delta_PMLB =            np.array(values_PMLB["last MAE"]       )                        - np.array(values_PMLB["best MAE"]       )
-    Complexity_delta_PMLB =     np.array(values_PMLB["last complexity"])                        - np.array(values_PMLB["best complexity"])
+    R2_delta_PMLB =             np.array(values_PMLB["last R2"]        )     - np.array(values_PMLB["best R2"]        )
+    MAE_delta_PMLB =            np.array(values_PMLB["last MAE"]       )     - np.array(values_PMLB["best MAE"]       )
+    Complexity_delta_PMLB =     np.array(values_PMLB["last complexity"])     - np.array(values_PMLB["best complexity"])
     
-    R2_delta_Strogatz =         np.array(values_strogatz["last R2"]        )                    - np.array(values_strogatz["best R2"]        )
-    MAE_delta_Strogatz =        np.array(values_strogatz["last MAE"]       )                    - np.array(values_strogatz["best MAE"]       )
-    Complexity_delta_Strogatz = np.array(values_strogatz["last complexity"])                    - np.array(values_strogatz["best complexity"])
+    R2_delta_Strogatz =         np.array(values_strogatz["last R2"]        ) - np.array(values_strogatz["best R2"]        )
+    MAE_delta_Strogatz =        np.array(values_strogatz["last MAE"]       ) - np.array(values_strogatz["best MAE"]       )
+    Complexity_delta_Strogatz = np.array(values_strogatz["last complexity"]) - np.array(values_strogatz["best complexity"])
     
 
     mask_R2_delta_PMLB =             np.isfinite(R2_delta_PMLB            )
@@ -600,8 +361,11 @@ def creation_performance_table():
     mask_R2_delta_Strogatz =         np.isfinite(R2_delta_Strogatz        )
     mask_MAE_delta_Strogatz =        np.isfinite(MAE_delta_Strogatz       )
     mask_Complexity_delta_Strogatz = np.isfinite(Complexity_delta_Strogatz)
+    
+    
+    #Create the resume table comparation delta: Last - Best
         
-
+        
     string += r"""\footnotesize
 \setlength{\tabcolsep}{2.5pt}
 
@@ -610,7 +374,7 @@ def creation_performance_table():
 
 \begin{longtable}{|p{0.12\textwidth}|p{0.12\textwidth}|c|c|c|c|c|}
 
-    \caption{Internal performance resume Delta: Last - Best} \label{tab:PMLB_internal_performance_resume} \\
+    \caption{Internal performance resume Delta: Last - Best} \label{tab:internal_performance_resume} \\
     \hline
     \textbf{Dataset} & \textbf{Metric} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Complexity} \\
     \hline
@@ -683,9 +447,9 @@ Max $R^2$ Competitor & std  & {np.std (values["max R2"])} & {np.std (values["max
         
         return string
         
+      
         
-        
-        
+    #Create the extended table comparation GSM, min and max R^2 model   
     
     string = r"""\footnotesize
 \setlength{\tabcolsep}{2.5pt}
@@ -787,37 +551,19 @@ Max $R^2$ Competitor & std  & {np.std (values["max R2"])} & {np.std (values["max
     string += r"""\end{longtable}
 """
 
-    
     string = string.replace("\_frac", "\\frac")
     string = string.replace(" ) ", " ) \\allowbreak ")
     
-    values = values_PMLB
-    
+    #Create the resume tables comparation GSM, min and max R^2 model, on PMLB and Stogatz datasets
     string += add_resume_table(values_PMLB, "PMLB resume table", "PMLB resume")
     string += add_resume_table(values_strogatz, "Strogatz resume table", "Strogatz resume")
 
     
     with open("Comparation's model.tex", "w", encoding="utf-8") as f:
         f.write(string)
+        
+        
 
-
-
-
-#creation_performance_table()
-#creation_comparation_table()
-
-
-
-
-
-
-
-
-
-
-
-#3 * 136 (122 pmlb + 14 strogatz) = 408. +1 con medie (o + 3 se le aggiungi anche per benchmark).
-# Magari per l'impaginazione meglio due tabelle separate: una solo con le medie, e una completa.
-# Se le fai separate, aggiungerei in quella delle medie anche il rank medio (con std) del modello
-# (in un dataset, 1 se e' il modello migliore, 2 se il secondo, etc.), e il numero di vittorie (numero di volte in cui e' il migliore su un dataset).
+creation_performance_table()
+creation_comparation_table()
 

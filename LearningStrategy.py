@@ -9,11 +9,6 @@ from Model import SymbolicRegression
 
 class GreedyStatisticalMapping:
     
-    #The order of binary operations is the order of construction every time a node is extended (every node will be extended with all binary operations, and the order is defined by
-    # the order of binary_operations list)
-    
-    #get_package_importance_nodes analyze nodes and returns a list of packages (for importance), where every package contains a list of triples node - feature- operation. 
-    # If it is possible to choose a valid extension with first package, the algorithm will stop, otherwise it will search the extension on next package
     def __init__(self):
         
         self._model = None
@@ -23,17 +18,20 @@ class GreedyStatisticalMapping:
         #Every values of dict = (index of package, index of extension to start inside the package)
         self._dict_extension_history = dict()
 
+    #Action where save every metrics
     def checkpoint_metrics(self):
         for key in self._metric_results:
             result = self._metric_functions[key](self._model)
             self._metric_results[key].append(result)
             #print(key, result)
         
+    #Operation before training phase
     def _pre_learning(self, model, metrics):
         self._model = model
         self._metric_functions = metrics
         self._metric_results = {key: [] for key in metrics.keys()}
-        
+    
+    
     def __call__(self, model, TR_inputs_dict, TR_output, stop_criteria, metric_functions = {}):
         
         self._pre_learning(model, metric_functions)
@@ -101,17 +99,22 @@ class GreedyStatisticalMapping:
         
         #Return the signal that algorithm must repeat the iteration
         return None
-            
+
+
+
     #Calculate all statistical heuristic considering only the operations that has no any problem with domain 
     def valid_heuristics_analysis(self, X, Y, X_name = None):
         coefficients = sh.all_heuristic_statisticals(X, Y, X_name)
         return [x for x in coefficients if getattr(op, x['unary operation']).check_input_domain(0, X)]    
       
+    #Operation of scaling coefficient
     def __scaling_coefficients(self, coefficients, scaling_coeff):
         for c in coefficients: c["score"] *= scaling_coeff
    
+    #Base analysis: statistical analysis atomic operation
     def __base_analysis(self, node, TR_inputs_dict, target_len):
         
+        #Extract output
         Y = node.get_memory("backward")
         
         name = node.get_name()
@@ -122,12 +125,15 @@ class GreedyStatisticalMapping:
         
         results = []
         
+        #Candidate modification (constant replacing)
         results.append({"modification": "replace",
                         "leaf": np.mean(Y),
                         "score": 1 / (1 + np.std(Y))})
         
+        #Candidates modifications (for each variable replacing)
         for f in TR_inputs_dict.keys():
             
+            #If the node is a variable f, do not consider the modification (it would be a pointless modification; the tree will not be changed)
             if(f == name): continue
             
             results.append({"modification": "replace",
@@ -138,8 +144,10 @@ class GreedyStatisticalMapping:
         
         return results
 
+    #Node non linear analysis: statistical analysis atomic operation
     def __node_non_linear_analysis(self, node, X, target_len, name):
         
+        #Extract node father
         father = node.get_father()
         father_non_invertible = father != None and not father.is_invertible()  
         
@@ -147,11 +155,11 @@ class GreedyStatisticalMapping:
         if(father_non_invertible):
             
             results = []
-            
+
             Y_father = father.get_memory("backward")
-            
+
             mask = np.isfinite(Y_father)
-            
+
             #Calculate for all operations (all unary operations are needed)
             for uo in ["sin", "cos", "exp", "ln", "sqrt", "div"]:
                 
@@ -184,35 +192,44 @@ class GreedyStatisticalMapping:
         
         return results
 
+    #Leaf non linear analysis: statistical analysis atomic operation
     def __leaf_non_linear_analysis(self, node, TR_inputs_dict, target_len):
     
         Y = node.get_memory("backward")
         
         mask = np.isfinite(Y)
         
+        #Choose the best variable with absolute value chatterjee correlation
         variable_choices = [{"var": x, "score": np.abs(ind.chatterjee_correlation(TR_inputs_dict[x][mask], Y))} for x in TR_inputs_dict.keys()]
         var_choosed = sorted(variable_choices, key = lambda x: -x["score"])[0]["var"]
         
+        #Apply Node non linear analysis
         return self.__node_non_linear_analysis(node, TR_inputs_dict[var_choosed], target_len, var_choosed)
-   
+
+    #Horizontal complete analysis: statistical analysis atomic operation
     def __horizontal_complete_analysis(self, node, TR_inputs_dict, target_len, chain_type):
         
+        #Create a puppet node
         real_node = op.Leaf(0)
         
+        #Set forward and backward vector values for analysis
         real_node.set_memory("forward", 0, target_len)
         real_node.set_memory("backward", chain_type.backward_calculation([node.get_memory("forward")], node.get_memory("backward"))[0], target_len)
         
         results = []
         
+        #Apply leaf non linear and base analysis
         results += self.__leaf_non_linear_analysis(real_node, TR_inputs_dict, target_len)
         results += self.__base_analysis(real_node, TR_inputs_dict, target_len)
         
+        #Add additional labels for each extensions calculated
         for c in results:
             c["modification"] = "horizontal extension"
             c["operation extension"] = chain_type
         
         return results
 
+    #Heuristic analysis step, where from each node, extract every candidates extensions
     def heuristics_analysis(self, TR_inputs_dict, TR_output):
         
         target_len = len(TR_output)
@@ -247,6 +264,7 @@ class GreedyStatisticalMapping:
                 #Choose the most important features with FOCI algorithm
                 matrix_features = np.array([x.get_memory("forward")[mask] for x in node.get_childrens()]).T
                 
+                #Extract important childrens
                 important_childrens = ind.most_important_features(matrix_features, Y[mask])
                 
                 #If number of important childrens variabile is at least 1
@@ -286,7 +304,8 @@ class GreedyStatisticalMapping:
                     coefficients += new_coefficients
                     
             father = node.get_father()
-                
+            
+            #Add new extension considering horizontal extension for addition and multiplication
             if(not isinstance(father, op.add)): coefficients += self.__horizontal_complete_analysis(node, TR_inputs_dict, target_len, op.add)
             if(not isinstance(father, op.mul)): coefficients += self.__horizontal_complete_analysis(node, TR_inputs_dict, target_len, op.mul)
             
@@ -298,6 +317,7 @@ class GreedyStatisticalMapping:
             
             return coefficients
         
+        #Extract all candidates considering from nodes
         for x in self._model.get_root().get_all_subtree_nodes(): choices += all_analysis(x)
 
         return sorted(choices, key = lambda x: -x["score"])
@@ -311,9 +331,11 @@ class GreedyStatisticalMapping:
         #Calculate the firm
         model_firm = str(self._model)
         
+        #If this tree is blocked, apply rollback
         if(model_firm in self._dict_extension_history.keys() and 
            self._dict_extension_history[model_firm] == None): return self.rollback(model_firm, TR_inputs_dict, TR_output)
         
+        #Take next index aviable modification from this tree (considering the idnex of choice)
         i = self._dict_extension_history[model_firm][0] if model_firm in self._dict_extension_history.keys() else 0
         
         #If this new state is worse of previous state, apply rollback
@@ -322,7 +344,7 @@ class GreedyStatisticalMapping:
             result = self.rollback(model_firm, TR_inputs_dict, TR_output)
             del self._dict_extension_history[model_firm]
             return result
-            
+
         #FORWARD - BACKWARD STEPS
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict, target_len).backward_calculation_memory_sub_tree(TR_output, target_len)
         
@@ -340,10 +362,13 @@ class GreedyStatisticalMapping:
         #EXTENSION STEP
         if(i >= len(choices)): return self.rollback(model_firm, TR_inputs_dict, TR_output)
 
+        #Choose te next extension
         choice = choices[i]
 
         modification = choice["modification"]
         node = choice["node"]
+        
+        #Choose the path for create the new node to substitute
         
         if(modification == "replace"): new_node = op.Leaf(choice["leaf"])
             
@@ -390,8 +415,10 @@ class GreedyStatisticalMapping:
         
         else: raise TypeError(f"Modification type {modification} is not allowed")
 
+        #Update the history dict
         self._dict_extension_history[model_firm] = (i+1, choice["score"])
             
+        #Apply the substitution
         self._model.replace_subtree(choice["node"], new_node)        
                     
         #SYNTAX REDUCTION STEP
@@ -399,7 +426,7 @@ class GreedyStatisticalMapping:
             
         return True
 
-
+    #Structure cost for MDL score
     def __information_cost_structure(self, k):
         
         def recursion(node):
@@ -422,6 +449,7 @@ class GreedyStatisticalMapping:
         
         return recursion(self._model.get_root()) 
     
+    #Calculate MDL score, and update the MDL history values
     def __calculate_MDL(self, TR_inputs_dict, TR_output):
         
         leafs = self._model.get_leafs()
@@ -439,6 +467,7 @@ class GreedyStatisticalMapping:
         self._previous_MDL = self._actual_MDL
         self._actual_MDL = MDL_score
          
+    #Apply a set of refreshing actions
     def __refresh(self, TR_inputs_dict, TR_output):
         target_len = len(TR_output)
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict, target_len).backward_calculation_memory_sub_tree(TR_output, target_len)
@@ -447,10 +476,7 @@ class GreedyStatisticalMapping:
         self.__calculate_MDL(TR_inputs_dict, TR_output)
         
          
-    #TR_inputs_dict: numpy array's dict
-    #VL_inputs_dict: numpy array's dict
-    #TR_output: constant or numpy array
-    #VL_output: constant or numpy array
+    #Start body iterations training
     def _body_learning(self, TR_inputs_dict, TR_output, stop_criteria):
         
         self._previuous_MDL = None
@@ -481,6 +507,7 @@ class GreedyStatisticalMapping:
             #True = Go with next iteration
             #False = Stop the learning
  
+            #While algorithm reach a valid tree
             Go = None
             while(Go is None): Go = self.__extension_step(TR_inputs_dict, TR_output)
                 

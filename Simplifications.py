@@ -6,7 +6,7 @@ import Operations as op
 import Exceptions as ex
 
 
-
+#Dict translation name -> Sympy node
 sympy_convertion_dict = {
     "add": sp.Add,
     "mul": sp.Mul,
@@ -18,16 +18,15 @@ sympy_convertion_dict = {
     "exp": sp.exp,
     "ln": sp.log,
     "sqrt": sp.sqrt,
-    
     }
 
 
 
 
 
-
+#Convertion from tree to sympy tree
 def to_sympy(node):
-    """Converte un tuo OperationNode in un'espressione SymPy."""
+    
     if isinstance(node, op.Leaf):
         
         if isinstance(node.get_name(), (int, float)):
@@ -35,7 +34,6 @@ def to_sympy(node):
         
         return sp.Symbol(str(node.get_name()), real = True)
     
-    # Converte ricorsivamente i figli
     args = [to_sympy(c) for c in node.get_childrens()]
     
     for key in sympy_convertion_dict.keys():
@@ -48,7 +46,7 @@ def to_sympy(node):
 
 
 
-
+#Convertion of a power sympy node, in equivalent standard form with in multiplication form
 def power_in_mul(base, pow):
     
     float_pow = eval(str(pow))
@@ -111,7 +109,7 @@ def power_in_mul(base, pow):
     
     
     
-    
+#Convertion of a power sympy node, in equivalent standard form with exp form
 def power_in_exp(base, pow, TR_inputs_dict):
     
     try:
@@ -138,6 +136,7 @@ def power_in_exp(base, pow, TR_inputs_dict):
     
 
 
+#Convertion from sympy tree to standard tree
 def from_sympy(expr, TR_inputs_dict):
     
     """Riconverte un'espressione SymPy nel tuo albero di OperationNode."""
@@ -158,8 +157,6 @@ def from_sympy(expr, TR_inputs_dict):
             except: pass
         
         if(node == None): raise ValueError(f"It is not possible to convert {base}^{pow} in standard form")
-        
-        
 
     elif(expr.func in sympy_convertion_dict.values()):
     
@@ -168,12 +165,9 @@ def from_sympy(expr, TR_inputs_dict):
             
         for arg in expr.args:
             child_node = from_sympy(arg, TR_inputs_dict)
-            node.new_connection(child_node) # Imposta automaticamente il padre!
- 
+            node.new_connection(child_node)
 
     else: raise ValueError(f"Operatore SymPy non supportato: {expr.func}")
-        
-    # Costruisci ricorsivamente garantendo l'integrità di _father
     
     if(isinstance(node, op.ChainOperationNode)):
         

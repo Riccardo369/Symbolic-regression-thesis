@@ -65,44 +65,14 @@ class SymbolicRegression:
     def __eq__(self, model):
         if(not isinstance(model, SymbolicRegression)): return False
         return self.get_root() == model.get_root()
-        
+     
+    #View all tree model   
     def view(self, f = lambda x: " ", block = True):
         self.__root.view_sub_tree(f, block)
-        
+    
     def copy(self):
         return SymbolicRegression(self.__root.copy_sub_tree())
-        
-    def save_state(self):
-        
-        def extract_weights(node, weights):
-            
-            weights.append(node.get_weight_memory())
-            
-            if(not issubclass(type(node), op.Leaf)):
-                for child in node.get_childrens(): extract_weights(child, weights)
-                
-            return weights
-        
-        return {"tree": str(self.__root), "weights": extract_weights(self.__root, [])}
-
-    def load_state(state):
-        
-        result = SymbolicRegression.string_to_tree(state["tree"])
-        
-        def assign_weights(node, weights):
-            
-            node.set_weight_memory(weights[0])
-            del weights[0]
-            
-            if(not issubclass(type(node), op.Leaf)):
-                for child in node.get_childrens(): assign_weights(child, weights)
-        
-        assign_weights(result.get_root(), state["weights"])
-        
-        if(len(state["weights"]) > 0): raise ValueError("Weight's number and total nodes of the tree are not matching")
-        
-        return result
-        
+   
     def tree_to_string(tree):
         if(not isinstance(tree, SymbolicRegression)): raise ValueError("Tree must be a SymbolicRegression type")
         return str(tree.get_root())
@@ -169,8 +139,10 @@ class SymbolicRegression:
         
         return result_function
     
+    #Apply syntax simplification con Sympy
     def simplify_model(self, TR_inputs_dict = {}):
         
+        #Clean tree from chain node with one node
         def clean_chain_node_one_child(tree, node):
             
             for c in node.get_childrens(): clean_chain_node_one_child(tree, c)
