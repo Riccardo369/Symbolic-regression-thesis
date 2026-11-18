@@ -46,3 +46,5 @@ For having a complete map of files and folders:
 - TestSimplifications.py contains script where see how simplification function simplfy the structure of model.
 
 - BenchmarkComparitions.json contains all informations about GSM and competitors for each dataaset where GSM are applied.
+
+- *.tex files are tables for show results

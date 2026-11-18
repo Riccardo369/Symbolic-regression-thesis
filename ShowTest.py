@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import json
 import sympy as sp
-
-
+import os
 
 import NonInvertibleFunctions as nif
 import Operations as op
@@ -136,7 +135,67 @@ def plot_non_invertible_metric(noise):
     plt.show()
 
 
-    
+
+def plot_non_invertible_metric2():
+    with open("TestNonInvertibleResults2.json", "r") as f:
+        data = json.load(f)
+
+    # Converti in DataFrame se è una lista di dizionari
+    df = pd.DataFrame(data) if isinstance(data, list) else data
+
+    if df.empty:
+        raise ValueError("Nessun dato trovato nel file JSON")
+
+    # Raggruppa per n_samples e function calcolando la media su tutti i seed
+    df_grouped = (
+        df.groupby(["n_samples", "function"])["pearson"]
+        .mean()
+        .reset_index()
+    )
+
+    # Impostazione grafica della figura (singolo grafico)
+    sns.set_theme(style="whitegrid")
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    sns.lineplot(
+        data=df_grouped,
+        x="n_samples",
+        y="pearson",
+        hue="function",
+        marker="o",
+        linewidth=2,
+        ax=ax,
+    )
+
+    # Configurazione assi e titoli
+    ax.set_xscale("log")
+    ax.set_title("Pearson Correlation", fontsize=14, fontweight="bold")
+    ax.set_xlabel("n samples", fontsize=12)
+    ax.set_ylabel("Pearson", fontsize=12)
+    ax.set_ylim(-0.05, 1.05)  # Range adattato ai valori [0, 1] del nuovo dataset
+
+    fig.suptitle(
+        "Non-Invertible Metric Comparison",
+        fontsize=16,
+        fontweight="bold",
+    )
+
+    # Sposta la legenda all'esterno della figura sulla destra
+    sns.move_legend(
+        ax,
+        loc="upper left",
+        bbox_to_anchor=(1.02, 1),
+        title="Function $g(X)$",
+        frameon=True,
+    )
+
+    plt.tight_layout()
+    plt.show()
+
+
+
+#plot_non_invertible_metric2()
+
 #plot_non_invertible_metric(False)
 #plot_non_invertible_metric(True)
 
@@ -207,6 +266,8 @@ def distribution_difference_non_invertible(g):
     
     
     
+    
+    
 #for i in ["X",
 #          "(2*X) + (np.pi/4)",
 #          "np.exp(0.5*X)",
@@ -224,10 +285,6 @@ def distribution_difference_non_invertible(g):
 
 
 
-informations = json.load(open("BenchmarkComparitions.json"))
-
-
-
 def convert_floats_to_fractions(expr_str, tolerance=1e-5):
 
     expr_parsed = sp.sympify(expr_str)
@@ -240,7 +297,6 @@ def overleaf_string(node):
     
     if(isinstance(node, op.Leaf)): return str(node if not node.is_constant() else convert_floats_to_fractions(node.get_name()))
     else:                          return dict_overleaf_string[str(node.__class__.__name__)](node.get_childrens())
-
 
 
 dict_overleaf_string = {
@@ -261,148 +317,48 @@ def convert_in_overleaf_standard(string):
     return overleaf_string(SymbolicRegression.string_to_tree(string).get_root())
 
 
-def approx(x, level):
-    try:
-        shift = 10**level
-        return int(x*shift)/shift
-    except: return x
 
 
-def creation_performance_table():
+
+informations = json.load(open("BenchmarkComparitions.json"))
+dataset_informations = json.load(open("DatasetDimension.json"))
+
+
+#intersection_competitors_presence = set()
+#for k in informations.keys():
+#    intersection_competitors_presence = intersection_competitors_presence.union(set(informations[k]["competitors"].keys()))
+#    
+#for k in informations.keys():
+#    intersection_competitors_presence = intersection_competitors_presence.intersection(set(informations[k]["competitors"].keys()))
+#
+#competitors_list = list(intersection_competitors_presence) + ["AIFeynman"]
+
+
+
+
+#competitors_list = ["AIFeynman", "DSR", "gplearn", "Operon", "GP-GOMEA"]
+competitors_list = []
+
+
+
+
+
+def approx(x, l):
     
-    #Create the extended table comparation Last - Best
+    threshold =       1e+10
+    str_threshold = f"1e+10"
     
-    string = r"""\footnotesize
-\setlength{\tabcolsep}{2.5pt}
-
-\binoppenalty=0
-\relpenalty=0
-
-\begin{longtable}{|p{0.12\textwidth}|p{0.10\textwidth}|c|c|c|p{0.35\textwidth}|c|c|c|}
+    result = round(x, l)
     
-    \caption{Performance's model} \label{tab:performances_models} \\
-    \hline
-    \textbf{Dataset} & \textbf{Ground-truth} & \textbf{Iter} & \textbf{Time (s)} & \textbf{Type} & \textbf{Model} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Complexity} \\
-    \hline
-    \endhead
-"""
-
-    values_PMLB = {}
+    return str(result)
     
-    for x in ["R2", "MAE", "complexity"]:
-        values_PMLB |= {f"best {x}": [], f"last {x}": []}
-
-    values_strogatz = values_PMLB.copy()
-    
-    
-    def create_dict():
-        Dict = {}
-        
-        for x in ["R2", "MAE", "complexity"]:
-            Dict |= {f"best {x}": [], f"last {x}": []}
-        
-        return Dict
-    
-    
-            
-    values_PMLB = create_dict()
-    values_strogatz = create_dict()
-    
-
-    for k in list(informations.keys()):
-        row = informations[k]["GSM"]
-
-        k_clean = str(k).replace("_", r" ")
-        gt_clean = str(informations[k]["ground truth"]).replace("_", r"\_")
-        iter_val = row["total iterations"]
-        time_val = approx(row["total seconds"], 4)
-
-        last_m = convert_in_overleaf_standard(row["last model"])
-        r2_last = approx(row["R2 TS last"], 3)
-        mae_last = approx(row["MAE TS last"], 4)
-        c_last = row["complexity last"]
-
-        best_m = convert_in_overleaf_standard(row["best model"])
-        r2_best = approx(row["R2 TS best"], 3)
-        mae_best = approx(row["MAE TS best"], 4)
-        c_best = row["complexity best"]
-        
-        values = values_strogatz if k.startswith("strogatz") else values_PMLB
-        
-        values["last R2"]        .append(r2_last)
-        values["last MAE"]       .append(mae_last)
-        values["last complexity"].append(int(c_last))
-        values["best R2"]        .append(r2_best)
-        values["best MAE"]       .append(mae_best)
-        values["best complexity"].append(int(c_best))
-        
-
-        string += f""" {k_clean} & {gt_clean} & {iter_val} & {time_val} & Last & ${last_m}$ & {r2_last} & {mae_last} & {c_last} \\\\\n"""
-        string += f"""           &            &            &            & Best & ${best_m}$ & {r2_best} & {mae_best} & {c_best} \\\\\n"""
-        string += r"    \hline" + "\n"
-
-    string += r"""\end{longtable}"""
-    
-    string = string.replace("\_frac", "\\frac")
-    string = string.replace(" ) ", " ) \\allowbreak ")
-    
-    R2_delta_PMLB =             np.array(values_PMLB["last R2"]        )     - np.array(values_PMLB["best R2"]        )
-    MAE_delta_PMLB =            np.array(values_PMLB["last MAE"]       )     - np.array(values_PMLB["best MAE"]       )
-    Complexity_delta_PMLB =     np.array(values_PMLB["last complexity"])     - np.array(values_PMLB["best complexity"])
-    
-    R2_delta_Strogatz =         np.array(values_strogatz["last R2"]        ) - np.array(values_strogatz["best R2"]        )
-    MAE_delta_Strogatz =        np.array(values_strogatz["last MAE"]       ) - np.array(values_strogatz["best MAE"]       )
-    Complexity_delta_Strogatz = np.array(values_strogatz["last complexity"]) - np.array(values_strogatz["best complexity"])
-    
-
-    mask_R2_delta_PMLB =             np.isfinite(R2_delta_PMLB            )
-    mask_MAE_delta_PMLB =            np.isfinite(MAE_delta_PMLB           )
-    mask_Complexity_delta_PMLB =     np.isfinite(Complexity_delta_PMLB    )
-    mask_R2_delta_Strogatz =         np.isfinite(R2_delta_Strogatz        )
-    mask_MAE_delta_Strogatz =        np.isfinite(MAE_delta_Strogatz       )
-    mask_Complexity_delta_Strogatz = np.isfinite(Complexity_delta_Strogatz)
-    
-    
-    #Create the resume table comparation delta: Last - Best
-        
-        
-    string += r"""\footnotesize
-\setlength{\tabcolsep}{2.5pt}
-
-\binoppenalty=0
-\relpenalty=0
-
-\begin{longtable}{|p{0.12\textwidth}|p{0.12\textwidth}|c|c|c|c|c|}
-
-    \caption{Internal performance resume Delta: Last - Best} \label{tab:internal_performance_resume} \\
-    \hline
-    \textbf{Dataset} & \textbf{Metric} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Complexity} \\
-    \hline
-    \endhead
-"""
-
-    string += f"""
-    PMLB     & mean & {approx(np.mean(R2_delta_PMLB[mask_R2_delta_PMLB]), 4)} (with {np.sum(mask_R2_delta_PMLB)} / {len(mask_R2_delta_PMLB)} values) & {approx(np.mean(MAE_delta_PMLB[mask_MAE_delta_PMLB]), 4)} (with {np.sum(mask_MAE_delta_PMLB)} / {len(mask_MAE_delta_PMLB)} values) & {approx(np.mean(Complexity_delta_PMLB[mask_Complexity_delta_PMLB]), 4)}  \\\\
-             & std  & {approx(np.std (R2_delta_PMLB[mask_R2_delta_PMLB]), 4)} (with {np.sum(mask_R2_delta_PMLB)} / {len(mask_R2_delta_PMLB)} values) & {approx(np.std (MAE_delta_PMLB[mask_MAE_delta_PMLB]), 4)} (with {np.sum(mask_MAE_delta_PMLB)} / {len(mask_MAE_delta_PMLB)} values) & {approx(np.std (Complexity_delta_PMLB[mask_Complexity_delta_PMLB]), 4)}  \\\\
-             & min  & {approx(np.min (R2_delta_PMLB[mask_R2_delta_PMLB]), 4)} (with {np.sum(mask_R2_delta_PMLB)} / {len(mask_R2_delta_PMLB)} values) & {approx(np.min (MAE_delta_PMLB[mask_MAE_delta_PMLB]), 4)} (with {np.sum(mask_MAE_delta_PMLB)} / {len(mask_MAE_delta_PMLB)} values) & {approx(np.min (Complexity_delta_PMLB[mask_Complexity_delta_PMLB]), 4)}  \\\\
-             & max  & {approx(np.max (R2_delta_PMLB[mask_R2_delta_PMLB]), 4)} (with {np.sum(mask_R2_delta_PMLB)} / {len(mask_R2_delta_PMLB)} values) & {approx(np.max (MAE_delta_PMLB[mask_MAE_delta_PMLB]), 4)} (with {np.sum(mask_MAE_delta_PMLB)} / {len(mask_MAE_delta_PMLB)} values) & {approx(np.max (Complexity_delta_PMLB[mask_Complexity_delta_PMLB]), 4)}  \\\\
-    \\hline
-    Strogatz & mean & {approx(np.mean(R2_delta_Strogatz[mask_R2_delta_Strogatz]), 4)} (with {np.sum(mask_R2_delta_Strogatz)} / {len(mask_R2_delta_Strogatz)} values) & {approx(np.mean(MAE_delta_Strogatz[mask_MAE_delta_Strogatz]), 4)} (with {np.sum(mask_MAE_delta_Strogatz)} / {len(mask_MAE_delta_Strogatz)} values) & {approx(np.mean(Complexity_delta_Strogatz[mask_Complexity_delta_Strogatz]), 4)}  \\\\
-             & std  & {approx(np.std (R2_delta_Strogatz[mask_R2_delta_Strogatz]), 4)} (with {np.sum(mask_R2_delta_Strogatz)} / {len(mask_R2_delta_Strogatz)} values) & {approx(np.std (MAE_delta_Strogatz[mask_MAE_delta_Strogatz]), 4)} (with {np.sum(mask_MAE_delta_Strogatz)} / {len(mask_MAE_delta_Strogatz)} values) & {approx(np.std (Complexity_delta_Strogatz[mask_Complexity_delta_Strogatz]), 4)}  \\\\
-             & min  & {approx(np.min (R2_delta_Strogatz[mask_R2_delta_Strogatz]), 4)} (with {np.sum(mask_R2_delta_Strogatz)} / {len(mask_R2_delta_Strogatz)} values) & {approx(np.min (MAE_delta_Strogatz[mask_MAE_delta_Strogatz]), 4)} (with {np.sum(mask_MAE_delta_Strogatz)} / {len(mask_MAE_delta_Strogatz)} values) & {approx(np.min (Complexity_delta_Strogatz[mask_Complexity_delta_Strogatz]), 4)}  \\\\
-             & max  & {approx(np.max (R2_delta_Strogatz[mask_R2_delta_Strogatz]), 4)} (with {np.sum(mask_R2_delta_Strogatz)} / {len(mask_R2_delta_Strogatz)} values) & {approx(np.max (MAE_delta_Strogatz[mask_MAE_delta_Strogatz]), 4)} (with {np.sum(mask_MAE_delta_Strogatz)} / {len(mask_MAE_delta_Strogatz)} values) & {approx(np.max (Complexity_delta_Strogatz[mask_Complexity_delta_Strogatz]), 4)}  \\\\
-    \\hline
-"""
-
-    string += r"""\end{longtable}
-"""
-
-    with open("Performance's model.tex", "w", encoding="utf-8") as f:
-        f.write(string)
+    #if(result > threshold): return f"$>{str_threshold}$"
+    #elif(result < -threshold and result < 0): return f"$<-{str_threshold}$"
+    #else: return str(result)
 
 
 
-def creation_comparation_table():
+def analysis_comparation_benchmark():
     
     def add_resume_table(values, caption, label):
         
@@ -412,33 +368,37 @@ def creation_comparation_table():
 \binoppenalty=0
 \relpenalty=0
 
-\begin{longtable}{|p{0.12\textwidth}|p{0.12\textwidth}|c|c|c|c|c|}
+\begin{longtable}{|p{0.08\textwidth}|p{0.28\textwidth}|p{0.28\textwidth}|c|c|c|p{0.08\textwidth}||}
 
     \caption{""" + caption + """} \label{tab:""" + label + r"""} \\
     \hline
-    \textbf{Model} & \textbf{Metric} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Time (s)} & \textbf{Complexity} & \textbf{GSM $R^2$ rank \%} \\
+    \textbf{Model} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Time (s)} & \textbf{Complexity} & \textbf{Pearson}\\
     \hline
     \endhead
 """
+        for c in ["GSM"] + competitors_list:
+            
+            R2 =         np.array(values[f"{c} R2"]        )
+            MAE =        np.array(values[f"{c} MAE"]       )
+            seconds =    np.array(values[f"{c} seconds"]   )
+            complexity = np.array(values[f"{c} complexity"])   
+            pearson =    np.array(values[f"{c} Pearson"]   )
+            
+            mask_R2 =         np.isfinite(values[f"{c} R2"]        )
+            mask_MAE =        np.isfinite(values[f"{c} MAE"]       )
+            mask_seconds =    np.isfinite(values[f"{c} seconds"]   )
+            mask_complexity = np.isfinite(values[f"{c} complexity"])
+            mask_pearson =    np.isfinite(values[f"{c} Pearson"]   )
+            
+            
+            l = len(values[f"{c} R2"])
 
-        string += f"""
-    & mean & {np.mean(values["GSM R2"])} & {np.mean(values["GSM MAE"])} & {np.mean(values["GSM seconds"])} & {np.mean(values["GSM complexity"])} & {np.mean(values["rank"])}    \\\\
-GSM & std  & {np.std (values["GSM R2"])} & {np.std (values["GSM MAE"])} & {np.std (values["GSM seconds"])} & {np.std (values["GSM complexity"])} & {np.std (values["rank"])}    \\\\
-    & min  & {np.min (values["GSM R2"])} & {np.min (values["GSM MAE"])} & {np.min (values["GSM seconds"])} & {np.min (values["GSM complexity"])} & {np.min (values["rank"])}    \\\\
-    & max  & {np.max (values["GSM R2"])} & {np.max (values["GSM MAE"])} & {np.max (values["GSM seconds"])} & {np.max (values["GSM complexity"])} & {np.max (values["rank"])}    \\\\
-    &      &                             &                              &                                  &                                     & Total wins: {values["wins"]} \\\\                             
-\\hline
-
-                     & mean & {np.mean(values["min R2"])} & {np.mean(values["min MAE"])} & {np.mean(values["min seconds"])} & {np.mean(values["min complexity"])} & - \\\\
-Min $R^2$ Competitor & std  & {np.std (values["min R2"])} & {np.std (values["min MAE"])} & {np.std (values["min seconds"])} & {np.std (values["min complexity"])} & - \\\\
-                     & min  & {np.min (values["min R2"])} & {np.min (values["min MAE"])} & {np.min (values["min seconds"])} & {np.min (values["min complexity"])} & - \\\\
-                     & max  & {np.max (values["min R2"])} & {np.max (values["min MAE"])} & {np.max (values["min seconds"])} & {np.max (values["min complexity"])} & - \\\\
-\\hline
-                
-                     & mean & {np.mean(values["max R2"])} & {np.mean(values["max MAE"])} & {np.mean(values["max seconds"])} & {np.mean(values["max complexity"])} & - \\\\
-Max $R^2$ Competitor & std  & {np.std (values["max R2"])} & {np.std (values["max MAE"])} & {np.std (values["max seconds"])} & {np.std (values["max complexity"])} & - \\\\
-                     & min  & {np.min (values["max R2"])} & {np.min (values["max MAE"])} & {np.min (values["max seconds"])} & {np.min (values["max complexity"])} & - \\\\
-                     & max  & {np.max (values["max R2"])} & {np.max (values["max MAE"])} & {np.max (values["max seconds"])} & {np.max (values["max complexity"])} & - \\\\
+            string += f"""            
+{c} & $\mu$ {approx(np.mean(R2[mask_R2]), 3)} $\sigma$ {approx(np.std(R2[mask_R2]), 3)} ({np.sum(mask_R2)} / {l}) &
+      $\mu$ {approx(np.mean(MAE[mask_MAE]), 3)} $\sigma$ {approx(np.std(MAE[mask_MAE]), 3)} ({np.sum(mask_MAE)} / {l}) & 
+      $\mu$ {approx(np.mean(seconds[mask_seconds]), 3)} $\sigma$ {approx(np.std(seconds[mask_seconds]), 3)} ({np.sum(mask_seconds)} / {l}) & 
+      $\mu$ {approx(np.mean(complexity[mask_complexity]), 3)} $\sigma$ {approx(np.std(complexity[mask_complexity]), 3)} ({np.sum(mask_complexity)} / {l}) & 
+      $\mu$ {approx(np.mean(pearson[mask_pearson]), 3)} $\sigma$ {approx(np.std(pearson[mask_pearson]), 3)} ({np.sum(mask_pearson)} / {l}) \\\\
 \\hline
 """
 
@@ -446,9 +406,9 @@ Max $R^2$ Competitor & std  & {np.std (values["max R2"])} & {np.std (values["max
         """
         
         return string
-        
-      
-        
+    
+    
+
     #Create the extended table comparation GSM, min and max R^2 model   
     
     string = r"""\footnotesize
@@ -457,96 +417,114 @@ Max $R^2$ Competitor & std  & {np.std (values["max R2"])} & {np.std (values["max
 \binoppenalty=0
 \relpenalty=0
 
-\begin{longtable}{|p{0.12\textwidth}|p{0.30\textwidth}|c|c|c|c|c|p{0.10\textwidth}|}
+\begin{longtable}{|p{0.12\textwidth}|p{0.30\textwidth}|c|c|c|c|p{0.16\textwidth}|}
     
     \caption{Benchmark comparition's models} \label{tab:benchmark_comparition_models} \\
     \hline
-    \textbf{Dataset} & \textbf{Best model} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Time (s)} & \textbf{Complexity} & \textbf{GSM $R^2$ rank} \\
+    \textbf{Dataset} & \textbf{Model} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Time (s)} & \textbf{Complexity} & \textbf{Pearson} \\
     \hline
     \endhead
 """
 
-    def create_dict():
+    
+
+    
+    
+    def create_competitors_dict():
         Dict = {}
         
-        for x in ["R2", "MAE", "seconds", "complexity"]:
-            Dict |= {f"GSM {x}": [], f"min {x}": [], f"max {x}": []}
+        for x in ["R2", "MAE", "seconds", "complexity", "Pearson"]:
+            Dict |= {f"{c} {x}": [] for c in competitors_list + ["GSM"]}
+            
+        Dict["valid"] = []
         
-        Dict["rank"] = []
-        Dict["wins"] = 0
-        
-        return Dict
-        
-    values_PMLB = create_dict()
-    values_strogatz = create_dict()
+        return Dict 
+    
+    competitors_PMLB =     create_competitors_dict()
+    competitors_Strogatz = create_competitors_dict()
+    
+    
+    
+    
 
+    
     for k in list(informations.keys()):
+        
+        #Apply filter if dataset is a PMLB dataset
+        if(not k.startswith("strogatz")):
+            
+            dataset_inf = [x for x in dataset_informations if x["dataset"] == k][0]
+            
+            #if(dataset_inf["features"]                           < 5):   continue
+            #if(dataset_inf["TR points"]                          < 200): continue
+            
+            
         
         row = informations[k]
         
-        # From minor to major
-        sort_best_competitors = sorted([x for x in row["competitors"].keys()], key = lambda d: row["competitors"][d]["R2 TS best"])
-        sort_worst_competitors = sorted([x for x in row["competitors"].keys()], key = lambda d: row["competitors"][d]["R2 TS worst"])
-        
-        best_rank = [(x, row["competitors"][x]["R2 TS best"]) for x in row["competitors"].keys()] + [("GSM", row["GSM"]["R2 TS best"])]
-        best_rank = sorted(best_rank, key = lambda k: -k[1])
-        
-        total_competitors = len(best_rank)
-        # +1 per convertire da indice 0-based a posizione 1-based (es. 1° posto)
-        gsm_rank_pos = [x[0] for x in best_rank].index("GSM") + 1
-        
-        min_R2_model = sort_best_competitors[0]
-        max_R2_model = sort_best_competitors[-1]
-        
         dataset = str(k).replace("_", r" ")
         
-        # Nomi dei modelli formattati per LaTeX (escape degli underscore)
-        min_model_name = min_R2_model.replace("_", r" ")
-        max_model_name = max_R2_model.replace("_", r" ")
+        competitors = competitors_Strogatz if k.startswith("strogatz") else competitors_PMLB
         
-        # Stringa del rank centrato (inserita solo nella riga centrale)
-        rank_str = f"{gsm_rank_pos} / {total_competitors}"
+        if(set(competitors_list).issubset(set(row["competitors"].keys()))):
+            
+            for comp in competitors_list:
+                
+                data = row["competitors"][comp]
+                
+                competitors[f"{comp} R2"]        .append(data["R2 TS best"])
+                competitors[f"{comp} MAE"]       .append(data["MAE TS best"])
+                competitors[f"{comp} seconds"]   .append(data["best total seconds"])
+                competitors[f"{comp} complexity"].append(int(data["complexity best"]))
+                competitors[f"{comp} Pearson"]   .append(data["Pearson best"])
+                
+
+            competitors["GSM R2"]        .append(row["GSM"]["R2 TS best"])
+            competitors["GSM MAE"]       .append(row["GSM"]["MAE TS best"])
+            competitors["GSM seconds"]   .append(row["GSM"]["total seconds"])
+            competitors["GSM complexity"].append(int(row["GSM"]["complexity best"]))
+            competitors["GSM Pearson"]   .append(row["GSM"]["Pearson best"])
+            
+            competitors["valid"].append(True)
         
-        GSM_R2 = approx(row["GSM"]["R2 TS best"], 3)
-        GSM_MAE = approx(row["GSM"]["MAE TS best"], 4)
-        GSM_seconds = approx(row["GSM"]["total seconds"], 4)
-        GSM_complexity = int(row["GSM"]["complexity best"])
-        
-        min_R2 = approx(row["competitors"][min_R2_model]["R2 TS best"], 3)
-        min_MAE = approx(row["competitors"][min_R2_model]["MAE TS best"], 4)
-        min_seconds = approx(row["competitors"][min_R2_model]["best total seconds"], 4)
-        min_complexity = int(row["competitors"][min_R2_model]["complexity best"])
-        
-        max_R2 = approx(row["competitors"]     [max_R2_model]["R2 TS best"], 3)
-        max_MAE = approx(row["competitors"]    [max_R2_model]["MAE TS best"], 4)
-        max_seconds = approx(row["competitors"][max_R2_model]["best total seconds"], 4)
-        max_complexity = int(row["competitors"]    [max_R2_model]["complexity best"])
-        
-        
-        values = values_strogatz if k.startswith("strogatz") else values_PMLB
-        
-        
-        values["GSM R2"]        .append(GSM_R2)
-        values["GSM MAE"]       .append(GSM_MAE)
-        values["GSM seconds"]   .append(GSM_seconds)
-        values["GSM complexity"].append(GSM_complexity)
-        values["min R2"]        .append(min_R2)
-        values["min MAE"]       .append(min_MAE)
-        values["min seconds"]   .append(min_seconds)
-        values["min complexity"].append(min_complexity)
-        values["max R2"]        .append(max_R2)
-        values["max MAE"]       .append(max_MAE)
-        values["max seconds"]   .append(max_seconds)
-        values["max complexity"].append(max_complexity)
-        values["rank"].append(approx((1 - ((gsm_rank_pos-1) / total_competitors)) * 100, 4))
-        
-        if(gsm_rank_pos == 1): values["wins"] += 1
+        else:
+            competitors["valid"].append(False)
+            print(f"SKIP {k} dataset")
+            continue
         
         
-        string += f"""          & GSM &                                  ${GSM_R2}$ & ${GSM_MAE}$ & ${GSM_seconds}$ & ${GSM_complexity}$ &            \\\\\n"""
-        string += f"""{dataset} & ${min_model_name}$ (min $R^2$ model) & ${min_R2}$ & ${min_MAE}$ & ${min_seconds}$ & ${min_complexity}$ & {rank_str} \\\\\n"""
-        string += f"""          & ${max_model_name}$ (max $R^2$ model) & ${max_R2}$ & ${max_MAE}$ & ${max_seconds}$ & ${max_complexity}$ &            \\\\\n"""
-        string += r"    \hline" + "\n"
+        max_indexes = dict()
+        
+        for metric in ["R2", "MAE", "seconds", "complexity", "Pearson"]:
+            
+            values = [competitors[f"{comp} {metric}"][-1] for comp in ["GSM"] + competitors_list]
+            
+            winner_value = np.min(values) if metric != "R2" else np.max(values)
+            
+            max_indexes[metric] = [i for i, x in enumerate(values) if approx(winner_value, 3) == approx(x, 3)]
+            
+        
+        for i, c in enumerate(["GSM"] + competitors_list):
+            
+            R2_value         = approx(competitors[f"{c} R2"][-1],         3)
+            MAE_value        = approx(competitors[f"{c} MAE"][-1],        3)
+            seconds_value    = approx(competitors[f"{c} seconds"][-1],    3)
+            complexity_value = approx(competitors[f"{c} complexity"][-1], 3)
+            Pearson_value    = approx(competitors[f"{c} Pearson"][-1],    3)
+            
+            b = r"\textbf{"
+            
+            string += f"""{dataset if c == 'GSM' else ''} & {c} & 
+            {b + str(R2_value        ) + "}" if i in max_indexes["R2"]         else R2_value        } &
+            {b + str(MAE_value       ) + "}" if i in max_indexes["MAE"]        else MAE_value       } &
+            {b + str(seconds_value   ) + "}" if i in max_indexes["seconds"]    else seconds_value   } &
+            {b + str(complexity_value) + "}" if i in max_indexes["complexity"] else complexity_value} &
+            {b + str(Pearson_value   ) + "}" if i in max_indexes["Pearson"]    else Pearson_value   }\\\\
+"""
+        
+        string += f"""\\hline
+"""
+        
         
     string += r"""\end{longtable}
 """
@@ -555,15 +533,161 @@ Max $R^2$ Competitor & std  & {np.std (values["max R2"])} & {np.std (values["max
     string = string.replace(" ) ", " ) \\allowbreak ")
     
     #Create the resume tables comparation GSM, min and max R^2 model, on PMLB and Stogatz datasets
-    string += add_resume_table(values_PMLB, "PMLB resume table", "PMLB resume")
-    string += add_resume_table(values_strogatz, "Strogatz resume table", "Strogatz resume")
-
+    string += add_resume_table(competitors_PMLB, "PMLB resume table", "PMLB resume")
+    string += add_resume_table(competitors_Strogatz, "Strogatz resume table", "Strogatz resume")
     
     with open("Comparation's model.tex", "w", encoding="utf-8") as f:
         f.write(string)
+
+
         
+        
+def computational_empirical_cost():
+    
+    dataset_information = json.load(open("DatasetDimension.json"))
+    performance_informations = {d.split(".")[0]: json.load(open(f"BenchmarkCompleteResults/{d}")) for d in os.listdir("BenchmarkCompleteResults")}
+    
+    X = []
+    Y = []
+    
+    for d in performance_informations.keys():
+    
+        #Calculate delta from 2 timestamp
+        delta_timestamp = np.diff(performance_informations[d]["results"]["timestamp"])
+        
+        #Take all starting tree: it is necessary FROM which tree algorithm starts (for compare with computational cost), not TO
+        nodes = np.array(performance_informations[d]["results"]["Nodes"][:-1])
+        
+        dataset = [x for x in dataset_information if x["dataset"] == d]
+        
+        features = np.array([dataset[0]["features"]]*len(nodes))
+        points = np.array([dataset[0]["TR points"]]*len(nodes))
+    
+        X += (nodes * features * points).tolist()
+        Y += (delta_timestamp / np.log2(points)).tolist()
+        
+    
+    X = np.array(X)
+    Y = np.array(Y)
+    
+    points = [(x, y) for x, y in zip(X, Y)]
+    
+    distinct_point = []
+    
+    for x_d in set(X):
+        
+        total_y = [y for x, y in points if x == x_d]
+        distinct_point.append((x_d, np.max(total_y)))
+        
+        
+    distinct_point = sorted(distinct_point, key = lambda p: p[0])
+    
+    
+    i = 1
+    
+    while(i < len(distinct_point)):
+        
+        if(distinct_point[i][1] < distinct_point[i-1][1]): del distinct_point[i]
+        else: i += 1
         
 
-creation_performance_table()
-creation_comparation_table()
+    x_bound = [x for x, y in distinct_point]
+    y_bound = [y for x, y in distinct_point]
+    
+    
+    plt.scatter(X, Y, label="Single iteration cost", color="black", alpha=0.35, s=4)
+    plt.plot(x_bound, y_bound, label="Upper bound", color="red")
+    
+
+    plt.xlabel(r"Iteration workload $T \cdot k \cdot n$")
+    plt.ylabel("Execution time per iteration (s) / log(n)")
+    plt.title("Empirical Computational Cost of GSM")
+    plt.legend()
+    plt.show()
+        
+
+  
+
+
+#--------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------------
+  
+
+
+
+
+
+Correlations = {"features": [],
+                "TR points": [],
+                "TS R2 best GSM" :[]}
+
+
+bad = 0
+good = 0
+neutral_positive = 0
+neutral_negative = 0
+neutral = 0
+
+
+for d in informations.keys():
+    
+    if(d.startswith("strogatz")): continue
+    
+    dataset_inf = [x for x in dataset_informations if x["dataset"] == d][0]
+    
+    GSM_R2 = informations[d]["GSM"]["R2 TS best"]
+    
+    Correlations["features"].append(dataset_inf["features"])
+    Correlations["TR points"].append(dataset_inf["TR points"])
+    Correlations["TS R2 best GSM"].append(GSM_R2)
+    
+    if(GSM_R2 > 0.1): good += 1
+    elif(GSM_R2 < -0.1): bad += 1
+    else:
+        
+        if(GSM_R2 > 0): neutral_positive += 1
+        if(GSM_R2 < 0): neutral_negative += 1
+        else: neutral = 0
+    
+    
+    
+    
+  
+#print("On dataset PMLB")  
+#print(f"bad (R2 < -0.1): {bad}")
+#print(f"neutral negative (-0.1 <= R2 < 0): {neutral_negative}")
+#print(f"neutral (R2 = 0): {neutral}")
+#print(f"neutral positive (0 < R2 <= 0.1): {neutral_positive}")
+#print(f"good (R2 > 0.1): {good}")
+
+
+    
+Correlations["features"] = np.array(Correlations["features"])
+Correlations["TR points"] = np.array(Correlations["TR points"])
+Correlations["TS R2 best GSM"] = np.array(Correlations["TS R2 best GSM"])
+
+
+    
+def fast_plot(X, Y, title, X_label, Y_label):
+    
+    index = np.argsort(X)
+    
+    plt.plot(X[index], Y[index])
+    
+    plt.xlabel(X_label)
+    plt.ylabel(Y_label)
+
+    plt.title(title)
+    plt.legend()
+    plt.show()
+
+
+#fast_plot(Correlations["features"], Correlations["TS R2 best GSM"], "(PMLB) Features vs R2", "Features", "R2")
+#fast_plot(Correlations["TR points"], Correlations["TS R2 best GSM"], "(PMLB) TR points vs R2", " TR points", "R2")
+#fast_plot(Correlations["features"] * Correlations["TR points"], Correlations["TS R2 best GSM"], "(PMLB) Features * TR points vs R2", "Features * TR points", "R2")
+
+
+analysis_comparation_benchmark()
+#computational_empirical_cost()
 

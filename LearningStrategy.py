@@ -339,11 +339,11 @@ class GreedyStatisticalMapping:
         i = self._dict_extension_history[model_firm][0] if model_firm in self._dict_extension_history.keys() else 0
         
         #If this new state is worse of previous state, apply rollback
-        if(not (self._previous_MDL is None) and not (self._actual_MDL is None) and (self._previous_MDL < self._actual_MDL)):
-
-            result = self.rollback(model_firm, TR_inputs_dict, TR_output)
-            del self._dict_extension_history[model_firm]
-            return result
+        #if(not (self._previous_MDL is None) and not (self._actual_MDL is None) and (self._previous_MDL < self._actual_MDL)):
+        #
+        #    result = self.rollback(model_firm, TR_inputs_dict, TR_output)
+        #    del self._dict_extension_history[model_firm]
+        #    return result
 
         #FORWARD - BACKWARD STEPS
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict, target_len).backward_calculation_memory_sub_tree(TR_output, target_len)

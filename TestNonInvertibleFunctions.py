@@ -59,28 +59,37 @@ for seed in seeds_list:
 
             print(f"Non invertible test: random seed {seed}, g = {g}, with {n} points, without multiplicative noise")
                 
-            result.append({
-                            'seed': seed,
-                            'n_samples': n,
-                            'function': g,
-                            'noise': False,
-                            'pearson_sin': np.abs(ind.pearson_correlation(X, approach["sin"](X, Y_sin))),
-                            'pearson_cos': np.abs(ind.pearson_correlation(X, approach["cos"](X, Y_cos)))
-                        })
+            #result.append({
+            #                'seed': seed,
+            #                'n_samples': n,
+            #                'function': g,
+            #                'noise': False,
+            #                'pearson_sin': np.abs(ind.pearson_correlation(X, approach["sin"](X, Y_sin))),
+            #                'pearson_cos': np.abs(ind.pearson_correlation(X, approach["cos"](X, Y_cos)))
+            #            })
+            #
+            #print(f"Non invertible test: random seed {seed}, g = {g}, with {n} points, with multiplicative noise")
+            #    
+            #result.append({
+            #            'seed': seed,
+            #            'n_samples': n,
+            #            'function': g,
+            #            'noise': True,
+            #            'pearson_sin': np.abs(ind.pearson_correlation(X, approach["sin"](X, (Y_sin * noise)))),
+            #            'pearson_cos': np.abs(ind.pearson_correlation(X, approach["cos"](X, (Y_cos * noise))))
+            #        })
             
-            print(f"Non invertible test: random seed {seed}, g = {g}, with {n} points, with multiplicative noise")
-                
+            
             result.append({
                         'seed': seed,
                         'n_samples': n,
                         'function': g,
-                        'noise': True,
-                        'pearson_sin': np.abs(ind.pearson_correlation(X, approach["sin"](X, (Y_sin * noise)))),
-                        'pearson_cos': np.abs(ind.pearson_correlation(X, approach["cos"](X, (Y_cos * noise))))
+                        'pearson': np.abs(ind.pearson_correlation(X, g_output)),
+                        #'pearson_cos': np.abs(ind.pearson_correlation(X, approach["cos"](X, (Y_cos * noise))))
                     })
 
 
 
 print("Save results...")
-json.dump(result, open("TestNonInvertibleResults.json", "w", encoding="utf-8"), indent=4)
+json.dump(result, open("TestNonInvertibleResults2.json", "w", encoding="utf-8"), indent=4)
 print("Statistical tests done!")
