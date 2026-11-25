@@ -196,19 +196,6 @@ class OperationNode:
         
         return self 
     
-    #CLEAR MEMORY OPERATIONS
-    def clear_all_subtree_memory(self, memory_name):
-        
-        def recursion(node):
-            for child in node.get_childrens(): recursion(child)
-            if(type(node) == Leaf):
-                node.set_memory(memory_name, None, 1)
-            else: node.set_memory(memory_name, None, 1)
-                
-        recursion(self)
-        
-        return self
-    
     #CHECK OPERATION ZONE
     def _check_type_name(self, name):
         return True
@@ -405,7 +392,7 @@ class mul(ChainOperationNode):
         return result
 
     def get_string_calculation_structure(self, x): 
-        return f"{' + '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
+        return f"{' * '.join(sorted([str(r.get_string_calculation_function()['body']) for r in self.get_childrens()]))}"
 
 class div(UnaryOperationNode):
     

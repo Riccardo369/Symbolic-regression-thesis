@@ -74,8 +74,8 @@ def plot_non_invertible_metric(noise):
 
     # Definizione delle metriche da tracciare e dei relativi titoli
     metrics_map = {
-        "pearson_sin": "Pearson sin",
-        "pearson_cos": "Pearson cos",
+        "Absolute_Pearson_sin": "Absolute_Pearson sin",
+        "Absolute_Pearson_cos": "Absolute_Pearson cos",
     }
 
     # Impostazione grafica della figura (1 riga, 2 colonne)
@@ -148,7 +148,7 @@ def plot_non_invertible_metric2():
 
     # Raggruppa per n_samples e function calcolando la media su tutti i seed
     df_grouped = (
-        df.groupby(["n_samples", "function"])["pearson"]
+        df.groupby(["n_samples", "function"])["Absolute_Pearson"]
         .mean()
         .reset_index()
     )
@@ -160,7 +160,7 @@ def plot_non_invertible_metric2():
     sns.lineplot(
         data=df_grouped,
         x="n_samples",
-        y="pearson",
+        y="Absolute_Pearson",
         hue="function",
         marker="o",
         linewidth=2,
@@ -169,9 +169,9 @@ def plot_non_invertible_metric2():
 
     # Configurazione assi e titoli
     ax.set_xscale("log")
-    ax.set_title("Pearson Correlation", fontsize=14, fontweight="bold")
+    ax.set_title("Absolute_Pearson Correlation", fontsize=14, fontweight="bold")
     ax.set_xlabel("n samples", fontsize=12)
-    ax.set_ylabel("Pearson", fontsize=12)
+    ax.set_ylabel("Absolute_Pearson", fontsize=12)
     ax.set_ylim(-0.05, 1.05)  # Range adattato ai valori [0, 1] del nuovo dataset
 
     fig.suptitle(
@@ -372,7 +372,7 @@ def analysis_comparation_benchmark():
 
     \caption{""" + caption + """} \label{tab:""" + label + r"""} \\
     \hline
-    \textbf{Model} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Time (s)} & \textbf{Complexity} & \textbf{Pearson}\\
+    \textbf{Model} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Time (s)} & \textbf{Complexity} & \textbf{Absolute Pearson}\\
     \hline
     \endhead
 """
@@ -382,13 +382,13 @@ def analysis_comparation_benchmark():
             MAE =        np.array(values[f"{c} MAE"]       )
             seconds =    np.array(values[f"{c} seconds"]   )
             complexity = np.array(values[f"{c} complexity"])   
-            pearson =    np.array(values[f"{c} Pearson"]   )
+            Absolute_Pearson =    np.array(values[f"{c} Absolute_Pearson"]   )
             
             mask_R2 =         np.isfinite(values[f"{c} R2"]        )
             mask_MAE =        np.isfinite(values[f"{c} MAE"]       )
             mask_seconds =    np.isfinite(values[f"{c} seconds"]   )
             mask_complexity = np.isfinite(values[f"{c} complexity"])
-            mask_pearson =    np.isfinite(values[f"{c} Pearson"]   )
+            mask_Absolute_Pearson =    np.isfinite(values[f"{c} Absolute_Pearson"]   )
             
             
             l = len(values[f"{c} R2"])
@@ -398,13 +398,13 @@ def analysis_comparation_benchmark():
       $\mu$ {approx(np.mean(MAE[mask_MAE]), 3)} $\sigma$ {approx(np.std(MAE[mask_MAE]), 3)} ({np.sum(mask_MAE)} / {l}) & 
       $\mu$ {approx(np.mean(seconds[mask_seconds]), 3)} $\sigma$ {approx(np.std(seconds[mask_seconds]), 3)} ({np.sum(mask_seconds)} / {l}) & 
       $\mu$ {approx(np.mean(complexity[mask_complexity]), 3)} $\sigma$ {approx(np.std(complexity[mask_complexity]), 3)} ({np.sum(mask_complexity)} / {l}) & 
-      $\mu$ {approx(np.mean(pearson[mask_pearson]), 3)} $\sigma$ {approx(np.std(pearson[mask_pearson]), 3)} ({np.sum(mask_pearson)} / {l}) \\\\
+      $\mu$ {approx(np.mean(Absolute_Pearson[mask_Absolute_Pearson]), 3)} $\sigma$ {approx(np.std(Absolute_Pearson[mask_Absolute_Pearson]), 3)} ({np.sum(mask_Absolute_Pearson)} / {l}) \\\\
 \\hline
 """
 
         string += r"""\end{longtable}
         """
-        
+
         return string
     
     
@@ -421,7 +421,7 @@ def analysis_comparation_benchmark():
     
     \caption{Benchmark comparition's models} \label{tab:benchmark_comparition_models} \\
     \hline
-    \textbf{Dataset} & \textbf{Model} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Time (s)} & \textbf{Complexity} & \textbf{Pearson} \\
+    \textbf{Dataset} & \textbf{Model} & \textbf{$R^2$} & \textbf{MAE} & \textbf{Time (s)} & \textbf{Complexity} & \textbf{Absolute Pearson} \\
     \hline
     \endhead
 """
@@ -433,7 +433,7 @@ def analysis_comparation_benchmark():
     def create_competitors_dict():
         Dict = {}
         
-        for x in ["R2", "MAE", "seconds", "complexity", "Pearson"]:
+        for x in ["R2", "MAE", "seconds", "complexity", "Absolute_Pearson"]:
             Dict |= {f"{c} {x}": [] for c in competitors_list + ["GSM"]}
             
         Dict["valid"] = []
@@ -476,14 +476,14 @@ def analysis_comparation_benchmark():
                 competitors[f"{comp} MAE"]       .append(data["MAE TS best"])
                 competitors[f"{comp} seconds"]   .append(data["best total seconds"])
                 competitors[f"{comp} complexity"].append(int(data["complexity best"]))
-                competitors[f"{comp} Pearson"]   .append(data["Pearson best"])
+                competitors[f"{comp} Absolute_Pearson"]   .append(data["Absolute_Pearson best"])
                 
 
             competitors["GSM R2"]        .append(row["GSM"]["R2 TS best"])
             competitors["GSM MAE"]       .append(row["GSM"]["MAE TS best"])
             competitors["GSM seconds"]   .append(row["GSM"]["total seconds"])
             competitors["GSM complexity"].append(int(row["GSM"]["complexity best"]))
-            competitors["GSM Pearson"]   .append(row["GSM"]["Pearson best"])
+            competitors["GSM Absolute_Pearson"]   .append(row["GSM"]["Absolute_Pearson best"])
             
             competitors["valid"].append(True)
         
@@ -495,7 +495,7 @@ def analysis_comparation_benchmark():
         
         max_indexes = dict()
         
-        for metric in ["R2", "MAE", "seconds", "complexity", "Pearson"]:
+        for metric in ["R2", "MAE", "seconds", "complexity", "Absolute_Pearson"]:
             
             values = [competitors[f"{comp} {metric}"][-1] for comp in ["GSM"] + competitors_list]
             
@@ -506,11 +506,11 @@ def analysis_comparation_benchmark():
         
         for i, c in enumerate(["GSM"] + competitors_list):
             
-            R2_value         = approx(competitors[f"{c} R2"][-1],         3)
-            MAE_value        = approx(competitors[f"{c} MAE"][-1],        3)
-            seconds_value    = approx(competitors[f"{c} seconds"][-1],    3)
-            complexity_value = approx(competitors[f"{c} complexity"][-1], 3)
-            Pearson_value    = approx(competitors[f"{c} Pearson"][-1],    3)
+            R2_value                  = approx(competitors[f"{c} R2"][-1],         3)
+            MAE_value                 = approx(competitors[f"{c} MAE"][-1],        3)
+            seconds_value             = approx(competitors[f"{c} seconds"][-1],    3)
+            complexity_value          = approx(competitors[f"{c} complexity"][-1], 3)
+            Absolute_Pearson_value    = approx(competitors[f"{c} Absolute_Pearson"][-1],    3)
             
             b = r"\textbf{"
             
@@ -519,7 +519,7 @@ def analysis_comparation_benchmark():
             {b + str(MAE_value       ) + "}" if i in max_indexes["MAE"]        else MAE_value       } &
             {b + str(seconds_value   ) + "}" if i in max_indexes["seconds"]    else seconds_value   } &
             {b + str(complexity_value) + "}" if i in max_indexes["complexity"] else complexity_value} &
-            {b + str(Pearson_value   ) + "}" if i in max_indexes["Pearson"]    else Pearson_value   }\\\\
+            {b + str(Absolute_Pearson_value   ) + "}" if i in max_indexes["Absolute_Pearson"]    else Absolute_Pearson_value   }\\\\
 """
         
         string += f"""\\hline
@@ -681,12 +681,11 @@ def fast_plot(X, Y, title, X_label, Y_label):
     plt.title(title)
     plt.legend()
     plt.show()
-
+    
 
 #fast_plot(Correlations["features"], Correlations["TS R2 best GSM"], "(PMLB) Features vs R2", "Features", "R2")
 #fast_plot(Correlations["TR points"], Correlations["TS R2 best GSM"], "(PMLB) TR points vs R2", " TR points", "R2")
 #fast_plot(Correlations["features"] * Correlations["TR points"], Correlations["TS R2 best GSM"], "(PMLB) Features * TR points vs R2", "Features * TR points", "R2")
-
 
 analysis_comparation_benchmark()
 #computational_empirical_cost()

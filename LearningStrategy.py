@@ -95,7 +95,7 @@ class GreedyStatisticalMapping:
         self._previous_MDL = None
         self._actual_MDL = None
 
-        self.__calculate_MDL(TR_inputs_dict, TR_output)
+        self.__calculate_MDL(TR_output)
         
         #Return the signal that algorithm must repeat the iteration
         return None
@@ -339,11 +339,11 @@ class GreedyStatisticalMapping:
         i = self._dict_extension_history[model_firm][0] if model_firm in self._dict_extension_history.keys() else 0
         
         #If this new state is worse of previous state, apply rollback
-        #if(not (self._previous_MDL is None) and not (self._actual_MDL is None) and (self._previous_MDL < self._actual_MDL)):
-        #
-        #    result = self.rollback(model_firm, TR_inputs_dict, TR_output)
-        #    del self._dict_extension_history[model_firm]
-        #    return result
+        if(not (self._previous_MDL is None) and not (self._actual_MDL is None) and (self._previous_MDL < self._actual_MDL)):
+        
+            result = self.rollback(model_firm, TR_inputs_dict, TR_output)
+            del self._dict_extension_history[model_firm]
+            return result
 
         #FORWARD - BACKWARD STEPS
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict, target_len).backward_calculation_memory_sub_tree(TR_output, target_len)
@@ -422,60 +422,53 @@ class GreedyStatisticalMapping:
         self._model.replace_subtree(choice["node"], new_node)        
                     
         #SYNTAX REDUCTION STEP
-        self._model.simplify_model(TR_inputs_dict)
+        self._model.simplify_model()
             
         return True
 
     #Structure cost for MDL score
-    def __information_cost_structure(self, k):
-        
-        def recursion(node):
-            
-            subtree_cost = np.sum([recursion(c) for c in node.get_childrens()])
-            
-            # Unary operation: sin, cos, arcsin, arccos, exp, ln, sqrt, div
-            if isinstance(node, op.UnaryOperationNode): node_cost = np.log2(8)
-                
-            # Chain operation: add, mul
-            elif isinstance(node, op.ChainOperationNode): node_cost = np.log2(2) + np.log2(len(node.get_childrens()))
-                
-            # Constant
-            elif node.is_constant(): node_cost = 1.0
-                
-            # Variable
-            else: node_cost = 1.0 + np.log2(k)
-                
-            return subtree_cost + node_cost
-        
-        return recursion(self._model.get_root()) 
+    #def __information_cost_structure(self, k):
+    #    
+    #    def recursion(node):
+    #        
+    #        subtree_cost = np.sum([recursion(c) for c in node.get_childrens()])
+    #        
+    #        # Unary operation: sin, cos, arcsin, arccos, exp, ln, sqrt, div
+    #        if isinstance(node, op.UnaryOperationNode): node_cost = np.log2(8)
+    #            
+    #        # Chain operation: add, mul
+    #        elif isinstance(node, op.ChainOperationNode): node_cost = np.log2(2) + np.log2(len(node.get_childrens()))
+    #            
+    #        # Constant
+    #        elif node.is_constant(): node_cost = 1.0
+    #        
+    #        # Variable
+    #        else: node_cost = 1.0 + np.log2(k)
+    #            
+    #        return subtree_cost + node_cost
+    #    
+    #    return recursion(self._model.get_root())
+    
     
     #Calculate MDL score, and update the MDL history values
-    def __calculate_MDL(self, TR_inputs_dict, TR_output):
+    def __calculate_MDL(self, TR_output):
         
-        leafs = self._model.get_leafs()
-
-        n = len(TR_output)
-        k = len(TR_inputs_dict.keys())
-
-        L_struct = self.__information_cost_structure(k)   #Discrete solution / complexity structure
-        L_const = len([x for x in leafs if x.is_constant()]) * 0.5 * np.log2(n)   #Continuous solution
-        L_res = n * 0.5 * np.log2(er.MSE(self._model.get_root().get_memory("forward"), TR_output) + 1e-40)   #Error model
+        alpha = 0
         
-        MDL_score = L_struct + L_const + L_res
-        MDL_score = MDL_score if np.isfinite(MDL_score) else float("inf")
+        MDL_score = er.MSE(self._model.get_root().get_memory("forward"), TR_output) #+ (alpha * self._model.get_root().get_all_subtree_nodes())
         
         self._previous_MDL = self._actual_MDL
         self._actual_MDL = MDL_score
-         
+
+
     #Apply a set of refreshing actions
     def __refresh(self, TR_inputs_dict, TR_output):
         target_len = len(TR_output)
         self._model.get_root().forward_calculation_memory_sub_tree(TR_inputs_dict, target_len).backward_calculation_memory_sub_tree(TR_output, target_len)
         self.checkpoint_metrics()
         
-        self.__calculate_MDL(TR_inputs_dict, TR_output)
-        
-         
+        self.__calculate_MDL(TR_output)
+
     #Start body iterations training
     def _body_learning(self, TR_inputs_dict, TR_output, stop_criteria):
         
@@ -492,7 +485,6 @@ class GreedyStatisticalMapping:
         #Set the constant in numpy array (so everything is in array)
         if(type(TR_output) in [int, float]): TR_output = np.array([TR_output for _ in range(np.var(len_inputs))])
 
-        
         self.__refresh(TR_inputs_dict, TR_output)
         
         i = 0
@@ -515,6 +507,6 @@ class GreedyStatisticalMapping:
 
             i += 1
             
-            #print(f"Iteration done {i} {'-'*100}")
+            print(f"Iteration done {i} {'-'*100}")
 
             if(not Go): break

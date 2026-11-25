@@ -39,8 +39,8 @@ class SymbolicRegression:
 
         father = tree1.get_father()
 
-        if(not self.__root.is_node_present_in_sub_tree(tree1)): raise ValueError(f"Sub tree 1 {tree1} must be in this tree {self}, its not")
-        if(self.__root.is_node_present_in_sub_tree(tree2)): raise ValueError(f"Sub tree 2 {tree2} cannot be in this tree {self}, it is")
+        if(not self.__root.is_node_present_in_sub_tree(tree1)): raise ValueError(f"First sub tree {tree1} must be in this tree {self}, its not")
+        if(self.__root.is_node_present_in_sub_tree(tree2)): raise ValueError(f"Second sub tree {tree2} cannot be in this tree {self}, it is")
         
         if(tree2.get_father() != None): raise ValueError(f"tree 2 {tree2} must has no father, has {tree2.get_father()}")
    
@@ -51,7 +51,7 @@ class SymbolicRegression:
                     
         else:
    
-            father.free_connection(tree1) 
+            father.free_connection(tree1)
             father.new_connection(tree2)
         
         
@@ -140,51 +140,93 @@ class SymbolicRegression:
         return result_function
     
     #Apply syntax simplification con Sympy
-    def simplify_model(self, TR_inputs_dict = {}):
+    def simplify_model(self):
+        
+        def clean(tree):
+            
+            for c in tree.get_childrens(): clean(c)
+            
+            #If node is not a chain
+            if((not isinstance(tree, op.ChainOperationNode)) or isinstance(tree, op.Leaf)):
+                
+                try:
+                    
+                    #Try to apply a direct calculation
+                    new_node = op.Leaf(eval(f"lambda: {tree.get_string_calculation_function()['body']}")())
+                    self.replace_subtree(tree, new_node) 
+                    
+                except: pass
+                return self
+            
+            #Flat the chain
+            childrens = si.flat_chain(tree)
+            
+            if(childrens[0].get_name() == 0 and type(tree) == op.mul):
+                self.replace_subtree(tree, op.Leaf(0))
+                return 0
+            
+            #Apply the substitution
+            if(len(childrens) == 1):
+              
+                self.replace_subtree(tree, childrens[0])
+                return self
+            
+            else:
+            
+                new_node = type(tree)()
+                for c in childrens: new_node.new_connection(c)
+                self.replace_subtree(tree, new_node)
+                return self
+            
+            
+        clean(self.get_root())
+                
+        return self  
+        
+          
         
         #Clean tree from chain node with one node
-        def clean_chain_node_one_child(tree, node):
-            
-            for c in node.get_childrens(): clean_chain_node_one_child(tree, c)
-            
-            if(isinstance(node, op.ChainOperationNode)):
-                                
-                flat_childrens = []
-                for c in node.get_childrens():
-                    if(type(c) == type(node)):
-                        flat_childrens += c.get_childrens()
-                        node.free_connection(c)
-                    
-                for fc in flat_childrens:
-                    fc.get_father().free_connection(fc)
-                    node.new_connection(fc)
-            
-            if(isinstance(node, op.ChainOperationNode) and len(node.get_childrens()) == 1):
-                
-                child = node.get_childrens()[0]
-                node.free_connection(child)
-                tree.replace_subtree(node, child)
-                
-                
-        f = si.to_sympy(self.get_root().copy_sub_tree())
-        f = sp.expand(f)
-        f = sp.factor(f)
-        f = sp.powsimp(f)
-        f = sp.nsimplify(f)
-        f.doit()
+        #def clean_chain_node_one_child(tree, node):
+        #    
+        #    #for c in node.get_childrens(): clean_chain_node_one_child(tree, c)
+        #    
+        #    if(isinstance(node, op.ChainOperationNode)):
+        #                        
+        #        flat_childrens = []
+        #        for c in node.get_childrens():
+        #            if(type(c) == type(node)):
+        #                flat_childrens += c.get_childrens()
+        #                node.free_connection(c)
+        #            
+        #        for fc in flat_childrens:
+        #            fc.get_father().free_connection(fc)
+        #            node.new_connection(fc)
+        #    
+        #    if(isinstance(node, op.ChainOperationNode) and len(node.get_childrens()) == 1):
+        #        
+        #        child = node.get_childrens()[0]
+        #        node.free_connection(child)
+        #        tree.replace_subtree(node, child)
+        #       
+        #f = si.to_sympy(self.get_root().copy_sub_tree())
+        #f = sp.expand(f)
+        #f = sp.factor(f)
+        #f = sp.powsimp(f)
+        #f = sp.nsimplify(f)
+        #f.doit()
+        #
+        #try:
+        #
+        #    f = si.from_sympy(f, TR_inputs_dict)
+        #
+        #if(len(f.get_all_subtree_nodes()) <= len(self.get_root().get_all_subtree_nodes())): self.replace_subtree(self.get_root(), f)
+        #
+        #except: return self
+        #
+        #clean_chain_node_one_child(self, self.get_root())
         
-        try:
         
-            f = si.from_sympy(f, TR_inputs_dict)
-            if(len(f.get_all_subtree_nodes()) <= len(self.get_root().get_all_subtree_nodes())): self.replace_subtree(self.get_root(), f)
-        
-        except: return self
-        
-        clean_chain_node_one_child(self, self.get_root())
-        
-        return self
     
-
 
 
     #Learn phase   
@@ -201,5 +243,4 @@ class SymbolicRegression:
         warnings.filterwarnings('default', category=RuntimeWarning)
         
         return result
-
 

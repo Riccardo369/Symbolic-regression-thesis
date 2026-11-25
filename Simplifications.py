@@ -180,7 +180,10 @@ def from_sympy(expr, TR_inputs_dict):
 
 
 
-
+def prod(x):
+    s = 1
+    for i in x: s*= i
+    return s
 
 """
 Preconditions:
@@ -196,21 +199,29 @@ def flat_chain(node):
     
     if(not isinstance(node, op.ChainOperationNode)): raise ValueError(f"Node {node} is not a chain")
     
+    sub_chains = [None]
     elements = node.get_childrens()
     
-    oper = type(node)
+    Oper = type(node)
     
-    sub_chains = [None]
-    
-    #Flat all oper chain in one chain (like oper(a, b, oper(c, d)) = oper (a, b, c, d))
+    #Flat all Oper chain in one chain (like Oper(a, b, Oper(c, d)) = Oper (a, b, c, d))
     while(len(sub_chains) > 0):
         
-        sub_chains = [x for x in elements if isinstance(x, oper)]
-        elements =   [x for x in elements if not isinstance(x, oper)]
+        sub_chains = [x for x in elements if isinstance(x, Oper)]
+        elements =   [x for x in elements if not isinstance(x, Oper)]
         
         for s in sub_chains: elements += s.get_childrens()
         
+    constants = [x.get_name() for x in elements if x != None and x.is_constant()]
+    elements = [x.copy_sub_tree() for x in elements if x != None and not x.is_constant()]
+    
+    if(len(constants) == 0): return elements
+    
+    new_constant = np.sum(constants) if Oper == op.add else np.prod(constants)
+    
+    if(not ((new_constant == 0.0 and Oper == op.add) or 
+            (new_constant == 1.0 and Oper == op.mul))): elements.insert(0, op.Leaf(new_constant))
+    
     return elements
-
 
 

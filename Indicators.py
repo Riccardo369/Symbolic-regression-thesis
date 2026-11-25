@@ -23,7 +23,8 @@ def prepare(x, y):
 #For linearity correlation
 def pearson_correlation(x, y):
     
-    if(len(x) == 0 or len(y) == 0): return 0
+    #if((len(x) == 0) or len(y) == 0): return 0
+    if((isinstance(x, np.ndarray) and len(x) == 0) or (isinstance(y, np.ndarray) and len(y) == 0)): return 0
     
     x, y = prepare(x, y)
     
@@ -33,7 +34,8 @@ def pearson_correlation(x, y):
 #For monoton correlation
 def spearman_correlation(x, y):
     
-    if(len(x) == 0 or len(y) == 0): return 0
+    #if(len(x) == 0 or len(y) == 0): return 0
+    if((isinstance(x, np.ndarray) and len(x) == 0) or (isinstance(y, np.ndarray) and len(y) == 0)): return 0
     
     x, y = prepare(x, y)
     
@@ -48,7 +50,8 @@ def spearman_correlation(x, y):
 #With less points, chatterjee is less precise with identification
 def chatterjee_correlation(x, y):
     
-    if(len(x) == 0 or len(y) == 0): return 0
+    #if(len(x) == 0 or len(y) == 0): return 0
+    if((isinstance(x, np.ndarray) and len(x) == 0) or (isinstance(y, np.ndarray) and len(y) == 0)): return 0
     
     x, y = prepare(x, y)
     
@@ -60,6 +63,7 @@ def chatterjee_correlation(x, y):
 def kurtosis_coefficient(y):
     
     if(len(y) == 0): return 0
+    if((isinstance(y, np.ndarray) and len(y) == 0)): return 0
     
     result = kurtosis(y, fisher = True) + 2
     return result if np.isfinite(result) else 0
@@ -74,6 +78,8 @@ def most_important_features(features, Y):
     if(features.shape[0] < 3 or Y.shape[0] < 3): return []
     
     return xi.select_features_using_foci(Y, features, num_features = None)
+
+
 
 
 #--------------------------------------------------------------------------------------------------------------
@@ -102,8 +108,6 @@ if(__name__ == "__main__"):
     print(f(y, x))
     print(f(y, y))
     
-    f = lambda x, y: kendall_correlation(x, y)
-    
     print("Kendall")
     print(f(x, x))
     print(f(x, y))
@@ -122,7 +126,11 @@ if(__name__ == "__main__"):
     c = 100
     
     x = np.random.rand(100, k)*c
+    x = np.column_stack((x, np.full(100, 3)))
+    
     y = np.random.rand(100)*c
+    
+    print(x.shape)
     
     print(f"Most important features (from {k} features)")
     print(most_important_features(x, y))
